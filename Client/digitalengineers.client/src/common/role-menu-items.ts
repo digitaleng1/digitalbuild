@@ -278,7 +278,7 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 			{
 				key: 'projects-active',
 				label: 'Active Projects',
-				url: '/projects/list',
+				url: '/projects',
 				parentKey: 'my-projects',
 			},
 			{

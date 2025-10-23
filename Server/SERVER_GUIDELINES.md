@@ -64,8 +64,7 @@ Server/
 │   └── Program.cs
 │
 └── DigitalEngineers.Shared/         # Shared utilities/enums/helpers etc 
-    └── Enums/
-        └── UserRole.cs
+
 ```
 
 ---

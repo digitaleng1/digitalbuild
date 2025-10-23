@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<ILookupService, LookupService>();
+        services.AddScoped<IProjectService, ProjectService>();
 
         return services;
     }
