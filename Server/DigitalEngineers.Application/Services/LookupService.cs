@@ -5,37 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DigitalEngineers.Application.Services;
 
-public class DictionaryService : IDictionaryService
+public class LookupService : ILookupService
 {
     private readonly ApplicationDbContext _context;
 
-    public DictionaryService(ApplicationDbContext context)
+    public LookupService(ApplicationDbContext context)
     {
         _context = context;
-    }
-
-    public Task<IEnumerable<ProfessionalTypeDto>> GetProfessionalTypesAsync(CancellationToken cancellationToken = default)
-    {
-        var professionalTypes = new List<ProfessionalTypeDto>
-        {
-            new() { Id = 1, Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering" },
-            new() { Id = 2, Name = "Architectural Engineering", Description = "Architectural Engineering" },
-            new() { Id = 3, Name = "Chemical Engineering", Description = "Chemical Engineering" },
-            new() { Id = 4, Name = "Civil Engineering", Description = "Civil Engineering" },
-            new() { Id = 5, Name = "Control Systems Engineering", Description = "Control Systems Engineering" },
-            new() { Id = 6, Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering" },
-            new() { Id = 7, Name = "Environmental Engineering", Description = "Environmental Engineering" },
-            new() { Id = 8, Name = "Fire Protection Engineering", Description = "Fire Protection Engineering" },
-            new() { Id = 9, Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering" },
-            new() { Id = 10, Name = "Mechanical Engineering", Description = "Mechanical Engineering" },
-            new() { Id = 11, Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering" },
-            new() { Id = 12, Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering" },
-            new() { Id = 13, Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering" },
-            new() { Id = 14, Name = "Nuclear Engineering", Description = "Nuclear Engineering" },
-            new() { Id = 15, Name = "Petroleum Engineering", Description = "Petroleum Engineering" }
-        };
-
-        return Task.FromResult<IEnumerable<ProfessionalTypeDto>>(professionalTypes);
     }
 
     public Task<IEnumerable<StateDto>> GetStatesAsync(CancellationToken cancellationToken = default)

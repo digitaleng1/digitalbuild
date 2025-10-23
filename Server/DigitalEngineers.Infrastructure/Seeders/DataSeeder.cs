@@ -1,5 +1,6 @@
 using DigitalEngineers.Infrastructure.Entities.Identity;
 using DigitalEngineers.Infrastructure.Data;
+using DigitalEngineers.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ public static class DataSeeder
             await SeedSuperAdminAsync(userManager);
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
+            await SeedDictionariesAsync(context, logger);
 
             logger.LogInformation("Data seeding completed successfully.");
         }
@@ -222,5 +224,70 @@ public static class DataSeeder
                 }
             }
         }
+    }
+
+    private static async Task SeedDictionariesAsync(ApplicationDbContext context, ILogger logger)
+    {
+        logger.LogInformation("Starting dictionary data seeding...");
+
+        await SeedProfessionsAsync(context, logger);
+        await SeedLicenseTypesAsync(context, logger);
+
+        logger.LogInformation("Dictionary data seeding completed.");
+    }
+
+    private static async Task SeedProfessionsAsync(ApplicationDbContext context, ILogger logger)
+    {
+        if (await context.Professions.AnyAsync())
+        {
+            logger.LogInformation("Professions already seeded. Skipping...");
+            return;
+        }
+
+        var professions = new List<Profession>
+        {
+            new() { Id = 1, Name = "Engineering", Description = "Professional Engineer" },
+            new() { Id = 2, Name = "Transportation Trades", Description = "Transportation" }
+        };
+
+        await context.Professions.AddRangeAsync(professions);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Professions seeded successfully.");
+    }
+
+    private static async Task SeedLicenseTypesAsync(ApplicationDbContext context, ILogger logger)
+    {
+        if (await context.LicenseTypes.AnyAsync())
+        {
+            logger.LogInformation("License types already seeded. Skipping...");
+            return;
+        }
+
+        var licenseTypes = new List<LicenseType>
+        {
+            new() { Id = 1, Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering", ProfessionId = 1 },
+            new() { Id = 2, Name = "Architectural Engineering", Description = "Architectural Engineering", ProfessionId = 1 },
+            new() { Id = 3, Name = "Chemical Engineering", Description = "Chemical Engineering", ProfessionId = 1 },
+            new() { Id = 4, Name = "Civil Engineering", Description = "Civil Engineering", ProfessionId = 1 },
+            new() { Id = 5, Name = "Control Systems Engineering", Description = "Control Systems Engineering", ProfessionId = 1 },
+            new() { Id = 6, Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering", ProfessionId = 1 },
+            new() { Id = 7, Name = "Environmental Engineering", Description = "Environmental Engineering", ProfessionId = 1 },
+            new() { Id = 8, Name = "Fire Protection Engineering", Description = "Fire Protection Engineering", ProfessionId = 1 },
+            new() { Id = 9, Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering", ProfessionId = 1 },
+            new() { Id = 10, Name = "Mechanical Engineering", Description = "Mechanical Engineering", ProfessionId = 1 },
+            new() { Id = 11, Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering", ProfessionId = 1 },
+            new() { Id = 12, Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering", ProfessionId = 1 },
+            new() { Id = 13, Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering", ProfessionId = 1 },
+            new() { Id = 14, Name = "Nuclear Engineering", Description = "Nuclear Engineering", ProfessionId = 1 },
+            new() { Id = 15, Name = "Petroleum Engineering", Description = "Petroleum Engineering", ProfessionId = 1 },
+            new() { Id = 16, Name = "Crane Operation", Description = "Crane Operation", ProfessionId = 2 },
+            new() { Id = 17, Name = "Commercial Truck Driving", Description = "Commercial Truck Driving", ProfessionId = 2 }
+        };
+
+        await context.LicenseTypes.AddRangeAsync(licenseTypes);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("License types seeded successfully.");
     }
 }

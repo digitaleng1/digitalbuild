@@ -7,27 +7,19 @@ namespace DigitalEngineers.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DictionaryController : ControllerBase
+public class LookupController : ControllerBase
 {
-    private readonly IDictionaryService _dictionaryService;
+    private readonly ILookupService _dictionaryService;
     private readonly IMapper _mapper;
 
-    public DictionaryController(IDictionaryService dictionaryService, IMapper mapper)
+    public LookupController(ILookupService dictionaryService, IMapper mapper)
     {
         _dictionaryService = dictionaryService;
         _mapper = mapper;
     }
 
-    [HttpGet("professional-types")]
-    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
-    public async Task<IActionResult> GetProfessionalTypes(CancellationToken cancellationToken)
-    {
-        var dtos = await _dictionaryService.GetProfessionalTypesAsync(cancellationToken);
-        var viewModels = _mapper.Map<IEnumerable<ProfessionalTypeViewModel>>(dtos);
-        return Ok(viewModels);
-    }
 
-    [HttpGet("us-states")]
+    [HttpGet("states")]
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetUSStates(CancellationToken cancellationToken)
     {

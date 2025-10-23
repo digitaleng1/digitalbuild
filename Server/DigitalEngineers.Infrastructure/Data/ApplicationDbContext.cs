@@ -57,10 +57,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ProfessionId).IsRequired();
         });
 
-        // Seed data
-        SeedProfessions(builder);
-        SeedLicenseTypes(builder);
-
         // Rename Identity tables
         builder.Entity<IdentityRole>(entity =>
         {
@@ -91,33 +87,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("UserTokens");
         });
-    }
-
-    private static void SeedProfessions(ModelBuilder builder)
-    {
-        builder.Entity<Profession>().HasData(
-            new Profession { Id = 1, Name = "Engineer", Description = "Professional Engineer" }
-        );
-    }
-
-    private static void SeedLicenseTypes(ModelBuilder builder)
-    {
-        builder.Entity<LicenseType>().HasData(
-            new LicenseType { Id = 1, Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 2, Name = "Architectural Engineering", Description = "Architectural Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 3, Name = "Chemical Engineering", Description = "Chemical Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 4, Name = "Civil Engineering", Description = "Civil Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 5, Name = "Control Systems Engineering", Description = "Control Systems Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 6, Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 7, Name = "Environmental Engineering", Description = "Environmental Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 8, Name = "Fire Protection Engineering", Description = "Fire Protection Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 9, Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 10, Name = "Mechanical Engineering", Description = "Mechanical Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 11, Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 12, Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 13, Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 14, Name = "Nuclear Engineering", Description = "Nuclear Engineering", ProfessionId = 1 },
-            new LicenseType { Id = 15, Name = "Petroleum Engineering", Description = "Petroleum Engineering", ProfessionId = 1 }
-        );
     }
 }
