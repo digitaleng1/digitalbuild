@@ -48,113 +48,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasIndex("ProfessionId");
 
                     b.ToTable("LicenseTypes", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Agricultural and Biological Engineering",
-                            Name = "Agricultural and Biological Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Architectural Engineering",
-                            Name = "Architectural Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Chemical Engineering",
-                            Name = "Chemical Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Civil Engineering",
-                            Name = "Civil Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "Control Systems Engineering",
-                            Name = "Control Systems Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Description = "Electrical and Computer Engineering",
-                            Name = "Electrical and Computer Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Description = "Environmental Engineering",
-                            Name = "Environmental Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Description = "Fire Protection Engineering",
-                            Name = "Fire Protection Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Description = "Industrial and Systems Engineering",
-                            Name = "Industrial and Systems Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Description = "Mechanical Engineering",
-                            Name = "Mechanical Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Description = "Metallurgical and Materials Engineering",
-                            Name = "Metallurgical and Materials Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Description = "Mining and Mineral Processing Engineering",
-                            Name = "Mining and Mineral Processing Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Description = "Naval Architecture and Marine Engineering",
-                            Name = "Naval Architecture and Marine Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Description = "Nuclear Engineering",
-                            Name = "Nuclear Engineering",
-                            ProfessionId = 1
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Description = "Petroleum Engineering",
-                            Name = "Petroleum Engineering",
-                            ProfessionId = 1
-                        });
                 });
 
             modelBuilder.Entity("DigitalEngineers.Domain.Entities.Profession", b =>
@@ -178,14 +71,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Professions", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Professional Engineer",
-                            Name = "Engineer"
-                        });
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", b =>

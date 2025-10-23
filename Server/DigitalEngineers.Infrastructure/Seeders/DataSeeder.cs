@@ -28,7 +28,7 @@ public static class DataSeeder
             await SeedSuperAdminAsync(userManager);
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
-            await SeedDictionariesAsync(context, logger);
+            await SeedlookupsDataAsync(context, logger);
 
             logger.LogInformation("Data seeding completed successfully.");
         }
@@ -226,7 +226,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedDictionariesAsync(ApplicationDbContext context, ILogger logger)
+    private static async Task SeedlookupsDataAsync(ApplicationDbContext context, ILogger logger)
     {
         logger.LogInformation("Starting dictionary data seeding...");
 
@@ -246,8 +246,8 @@ public static class DataSeeder
 
         var professions = new List<Profession>
         {
-            new() { Id = 1, Name = "Engineering", Description = "Professional Engineer" },
-            new() { Id = 2, Name = "Transportation Trades", Description = "Transportation" }
+            new() { Name = "Engineering", Description = "Professional Engineer" },
+            new() { Name = "Transportation Trades", Description = "Transportation" }
         };
 
         await context.Professions.AddRangeAsync(professions);
@@ -264,25 +264,35 @@ public static class DataSeeder
             return;
         }
 
+        // Get profession IDs from database
+        var engineeringProfession = await context.Professions.FirstOrDefaultAsync(p => p.Name == "Engineering");
+        var transportationProfession = await context.Professions.FirstOrDefaultAsync(p => p.Name == "Transportation Trades");
+
+        if (engineeringProfession == null || transportationProfession == null)
+        {
+            logger.LogError("Cannot seed license types - professions not found");
+            return;
+        }
+
         var licenseTypes = new List<LicenseType>
         {
-            new() { Id = 1, Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering", ProfessionId = 1 },
-            new() { Id = 2, Name = "Architectural Engineering", Description = "Architectural Engineering", ProfessionId = 1 },
-            new() { Id = 3, Name = "Chemical Engineering", Description = "Chemical Engineering", ProfessionId = 1 },
-            new() { Id = 4, Name = "Civil Engineering", Description = "Civil Engineering", ProfessionId = 1 },
-            new() { Id = 5, Name = "Control Systems Engineering", Description = "Control Systems Engineering", ProfessionId = 1 },
-            new() { Id = 6, Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering", ProfessionId = 1 },
-            new() { Id = 7, Name = "Environmental Engineering", Description = "Environmental Engineering", ProfessionId = 1 },
-            new() { Id = 8, Name = "Fire Protection Engineering", Description = "Fire Protection Engineering", ProfessionId = 1 },
-            new() { Id = 9, Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering", ProfessionId = 1 },
-            new() { Id = 10, Name = "Mechanical Engineering", Description = "Mechanical Engineering", ProfessionId = 1 },
-            new() { Id = 11, Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering", ProfessionId = 1 },
-            new() { Id = 12, Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering", ProfessionId = 1 },
-            new() { Id = 13, Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering", ProfessionId = 1 },
-            new() { Id = 14, Name = "Nuclear Engineering", Description = "Nuclear Engineering", ProfessionId = 1 },
-            new() { Id = 15, Name = "Petroleum Engineering", Description = "Petroleum Engineering", ProfessionId = 1 },
-            new() { Id = 16, Name = "Crane Operation", Description = "Crane Operation", ProfessionId = 2 },
-            new() { Id = 17, Name = "Commercial Truck Driving", Description = "Commercial Truck Driving", ProfessionId = 2 }
+            new() { Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Architectural Engineering", Description = "Architectural Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Chemical Engineering", Description = "Chemical Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Civil Engineering", Description = "Civil Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Control Systems Engineering", Description = "Control Systems Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Environmental Engineering", Description = "Environmental Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Fire Protection Engineering", Description = "Fire Protection Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Mechanical Engineering", Description = "Mechanical Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Nuclear Engineering", Description = "Nuclear Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Petroleum Engineering", Description = "Petroleum Engineering", ProfessionId = engineeringProfession.Id },
+            new() { Name = "Crane Operation", Description = "Crane Operation", ProfessionId = transportationProfession.Id },
+            new() { Name = "Commercial Truck Driving", Description = "Commercial Truck Driving", ProfessionId = transportationProfession.Id }
         };
 
         await context.LicenseTypes.AddRangeAsync(licenseTypes);
