@@ -1,4 +1,4 @@
-export interface USState {
+export interface State {
 	value: string;
 	label: string;
 }

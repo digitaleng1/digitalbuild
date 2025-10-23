@@ -1,12 +1,12 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { USState, Profession, LicenseType } from '@/types/dictionary';
+import type { State, Profession, LicenseType } from '@/types/dictionary';
 
 interface CacheEntry<T> {
 	data: T;
 	timestamp: number;
 }
 
-class DictionaryService {
+class LookupService {
 	private cache: Map<string, CacheEntry<any>> = new Map();
 	private readonly CACHE_TTL = 5 * 60 * 1000;
 
@@ -26,10 +26,6 @@ class DictionaryService {
 		});
 	}
 
-	/**
-	 * @deprecated Use getLicenseTypes() instead
-	 */
-
 	async getProfessions(): Promise<Profession[]> {
 		const cacheKey = 'professions';
 		const cached = this.getCachedData<Profession[]>(cacheKey);
@@ -38,7 +34,7 @@ class DictionaryService {
 			return cached;
 		}
 
-		const response = await httpClient.get<Profession[]>('/api/dictionary/professions');
+		const response = await httpClient.get<Profession[]>('/api/lookup/professions');
 		const data = response as Profession[];
 		this.setCachedData(cacheKey, data);
 
@@ -53,7 +49,7 @@ class DictionaryService {
 			return cached;
 		}
 
-		const response = await httpClient.get<LicenseType[]>('/api/dictionary/license-types');
+		const response = await httpClient.get<LicenseType[]>('/api/lookup/license-types');
 		const data = response as LicenseType[];
 		this.setCachedData(cacheKey, data);
 
@@ -69,7 +65,7 @@ class DictionaryService {
 		}
 
 		const response = await httpClient.get<LicenseType[]>(
-			`/api/dictionary/professions/${professionId}/license-types`
+			`/api/lookup/professions/${professionId}/license-types`
 		);
 		const data = response as LicenseType[];
 		this.setCachedData(cacheKey, data);
@@ -77,16 +73,16 @@ class DictionaryService {
 		return data;
 	}
 
-	async getUSStates(): Promise<USState[]> {
-		const cacheKey = 'us-states';
-		const cached = this.getCachedData<USState[]>(cacheKey);
+	async getStates(): Promise<State[]> {
+		const cacheKey = 'states';
+		const cached = this.getCachedData<State[]>(cacheKey);
 
 		if (cached) {
 			return cached;
 		}
 
-		const response = await httpClient.get<USState[]>('/api/dictionary/us-states');
-		const data = response as USState[];
+		const response = await httpClient.get<State[]>('/api/lookup/states');
+		const data = response as State[];
 		this.setCachedData(cacheKey, data);
 
 		return data;
@@ -97,4 +93,4 @@ class DictionaryService {
 	}
 }
 
-export default new DictionaryService();
+export default new LookupService();

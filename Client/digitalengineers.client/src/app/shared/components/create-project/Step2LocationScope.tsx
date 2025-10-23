@@ -3,14 +3,14 @@ import { Button, Col, FormGroup, FormLabel, Row, Form } from 'react-bootstrap';
 import { useWizard } from 'react-use-wizard';
 import { TextInput, SelectInput, Form as RHForm } from '@/components/Form';
 import * as yup from 'yup';
-import dictionaryService from '@/services/dictionaryService';
-import type { USState } from '@/types/dictionary';
+import lookupService from '@/services/lookupService';
+import type { State } from '@/types/dictionary';
 import { useProjectWizard } from './ProjectWizardContext';
 
 const Step2LocationScope = () => {
 	const { previousStep, nextStep } = useWizard();
 	const { formData, updateFormData } = useProjectWizard();
-	const [usStates, setUSStates] = useState<USState[]>([]);
+	const [usStates, setUSStates] = useState<State[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [projectScope, setProjectScope] = useState<string>(formData.projectScope || '1-3');
 
@@ -29,18 +29,18 @@ const Step2LocationScope = () => {
 	);
 
 	useEffect(() => {
-		const loadUSStates = async () => {
+		const loadStates = async () => {
 			try {
-				const states = await dictionaryService.getUSStates();
+				const states = await lookupService.getStates();
 				setUSStates(states);
 			} catch (error) {
-				console.error('Failed to load US states:', error);
+				console.error('Failed to load states:', error);
 			} finally {
 				setLoading(false);
 			}
 		};
 
-		loadUSStates();
+		loadStates();
 	}, []);
 
 	const handleSubmit = useCallback(

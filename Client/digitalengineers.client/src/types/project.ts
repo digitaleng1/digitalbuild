@@ -1,7 +1,7 @@
 export interface ProjectFormData {
 	// Step 1
 	name: string;
-	professionalTypeIds: number[];
+	licenseTypeIds: number[];
 
 	// Step 2
 	streetAddress: string;
@@ -12,20 +12,18 @@ export interface ProjectFormData {
 
 	// Step 3
 	description: string;
-	skills: string[];
 	documentUrls: string[];
 }
 
 export interface CreateProjectRequest {
 	name: string;
-	professionalTypeIds: number[];
+	licenseTypeIds: number[];
 	streetAddress: string;
 	city: string;
 	state: string;
 	zipCode: string;
 	projectScope: string;
 	description: string;
-	skills: string[];
 	documentUrls: string[];
 }
 

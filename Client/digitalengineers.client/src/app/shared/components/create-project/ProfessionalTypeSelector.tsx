@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Row, Col } from 'react-bootstrap';
-import dictionaryService from '@/services/dictionaryService';
-import type { Profession, LicenseType, SelectedProfession } from '@/types/dictionary';
+import lookupService from '@/services/lookupService';
+import type { Profession, LicenseType, SelectedProfession } from '@/types/lookup';
 import ProfessionBadge from './ProfessionBadge';
 import LicenseTypeModal from './LicenseTypeModal';
 
@@ -24,8 +24,8 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 		const loadData = async () => {
 			try {
 				const [professionsData, licenseTypesData] = await Promise.all([
-					dictionaryService.getProfessions(),
-					dictionaryService.getLicenseTypes(),
+					lookupService.getProfessions(),
+					lookupService.getLicenseTypes(),
 				]);
 				setProfessions(professionsData);
 				setAllLicenseTypes(licenseTypesData);

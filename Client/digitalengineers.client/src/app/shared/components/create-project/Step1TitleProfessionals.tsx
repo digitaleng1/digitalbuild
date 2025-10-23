@@ -9,7 +9,7 @@ import ProfessionalTypeSelector from './ProfessionalTypeSelector';
 const Step1TitleProfessionals = () => {
 	const { nextStep } = useWizard();
 	const { formData, updateFormData } = useProjectWizard();
-	const [selectedTypes, setSelectedTypes] = useState<number[]>(formData.professionalTypeIds);
+	const [selectedTypes, setSelectedTypes] = useState<number[]>(formData.licenseTypeIds);
 
 	const schema = useMemo(
 		() =>
@@ -27,7 +27,7 @@ const Step1TitleProfessionals = () => {
 			}
 			updateFormData({
 				name: values.name,
-				professionalTypeIds: selectedTypes,
+				licenseTypeIds: selectedTypes,
 			});
 			nextStep();
 		},

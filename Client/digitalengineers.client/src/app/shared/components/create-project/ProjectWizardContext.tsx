@@ -13,14 +13,13 @@ interface ProjectWizardContextType {
 
 const initialFormData: ProjectFormData = {
 	name: '',
-	professionalTypeIds: [],
+	licenseTypeIds: [],
 	streetAddress: '',
 	city: '',
 	state: '',
 	zipCode: '',
 	projectScope: '1-3',
 	description: '',
-	skills: [],
 	documentUrls: [],
 };
 

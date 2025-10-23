@@ -9,12 +9,12 @@ namespace DigitalEngineers.API.Controllers;
 [Route("api/[controller]")]
 public class LookupController : ControllerBase
 {
-    private readonly ILookupService _dictionaryService;
+    private readonly ILookupService _lookupService;
     private readonly IMapper _mapper;
 
-    public LookupController(ILookupService dictionaryService, IMapper mapper)
+    public LookupController(ILookupService lookupService, IMapper mapper)
     {
-        _dictionaryService = dictionaryService;
+        _lookupService = lookupService;
         _mapper = mapper;
     }
 
@@ -23,7 +23,7 @@ public class LookupController : ControllerBase
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetUSStates(CancellationToken cancellationToken)
     {
-        var dtos = await _dictionaryService.GetStatesAsync(cancellationToken);
+        var dtos = await _lookupService.GetStatesAsync(cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<StateViewModel>>(dtos);
         return Ok(viewModels);
     }
@@ -32,7 +32,7 @@ public class LookupController : ControllerBase
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetProfessions(CancellationToken cancellationToken)
     {
-        var dtos = await _dictionaryService.GetProfessionsAsync(cancellationToken);
+        var dtos = await _lookupService.GetProfessionsAsync(cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<ProfessionViewModel>>(dtos);
         return Ok(viewModels);
     }
@@ -41,7 +41,7 @@ public class LookupController : ControllerBase
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetLicenseTypes(CancellationToken cancellationToken)
     {
-        var dtos = await _dictionaryService.GetLicenseTypesAsync(cancellationToken);
+        var dtos = await _lookupService.GetLicenseTypesAsync(cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<LicenseTypeViewModel>>(dtos);
         return Ok(viewModels);
     }
@@ -50,7 +50,7 @@ public class LookupController : ControllerBase
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetLicenseTypesByProfessionId(int professionId, CancellationToken cancellationToken)
     {
-        var dtos = await _dictionaryService.GetLicenseTypesByProfessionIdAsync(professionId, cancellationToken);
+        var dtos = await _lookupService.GetLicenseTypesByProfessionIdAsync(professionId, cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<LicenseTypeViewModel>>(dtos);
         return Ok(viewModels);
     }

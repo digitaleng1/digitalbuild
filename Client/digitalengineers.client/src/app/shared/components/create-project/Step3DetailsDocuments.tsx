@@ -10,7 +10,6 @@ const Step3DetailsDocuments = () => {
 	const { previousStep } = useWizard();
 	const { formData, updateFormData, isSubmitting, submitProject } = useProjectWizard();
 	const [description, setDescription] = useState(formData.description);
-	const [skills, setSkills] = useState<string[]>(formData.skills);
 	const [documentUrls, setDocumentUrls] = useState<string[]>(formData.documentUrls);
 
 	const characterCount = description.length;
@@ -32,13 +31,12 @@ const Step3DetailsDocuments = () => {
 		async (values: Record<string, string>) => {
 			updateFormData({
 				description: values.description,
-				skills,
 				documentUrls,
 			});
 
 			await submitProject();
 		},
-		[skills, documentUrls, updateFormData, submitProject]
+		[documentUrls, updateFormData, submitProject]
 	);
 
 	const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -73,14 +71,6 @@ const Step3DetailsDocuments = () => {
 								</small>
 							)}
 						</FormGroup>
-
-						<TagInput
-							label="Preferred Skills/Experience (Optional)"
-							placeholder="Type a skill and click + (e.g., lighting, HVAC, power systems)"
-							helpText="Add skills that would be beneficial for this project"
-							value={skills}
-							onChange={setSkills}
-						/>
 
 						<TagInput
 							label="Project Document Links (Optional)"
