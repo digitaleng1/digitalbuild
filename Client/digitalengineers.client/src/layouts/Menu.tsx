@@ -17,14 +17,19 @@ export type SubMenus = {
 };
 
 const MenuItemWithChildren = ({ item, linkClassName, subMenuClassNames, activeMenuItems, toggleMenu }: SubMenus) => {
-	const [open, setOpen] = useState<boolean>(activeMenuItems!.includes(item.key));
+	const [open, setOpen] = useState<boolean>(item.expanded ?? activeMenuItems!.includes(item.key));
 
 	const { settings } = useThemeContext();
 
 	const collapseClass = settings.sidebar.size === ThemeSettings.sidebar.size.condensed;
 
 	useEffect(() => {
-		setOpen(activeMenuItems!.includes(item.key));
+		// If expanded is explicitly set, use it; otherwise use activeMenuItems
+		if (item.expanded !== undefined) {
+			setOpen(item.expanded);
+		} else {
+			setOpen(activeMenuItems!.includes(item.key));
+		}
 	}, [activeMenuItems, item]);
 
 	const toggleMenuItem = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {

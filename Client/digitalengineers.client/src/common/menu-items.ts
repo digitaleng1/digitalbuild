@@ -11,6 +11,7 @@ export type MenuItemType = {
 	parentKey?: string;
 	target?: string;
 	children?: MenuItemType[];
+	expanded?: boolean;
 };
 
 const MENU_ITEMS: MenuItemType[] = [

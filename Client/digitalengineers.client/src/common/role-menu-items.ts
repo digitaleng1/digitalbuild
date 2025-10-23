@@ -274,6 +274,7 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		label: 'My Projects',
 		isTitle: false,
 		icon: 'uil-briefcase',
+		expanded: true,
 		children: [
 			{
 				key: 'projects-active',
@@ -343,7 +344,7 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 			{
 				key: 'projects-gantt',
 				label: 'Gantt Chart',
-				url: '/apps/projects/gantt',
+			 url: '/apps/projects/gantt',
 				parentKey: 'my-projects',
 			},
 		],
@@ -432,7 +433,7 @@ export const HORIZONTAL_MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 			{
 				key: 'ds-project',
 				label: 'Projects',
-				url: '/dashboard/project',
+			 url: '/dashboard/project',
 				parentKey: 'dashboards',
 			},
 			{
