@@ -44,8 +44,12 @@ public class ProjectService : IProjectService
             throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
         }
 
-        // Parse project scope
-        var projectScope = ParseProjectScope(dto.ProjectScope);
+        // Validate project scope
+        if (!Enum.IsDefined(typeof(ProjectScope), dto.ProjectScope))
+        {
+            _logger.LogWarning("Invalid project scope: {ProjectScope}", dto.ProjectScope);
+            throw new ArgumentException($"Invalid project scope: {dto.ProjectScope}", nameof(dto.ProjectScope));
+        }
 
         using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -55,13 +59,13 @@ public class ProjectService : IProjectService
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                Status = ProjectStatus.Published,
+                Status = ProjectStatus.New,
                 ClientId = clientId,
                 StreetAddress = dto.StreetAddress,
                 City = dto.City,
                 State = dto.State,
                 ZipCode = dto.ZipCode,
-                ProjectScope = projectScope,
+                ProjectScope = (ProjectScope)dto.ProjectScope,
                 DocumentUrls = dto.DocumentUrls.ToList(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -128,7 +132,7 @@ public class ProjectService : IProjectService
             project.City,
             project.State,
             project.ZipCode,
-            ConvertProjectScopeToString(project.ProjectScope),
+            (int)project.ProjectScope,
             project.DocumentUrls.ToArray(),
             licenseTypeIds,
             project.CreatedAt,
@@ -151,27 +155,5 @@ public class ProjectService : IProjectService
             .ToListAsync(cancellationToken);
 
         return projects;
-    }
-
-    private static ProjectScope ParseProjectScope(string scope)
-    {
-        return scope switch
-        {
-            "1-3" => ProjectScope.OneToThreeMonths,
-            "less-6" => ProjectScope.LessThanSixMonths,
-            "greater-6" => ProjectScope.GreaterThanSixMonths,
-            _ => throw new ArgumentException($"Invalid project scope: {scope}", nameof(scope))
-        };
-    }
-
-    private static string ConvertProjectScopeToString(ProjectScope scope)
-    {
-        return scope switch
-        {
-            ProjectScope.OneToThreeMonths => "1-3",
-            ProjectScope.LessThanSixMonths => "less-6",
-            ProjectScope.GreaterThanSixMonths => "greater-6",
-            _ => throw new ArgumentException($"Invalid project scope: {scope}", nameof(scope))
-        };
     }
 }

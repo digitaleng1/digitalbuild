@@ -2,9 +2,10 @@ namespace DigitalEngineers.Domain.Enums;
 
 public enum ProjectStatus
 {
-    Draft = 0,
-    Published = 1,
-    InProgress = 2,
-    Completed = 3,
-    Cancelled = 4
+    New = 0,
+    Draft = 1,
+    Published = 2,
+    InProgress = 3,
+    Completed = 4,
+    Cancelled = 5
 }

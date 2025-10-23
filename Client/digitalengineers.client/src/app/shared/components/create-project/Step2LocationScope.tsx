@@ -12,7 +12,7 @@ const Step2LocationScope = () => {
 	const { formData, updateFormData } = useProjectWizard();
 	const [usStates, setUSStates] = useState<State[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [projectScope, setProjectScope] = useState<string>(formData.projectScope || '1-3');
+	const [projectScope, setProjectScope] = useState<number>(formData.projectScope || 1);
 
 	const schema = useMemo(
 		() =>
@@ -50,7 +50,7 @@ const Step2LocationScope = () => {
 				city: values.city,
 				state: values.state,
 				zipCode: values.zipCode,
-				projectScope: projectScope as '1-3' | 'less-6' | 'greater-6',
+				projectScope: projectScope as 1 | 2 | 3,
 			});
 			nextStep();
 		},
@@ -58,7 +58,7 @@ const Step2LocationScope = () => {
 	);
 
 	const handleScopeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setProjectScope(e.target.value);
+		setProjectScope(Number(e.target.value));
 	}, []);
 
 	const defaultValues = useMemo(
@@ -138,29 +138,29 @@ const Step2LocationScope = () => {
 							<div className="d-flex flex-column gap-2">
 								<Form.Check
 									type="radio"
-									id="scope-1-3"
+									id="scope-1"
 									name="projectScope"
 									label="1-3 months"
-									value="1-3"
-									checked={projectScope === '1-3'}
+									value="1"
+									checked={projectScope === 1}
 									onChange={handleScopeChange}
 								/>
 								<Form.Check
 									type="radio"
-									id="scope-less-6"
+									id="scope-2"
 									name="projectScope"
 									label="Less than 6 months"
-									value="less-6"
-									checked={projectScope === 'less-6'}
+									value="2"
+									checked={projectScope === 2}
 									onChange={handleScopeChange}
 								/>
 								<Form.Check
 									type="radio"
-									id="scope-greater-6"
+									id="scope-3"
 									name="projectScope"
 									label="Greater than 6 months"
-									value="greater-6"
-									checked={projectScope === 'greater-6'}
+									value="3"
+									checked={projectScope === 3}
 									onChange={handleScopeChange}
 								/>
 							</div>

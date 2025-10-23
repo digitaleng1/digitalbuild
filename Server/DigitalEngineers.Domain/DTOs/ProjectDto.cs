@@ -9,7 +9,7 @@ public record CreateProjectDto(
     string City,
     string State,
     string ZipCode,
-    string ProjectScope,
+    int ProjectScope,
     string Description,
     string[] DocumentUrls
 );
@@ -32,7 +32,7 @@ public record ProjectDetailsDto(
     string City,
     string State,
     string ZipCode,
-    string ProjectScope,
+    int ProjectScope,
     string[] DocumentUrls,
     int[] LicenseTypeIds,
     DateTime CreatedAt,

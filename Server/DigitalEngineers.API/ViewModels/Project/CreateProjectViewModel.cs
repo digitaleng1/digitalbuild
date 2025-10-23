@@ -29,8 +29,8 @@ public class CreateProjectViewModel
     public string ZipCode { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Project scope is required")]
-    [RegularExpression(@"^(1-3|less-6|greater-6)$", ErrorMessage = "Invalid project scope")]
-    public string ProjectScope { get; set; } = string.Empty;
+    [Range(1, 3, ErrorMessage = "Invalid project scope")]
+    public int ProjectScope { get; set; }
 
     [Required(ErrorMessage = "Project description is required")]
     [StringLength(5000, MinimumLength = 50, ErrorMessage = "Description must be between 50 and 5000 characters")]

@@ -18,7 +18,7 @@ const initialFormData: ProjectFormData = {
 	city: '',
 	state: '',
 	zipCode: '',
-	projectScope: '1-3',
+	projectScope: 1,
 	description: '',
 	documentUrls: [],
 };

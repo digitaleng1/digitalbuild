@@ -20,7 +20,7 @@ public class ProjectDetailsViewModel
     public string City { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
-    public string ProjectScope { get; set; } = string.Empty;
+    public int ProjectScope { get; set; }
     public string[] DocumentUrls { get; set; } = [];
     public int[] LicenseTypeIds { get; set; } = [];
     public DateTime CreatedAt { get; set; }

@@ -8,7 +8,7 @@ export interface ProjectFormData {
 	city: string;
 	state: string;
 	zipCode: string;
-	projectScope: '1-3' | 'less-6' | 'greater-6';
+	projectScope: 1 | 2 | 3;
 
 	// Step 3
 	description: string;
@@ -22,7 +22,7 @@ export interface CreateProjectRequest {
 	city: string;
 	state: string;
 	zipCode: string;
-	projectScope: string;
+	projectScope: number;
 	description: string;
 	documentUrls: string[];
 }
