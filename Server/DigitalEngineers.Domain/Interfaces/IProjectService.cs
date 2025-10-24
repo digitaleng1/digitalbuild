@@ -12,5 +12,5 @@ public interface IProjectService
         CancellationToken cancellationToken = default);
 
     Task<ProjectDetailsDto?> GetProjectByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<ProjectDto>> GetProjectsByClientIdAsync(string clientId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ProjectDto>> GetProjectsAsync(string userId, string[] userRoles, CancellationToken cancellationToken = default);
 }

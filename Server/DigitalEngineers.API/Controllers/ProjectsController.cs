@@ -128,23 +128,24 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all projects for the current client
+    /// Get projects based on user role (Client -> their projects, Admin/SuperAdmin -> all projects)
     /// </summary>
-    [HttpGet("my-projects")]
-    [Authorize(Roles = "Client")]
+    [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ProjectViewModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<IEnumerable<ProjectViewModel>>> GetMyProjects(
+    public async Task<ActionResult<IEnumerable<ProjectViewModel>>> GetProjects(
         CancellationToken cancellationToken)
     {
-        var clientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         
-        if (string.IsNullOrEmpty(clientId))
+        if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized(new { message = "User ID not found in token" });
         }
 
-        var projects = await _projectService.GetProjectsByClientIdAsync(clientId, cancellationToken);
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+
+        var projects = await _projectService.GetProjectsAsync(userId, roles, cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<ProjectViewModel>>(projects);
         
         return Ok(viewModels);

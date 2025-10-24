@@ -2,41 +2,51 @@ using DigitalEngineers.Domain.Enums;
 
 namespace DigitalEngineers.Domain.DTOs;
 
-public record CreateProjectDto(
-    string Name,
-    int[] LicenseTypeIds,
-    string StreetAddress,
-    string City,
-    string State,
-    string ZipCode,
-    int ProjectScope,
-    string Description,
-    string[] DocumentUrls
-);
+public class CreateProjectDto
+{
+    public string Name { get; init; } = string.Empty;
+    public int[] LicenseTypeIds { get; init; } = [];
+    public string StreetAddress { get; init; } = string.Empty;
+    public string City { get; init; } = string.Empty;
+    public string State { get; init; } = string.Empty;
+    public string ZipCode { get; init; } = string.Empty;
+    public int ProjectScope { get; init; }
+    public string Description { get; init; } = string.Empty;
+    public string[] DocumentUrls { get; init; } = [];
+}
 
-public record ProjectDto(
-    int Id,
-    string Name,
-    string Description,
-    string Status,
-    DateTime CreatedAt
-);
+public class ProjectDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public string StreetAddress { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string ZipCode { get; set; } = string.Empty;
+    public int ProjectScope { get; set; }
+    public int[] LicenseTypeIds { get; set; } = [];
+}
 
-public record ProjectDetailsDto(
-    int Id,
-    string Name,
-    string Description,
-    string Status,
-    string ClientId,
-    string StreetAddress,
-    string City,
-    string State,
-    string ZipCode,
-    int ProjectScope,
-    string[] DocumentUrls,
-    int[] LicenseTypeIds,
-    DateTime CreatedAt,
-    DateTime UpdatedAt,
-    string? ThumbnailUrl,
-    ProjectFileDto[] Files
-);
+public class ProjectDetailsDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string ClientId { get; set; } = string.Empty;
+    public string StreetAddress { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string ZipCode { get; set; } = string.Empty;
+    public int ProjectScope { get; set; }
+    public string[] DocumentUrls { get; set; } = [];
+    public int[] LicenseTypeIds { get; set; } = [];
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public ProjectFileDto[] Files { get; set; } = [];
+}

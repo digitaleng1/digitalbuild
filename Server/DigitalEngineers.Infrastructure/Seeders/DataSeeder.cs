@@ -20,17 +20,13 @@ public static class DataSeeder
 
         try
         {
-            logger.LogInformation("Starting database migration...");
             await context.Database.MigrateAsync();
-            logger.LogInformation("Database migration completed successfully.");
 
             await SeedRolesAsync(roleManager);
             await SeedSuperAdminAsync(userManager);
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
             await SeedlookupsDataAsync(context, logger);
-
-            logger.LogInformation("Data seeding completed successfully.");
         }
         catch (Exception ex)
         {
@@ -228,19 +224,14 @@ public static class DataSeeder
 
     private static async Task SeedlookupsDataAsync(ApplicationDbContext context, ILogger logger)
     {
-        logger.LogInformation("Starting dictionary data seeding...");
-
         await SeedProfessionsAsync(context, logger);
         await SeedLicenseTypesAsync(context, logger);
-
-        logger.LogInformation("Dictionary data seeding completed.");
     }
 
     private static async Task SeedProfessionsAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.Professions.AnyAsync())
         {
-            logger.LogInformation("Professions already seeded. Skipping...");
             return;
         }
 
@@ -252,15 +243,12 @@ public static class DataSeeder
 
         await context.Professions.AddRangeAsync(professions);
         await context.SaveChangesAsync();
-
-        logger.LogInformation("Professions seeded successfully.");
     }
 
     private static async Task SeedLicenseTypesAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.LicenseTypes.AnyAsync())
         {
-            logger.LogInformation("License types already seeded. Skipping...");
             return;
         }
 
@@ -297,7 +285,5 @@ public static class DataSeeder
 
         await context.LicenseTypes.AddRangeAsync(licenseTypes);
         await context.SaveChangesAsync();
-
-        logger.LogInformation("License types seeded successfully.");
     }
 }

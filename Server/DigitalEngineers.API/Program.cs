@@ -1,4 +1,5 @@
 using System.Text;
+using DigitalEngineers.API.Middleware;
 using DigitalEngineers.Domain.Configuration;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Extensions;
@@ -119,9 +120,7 @@ using (var scope = app.Services.CreateScope())
     
     try
     {
-        logger.LogInformation("Checking S3 bucket...");
         await fileStorageService.EnsureBucketExistsAsync();
-        logger.LogInformation("S3 bucket check completed successfully");
     }
     catch (Exception ex)
     {
@@ -129,6 +128,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseExceptionHandlerMiddleware();
 app.UseDefaultFiles();
 app.MapStaticAssets();
 

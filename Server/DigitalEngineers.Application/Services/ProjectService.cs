@@ -31,8 +31,6 @@ public class ProjectService : IProjectService
         FileUploadInfo? thumbnail = null,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Creating project '{Name}' for client {ClientId}", dto.Name, clientId);
-
         // Validate ClientId exists
         var clientExists = await _context.Users.AnyAsync(u => u.Id == clientId, cancellationToken);
         if (!clientExists)
@@ -91,7 +89,6 @@ public class ProjectService : IProjectService
             // Upload thumbnail if provided
             if (thumbnail != null)
             {
-                _logger.LogInformation("Uploading thumbnail for project {ProjectId}", project.Id);
                 try
                 {
                     var thumbnailKey = await _fileStorageService.UploadFileAsync(
@@ -101,7 +98,7 @@ public class ProjectService : IProjectService
                         project.Id,
                         cancellationToken);
                     
-                    project.ThumbnailUrl = thumbnailKey; // Store S3 key instead of full URL
+                    project.ThumbnailUrl = thumbnailKey;
                     uploadedS3Keys.Add(thumbnailKey);
                 }
                 catch (Exception ex)
@@ -114,8 +111,6 @@ public class ProjectService : IProjectService
             // Upload files if provided
             if (files != null && files.Count > 0)
             {
-                _logger.LogInformation("Uploading {FileCount} files for project {ProjectId}", files.Count, project.Id);
-                
                 foreach (var file in files)
                 {
                     if (file.FileSize == 0)
@@ -136,7 +131,7 @@ public class ProjectService : IProjectService
                         {
                             ProjectId = project.Id,
                             FileName = file.FileName,
-                            FileUrl = fileKey, // Store S3 key instead of full URL
+                            FileUrl = fileKey,
                             FileSize = file.FileSize,
                             ContentType = file.ContentType,
                             UploadedBy = clientId,
@@ -168,16 +163,27 @@ public class ProjectService : IProjectService
 
             await transaction.CommitAsync(cancellationToken);
 
-            _logger.LogInformation("Project {ProjectId} created successfully with {FileCount} files", 
-                project.Id, files?.Count ?? 0);
+            string? thumbnailPresignedUrl = null;
+            if (!string.IsNullOrEmpty(project.ThumbnailUrl))
+            {
+                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
+            }
 
-            return new ProjectDto(
-                project.Id,
-                project.Name,
-                project.Description,
-                project.Status.ToString(),
-                project.CreatedAt
-            );
+            return new ProjectDto
+            {
+                Id = project.Id,
+                Name = project.Name,
+                Description = project.Description,
+                Status = project.Status.ToString(),
+                CreatedAt = project.CreatedAt,
+                ThumbnailUrl = thumbnailPresignedUrl,
+                StreetAddress = project.StreetAddress,
+                City = project.City,
+                State = project.State,
+                ZipCode = project.ZipCode,
+                ProjectScope = (int)project.ProjectScope,
+                LicenseTypeIds = dto.LicenseTypeIds
+            };
         }
         catch (Exception ex)
         {
@@ -195,7 +201,6 @@ public class ProjectService : IProjectService
                     try
                     {
                         await _fileStorageService.DeleteFileAsync(s3Key, cancellationToken);
-                        _logger.LogInformation("Deleted file from S3: {S3Key}", s3Key);
                     }
                     catch (Exception deleteEx)
                     {
@@ -233,50 +238,91 @@ public class ProjectService : IProjectService
 
         // Generate presigned URLs for project files
         var filesWithPresignedUrls = project.Files
-            .Select(pf => new ProjectFileDto(
-                pf.Id,
-                pf.FileName,
-                _fileStorageService.GetPresignedUrl(pf.FileUrl), // Generate presigned URL
-                pf.FileSize,
-                pf.ContentType,
-                pf.UploadedAt
-            ))
+            .Select(pf => new ProjectFileDto
+            {
+                Id = pf.Id,
+                FileName = pf.FileName,
+                FileUrl = _fileStorageService.GetPresignedUrl(pf.FileUrl),
+                FileSize = pf.FileSize,
+                ContentType = pf.ContentType,
+                UploadedAt = pf.UploadedAt
+            })
             .ToArray();
 
-        return new ProjectDetailsDto(
-            project.Id,
-            project.Name,
-            project.Description,
-            project.Status.ToString(),
-            project.ClientId,
-            project.StreetAddress,
-            project.City,
-            project.State,
-            project.ZipCode,
-            (int)project.ProjectScope,
-            project.DocumentUrls.ToArray(),
-            licenseTypeIds,
-            project.CreatedAt,
-            project.UpdatedAt,
-            thumbnailPresignedUrl,
-            filesWithPresignedUrls
-        );
+        return new ProjectDetailsDto
+        {
+            Id = project.Id,
+            Name = project.Name,
+            Description = project.Description,
+            Status = project.Status.ToString(),
+            ClientId = project.ClientId,
+            StreetAddress = project.StreetAddress,
+            City = project.City,
+            State = project.State,
+            ZipCode = project.ZipCode,
+            ProjectScope = (int)project.ProjectScope,
+            DocumentUrls = project.DocumentUrls.ToArray(),
+            LicenseTypeIds = licenseTypeIds,
+            CreatedAt = project.CreatedAt,
+            UpdatedAt = project.UpdatedAt,
+            ThumbnailUrl = thumbnailPresignedUrl,
+            Files = filesWithPresignedUrls
+        };
     }
 
-    public async Task<IEnumerable<ProjectDto>> GetProjectsByClientIdAsync(string clientId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProjectDto>> GetProjectsAsync(
+        string userId, 
+        string[] userRoles, 
+        CancellationToken cancellationToken = default)
     {
-        var projects = await _context.Projects
-            .Where(p => p.ClientId == clientId)
+        IQueryable<Project> query = _context.Projects.Include(p => p.ProjectLicenseTypes);
+
+        if (userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin"))
+        {
+            // Return all projects for Admin/SuperAdmin
+        }
+        else if (userRoles.Contains("Client"))
+        {
+            query = query.Where(p => p.ClientId == userId);
+        }
+        else
+        {
+            _logger.LogWarning("User {UserId} has no recognized role, returning empty list", userId);
+            return Enumerable.Empty<ProjectDto>();
+        }
+
+        var projects = await query
             .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new ProjectDto(
-                p.Id,
-                p.Name,
-                p.Description,
-                p.Status.ToString(),
-                p.CreatedAt
-            ))
+            .Select(p => new
+            {
+                Project = p,
+                LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray()
+            })
             .ToListAsync(cancellationToken);
 
-        return projects;
+        return projects.Select(p =>
+        {
+            string? thumbnailPresignedUrl = null;
+            if (!string.IsNullOrEmpty(p.Project.ThumbnailUrl))
+            {
+                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(p.Project.ThumbnailUrl);
+            }
+
+            return new ProjectDto
+            {
+                Id = p.Project.Id,
+                Name = p.Project.Name,
+                Description = p.Project.Description,
+                Status = p.Project.Status.ToString(),
+                CreatedAt = p.Project.CreatedAt,
+                ThumbnailUrl = thumbnailPresignedUrl,
+                StreetAddress = p.Project.StreetAddress,
+                City = p.Project.City,
+                State = p.Project.State,
+                ZipCode = p.Project.ZipCode,
+                ProjectScope = (int)p.Project.ProjectScope,
+                LicenseTypeIds = p.LicenseTypeIds
+            };
+        });
     }
 }
