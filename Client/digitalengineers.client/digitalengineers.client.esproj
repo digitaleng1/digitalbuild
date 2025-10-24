@@ -4,7 +4,6 @@
     <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="docs\" />
     <Folder Include="src\app\admin\" />
     <Folder Include="src\app\provider\" />
   </ItemGroup>

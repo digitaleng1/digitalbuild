@@ -1,6 +1,6 @@
 using DigitalEngineers.Infrastructure.Entities.Identity;
 using DigitalEngineers.Infrastructure.Data;
-using DigitalEngineers.Domain.Entities;
+using DigitalEngineers.Infrastructure.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

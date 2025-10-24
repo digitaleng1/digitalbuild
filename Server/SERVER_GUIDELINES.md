@@ -1,5 +1,94 @@
 # Server Architecture Guidelines
 
+## 🚨 CRITICAL RULE: Entity Model Placement
+
+### ⚠️ STRICT RULE
+
+```
+Entity models (EF Core) MUST be placed in Infrastructure/Entities/
+
+❌ DO NOT place Entity models in Domain/Entities/
+✅ ALWAYS place Entity models in Infrastructure/Entities/
+```
+
+### Why?
+
+- **Entity** = Database models (technical storage implementation)
+- **Domain** = Business logic (DTOs, Enums, Interfaces)
+- **Infrastructure** = Responsible for database operations and data persistence
+
+### Correct Structure
+
+```
+Infrastructure/
+├── Entities/                    ← DATABASE ENTITY MODELS HERE
+│   ├── Project.cs              ← EF Core Entity
+│   ├── ProjectFile.cs          ← EF Core Entity
+│   ├── LicenseType.cs          ← EF Core Entity
+│   ├── Profession.cs           ← EF Core Entity
+│   ├── ProjectLicenseType.cs   ← EF Core Entity
+│   └── Identity/
+│       └── ApplicationUser.cs  ← Identity Entity
+├── Data/
+│   └── ApplicationDbContext.cs ← Uses Infrastructure.Entities
+└── Migrations/                 ← EF Core Migrations
+
+Domain/
+├── DTOs/                       ← Data Transfer Objects (business logic)
+│   ├── ProjectDto.cs
+│   └── CreateProjectDto.cs
+├── Enums/                      ← Enumerations
+│   └── ProjectStatus.cs
+└── Interfaces/                 ← Service contracts
+    └── IProjectService.cs
+```
+
+### Code Examples
+
+**❌ WRONG - Entity in Domain:**
+```csharp
+namespace DigitalEngineers.Domain.Entities;
+
+public class Project { } // WRONG LOCATION!
+```
+
+**✅ CORRECT - Entity in Infrastructure:**
+```csharp
+namespace DigitalEngineers.Infrastructure.Entities;
+
+public class Project { } // CORRECT LOCATION!
+```
+
+**✅ CORRECT - Using Entities in Services:**
+```csharp
+// Application/Services/ProjectService.cs
+using DigitalEngineers.Infrastructure.Entities; // Infrastructure.Entities
+using DigitalEngineers.Domain.DTOs;             // Domain.DTOs
+using DigitalEngineers.Infrastructure.Data;
+
+namespace DigitalEngineers.Application.Services;
+
+public class ProjectService : IProjectService
+{
+    private readonly ApplicationDbContext _context;
+
+    public async Task<ProjectDto> GetProjectAsync(int id)
+    {
+        var project = await _context.Projects.FindAsync(id); // Infrastructure.Entities.Project
+        
+        return new ProjectDto(                               // Domain.DTOs.ProjectDto
+            project.Id,
+            project.Name,
+            project.Description,
+            project.Status.ToString(),
+            project.CreatedAt
+        );
+    }
+}
+```
+
+---
+
 ## Project Overview
 
 **DigitalEngineers** server is built using .NET 9 with Clean Architecture pattern and multi-project structure.
@@ -36,9 +125,14 @@ Server/
 ├── DigitalEngineers.Infrastructure/  # Infrastructure Layer
 │   ├── Data/
 │   │   └── ApplicationDbContext.cs
-│   ├── Entities/                     # Database entities(Tables)
+│   ├── Entities/                     # ⚠️ DATABASE ENTITY MODELS (EF Core)
+│   │   ├── Project.cs                # ← EF Core Entity
+│   │   ├── ProjectFile.cs            # ← EF Core Entity
+│   │   ├── LicenseType.cs            # ← EF Core Entity
+│   │   ├── Profession.cs             # ← EF Core Entity
+│   │   ├── ProjectLicenseType.cs     # ← EF Core Entity
 │   │   └── Identity/
-│   │       └── ApplicationUser.cs
+│   │       └── ApplicationUser.cs    # ← Identity Entity
 │   ├── Migrations/                   # EF Core migrations
 │   └── Seeders/
 │       └── DataSeeder.cs
@@ -162,17 +256,19 @@ Server/
 - Npgsql.EntityFrameworkCore.PostgreSQL (9.0.4)
 
 **Contains:**
+- **Entities/** - Database models (EF Core Entity classes)
 - DbContext
-- TableModels
 - Migrations
 - Data seeders
 
 **Rules:**
 - ✅ Contains data access logic
-- ✅ Uses SQL
+- ✅ **Entity models MUST be in Infrastructure/Entities/**
+- ✅ Uses PostgreSQL with EF Core
 - ✅ DbContext used directly in services
-- ❌ No Repository pattern because DbContext it's UnitOfWork pattern
+- ❌ No Repository pattern (DbContext is Unit of Work)
 - ❌ No business logic
+- ❌ **DO NOT place Entity models in Domain/Entities/**
 
 ---
 
@@ -506,7 +602,7 @@ API → Application → Domain
 API → Infrastructure → Domain
 API → Shared
 Application → Domain
-Application → Infrastructure
+Application → Infrastructure (for Entities access)
 Application → Shared
 Infrastructure → Domain
 ```
@@ -519,9 +615,17 @@ Domain → API ❌
 Application → API ❌
 Infrastructure → API ❌
 Shared → Any other project ❌
+Domain/Entities → Entity models ❌ (USE Infrastructure/Entities/)
+```
+
+**Critical:**
+```
+✅ Infrastructure/Entities/ - Database Entity models location
+❌ Domain/Entities/ - NEVER place Entity models here
 ```
 
 ---
 
 **Architecture:** Clean Architecture with multi-project structure  
-**Framework:** .NET 9
+**Framework:** .NET 9  
+**Entity Location:** Infrastructure/Entities/ (STRICT RULE)

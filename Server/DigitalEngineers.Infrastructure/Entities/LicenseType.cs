@@ -1,4 +1,4 @@
-namespace DigitalEngineers.Domain.Entities;
+namespace DigitalEngineers.Infrastructure.Entities;
 
 public class LicenseType
 {

@@ -1,4 +1,6 @@
 using System.Text;
+using DigitalEngineers.Domain.Configuration;
+using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -53,6 +55,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Configure AWS S3 Settings
+builder.Services.Configure<AwsS3Settings>(builder.Configuration.GetSection("AwsS3"));
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add AutoMapper
@@ -105,6 +110,24 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 await app.Services.SeedDatabaseAsync();
+
+// Initialize S3 bucket
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var fileStorageService = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+    
+    try
+    {
+        logger.LogInformation("Checking S3 bucket...");
+        await fileStorageService.EnsureBucketExistsAsync();
+        logger.LogInformation("S3 bucket check completed successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to initialize S3 bucket. File upload functionality may not work.");
+    }
+}
 
 app.UseDefaultFiles();
 app.MapStaticAssets();

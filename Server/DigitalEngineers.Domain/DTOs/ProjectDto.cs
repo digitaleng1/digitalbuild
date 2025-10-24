@@ -36,5 +36,7 @@ public record ProjectDetailsDto(
     string[] DocumentUrls,
     int[] LicenseTypeIds,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string? ThumbnailUrl,
+    ProjectFileDto[] Files
 );

@@ -12,7 +12,8 @@ export interface ProjectFormData {
 
 	// Step 3
 	description: string;
-	documentUrls: string[];
+	files: File[];
+	thumbnail: File | null;
 }
 
 export interface CreateProjectRequest {
@@ -24,7 +25,8 @@ export interface CreateProjectRequest {
 	zipCode: string;
 	projectScope: number;
 	description: string;
-	documentUrls: string[];
+	files: File[];
+	thumbnail: File | null;
 }
 
 export interface ProjectDto {
@@ -33,4 +35,13 @@ export interface ProjectDto {
 	description: string;
 	status: string;
 	createdAt: string;
+}
+
+export interface ProjectFile {
+	id: number;
+	fileName: string;
+	fileUrl: string;
+	fileSize: number;
+	contentType: string;
+	uploadedAt: string;
 }

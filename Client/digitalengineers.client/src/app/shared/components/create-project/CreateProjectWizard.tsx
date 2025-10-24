@@ -11,40 +11,37 @@ interface WizardHeaderProps {
 }
 
 const WizardHeader = ({ withProgress }: WizardHeaderProps) => {
-	const { goToStep, activeStep, stepCount } = useWizard();
+	const { activeStep, stepCount } = useWizard();
 
 	return (
 		<>
 			<ul className="nav nav-pills nav-justified form-wizard-header mb-3">
 				<li className="nav-item">
-					<button
-						onClick={() => goToStep(0)}
+					<div
 						className={clsx('nav-link rounded-0 py-2', activeStep === 0 && 'active')}
-						type="button"
+						style={{ cursor: 'default' }}
 					>
-						<span className="d-none d-sm-inline">Title & Professionals</span>
+						<span className="d-none d-sm-inline">Professionals</span>
 						<span className="d-sm-none">Step 1</span>
-					</button>
+					</div>
 				</li>
 				<li className="nav-item">
-					<button
-						onClick={() => goToStep(1)}
+					<div
 						className={clsx('nav-link rounded-0 py-2', activeStep === 1 && 'active')}
-						type="button"
+						style={{ cursor: 'default' }}
 					>
 						<span className="d-none d-sm-inline">Location & Scope</span>
 						<span className="d-sm-none">Step 2</span>
-					</button>
+					</div>
 				</li>
 				<li className="nav-item">
-					<button
-						onClick={() => goToStep(2)}
+					<div
 						className={clsx('nav-link rounded-0 py-2', activeStep === 2 && 'active')}
-						type="button"
+						style={{ cursor: 'default' }}
 					>
-						<span className="d-none d-sm-inline">Details & Documents</span>
+						<span className="d-none d-sm-inline">Project & Documents</span>
 						<span className="d-sm-none">Step 3</span>
-					</button>
+					</div>
 				</li>
 			</ul>
 			{withProgress && (

@@ -1,4 +1,4 @@
-using DigitalEngineers.Domain.Entities;
+using DigitalEngineers.Infrastructure.Entities;
 using DigitalEngineers.Infrastructure.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<LicenseType> LicenseTypes => Set<LicenseType>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectLicenseType> ProjectLicenseTypes => Set<ProjectLicenseType>();
+    public DbSet<ProjectFile> ProjectFiles => Set<ProjectFile>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -38,10 +39,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         });
 
         // Configure Profession
-        builder.Entity<Profession>(entity =>
-        {
+        builder.Entity<Profession>(entity =>        {
             entity.ToTable("Professions");
-            entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.HasMany(e => e.LicenseTypes)
@@ -74,6 +73,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.State).HasMaxLength(2).IsRequired();
             entity.Property(e => e.ZipCode).HasMaxLength(10).IsRequired();
             entity.Property(e => e.ProjectScope).IsRequired();
+            entity.Property(e => e.ThumbnailUrl).HasMaxLength(1000);
             entity.Property(e => e.DocumentUrls)
                 .HasColumnType("jsonb")
                 .HasConversion(
@@ -92,6 +92,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithOne(e => e.Project)
                 .HasForeignKey(e => e.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasMany(e => e.Files)
+                .WithOne(e => e.Project)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure ProjectFile
+        builder.Entity<ProjectFile>(entity =>
+        {
+            entity.ToTable("ProjectFiles");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ProjectId).IsRequired();
+            entity.Property(e => e.FileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.FileUrl).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.FileSize).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.UploadedAt).IsRequired();
+            entity.Property(e => e.UploadedBy).HasMaxLength(450).IsRequired();
+            
+            entity.HasOne(e => e.Project)
+                .WithMany(e => e.Files)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.ProjectId);
         });
 
         // Configure ProjectLicenseType (Many-to-Many)

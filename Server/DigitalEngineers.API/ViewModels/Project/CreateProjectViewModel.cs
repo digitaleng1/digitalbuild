@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace DigitalEngineers.API.ViewModels.Project;
 
@@ -37,4 +38,8 @@ public class CreateProjectViewModel
     public string Description { get; set; } = string.Empty;
 
     public string[] DocumentUrls { get; set; } = [];
+    
+    public IFormFileCollection? Files { get; set; }
+    
+    public IFormFile? Thumbnail { get; set; }
 }

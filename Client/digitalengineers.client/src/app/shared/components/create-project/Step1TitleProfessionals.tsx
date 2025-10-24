@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Button, Col, FormGroup, FormLabel, Row } from 'react-bootstrap';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Col, FormGroup, FormLabel, Row } from 'react-bootstrap';
 import { useWizard } from 'react-use-wizard';
-import { TextInput, Form as RHForm } from '@/components/Form';
+import { Form as RHForm } from '@/components/Form';
 import * as yup from 'yup';
 import { useProjectWizard } from './ProjectWizardContext';
 import ProfessionalTypeSelector from './ProfessionalTypeSelector';
@@ -10,23 +10,28 @@ const Step1TitleProfessionals = () => {
 	const { nextStep } = useWizard();
 	const { formData, updateFormData } = useProjectWizard();
 	const [selectedTypes, setSelectedTypes] = useState<number[]>(formData.licenseTypeIds);
+	const [showError, setShowError] = useState(false);
 
 	const schema = useMemo(
 		() =>
-			yup.object().shape({
-				name: yup.string().required('Please enter Project Title'),
-			}),
+			yup.object().shape({}),
 		[]
 	);
 
+	useEffect(() => {
+		if (selectedTypes.length > 0) {
+			setShowError(false);
+		}
+	}, [selectedTypes]);
+
 	const handleSubmit = useCallback(
-		(values: Record<string, string>) => {
+		() => {
 			if (selectedTypes.length === 0) {
-				alert('Please select at least one professional type');
+				setShowError(true);
 				return;
 			}
+			setShowError(false);
 			updateFormData({
-				name: values.name,
 				licenseTypeIds: selectedTypes,
 			});
 			nextStep();
@@ -38,24 +43,21 @@ const Step1TitleProfessionals = () => {
 		<>
 			<Row>
 				<Col>
-					<RHForm onSubmit={handleSubmit} schema={schema} defaultValues={{ name: formData.name }}>
+					<RHForm onSubmit={handleSubmit} schema={schema}>
 						<Row>
 							<Col xl={12}>
-								<TextInput
-									type="text"
-									name="name"
-									label="Project Title"
-									placeholder="Enter project title"
-									containerClass="mb-3"
-									key="name"
-								/>
-
 								<FormGroup className="mb-3">
 									<FormLabel>
 										Types of Professionals Needed <span className="text-danger">*</span>
 									</FormLabel>
 									<ProfessionalTypeSelector value={selectedTypes} onChange={setSelectedTypes} />
 								</FormGroup>
+
+								{showError && (
+									<Alert variant="danger" onClose={() => setShowError(false)} dismissible className="mb-3">
+										Please select at least one professional type
+									</Alert>
+								)}
 							</Col>
 						</Row>
 

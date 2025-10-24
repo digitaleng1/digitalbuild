@@ -1,6 +1,7 @@
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Data;
+using DigitalEngineers.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DigitalEngineers.Application.Services;

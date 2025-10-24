@@ -2,13 +2,15 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import type { ProjectFormData } from '@/types/project';
 import projectService from '@/services/projectService';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/contexts';
+import { getErrorMessage, getErrorTitle } from '@/utils/errorHandler';
 
 interface ProjectWizardContextType {
 	formData: ProjectFormData;
 	updateFormData: (data: Partial<ProjectFormData>) => void;
 	resetForm: () => void;
 	isSubmitting: boolean;
-	submitProject: () => Promise<void>;
+	submitProject: (finalData?: Partial<ProjectFormData>) => Promise<void>;
 }
 
 const initialFormData: ProjectFormData = {
@@ -20,7 +22,8 @@ const initialFormData: ProjectFormData = {
 	zipCode: '',
 	projectScope: 1,
 	description: '',
-	documentUrls: [],
+	files: [],
+	thumbnail: null,
 };
 
 const ProjectWizardContext = createContext<ProjectWizardContextType | null>(null);
@@ -41,6 +44,7 @@ export const ProjectWizardProvider = ({ children }: ProjectWizardProviderProps) 
 	const [formData, setFormData] = useState<ProjectFormData>(initialFormData);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const navigate = useNavigate();
+	const { showSuccess, showError } = useToast();
 
 	const updateFormData = useCallback((data: Partial<ProjectFormData>) => {
 		setFormData((prev) => ({ ...prev, ...data }));
@@ -50,20 +54,27 @@ export const ProjectWizardProvider = ({ children }: ProjectWizardProviderProps) 
 		setFormData(initialFormData);
 	}, []);
 
-	const submitProject = useCallback(async () => {
+	const submitProject = useCallback(async (finalData?: Partial<ProjectFormData>) => {
 		setIsSubmitting(true);
 		try {
-			const result = await projectService.createProject(formData);
+			const dataToSubmit = finalData ? { ...formData, ...finalData } : formData;
+			const result = await projectService.createProject(dataToSubmit);
 			console.log('Project created:', result);
+			showSuccess(
+				'Project Submitted Successfully',
+				'Your project has been submitted and is now under review by our specialists. We will contact you shortly.'
+			);
 			resetForm();
 			navigate('/client/projects');
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Failed to create project:', error);
-			alert('Failed to create project. Please try again.');
+			const errorTitle = getErrorTitle(error);
+			const errorMessage = getErrorMessage(error);
+			showError(errorTitle, errorMessage);
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [formData, navigate, resetForm]);
+	}, [formData, navigate, resetForm, showSuccess, showError]);
 
 	const value = {
 		formData,

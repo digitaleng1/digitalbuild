@@ -28,15 +28,16 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new project
+    /// Create a new project with files
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "Client")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ProjectViewModel), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ProjectViewModel>> CreateProject(
-        [FromBody] CreateProjectViewModel model,
+        [FromForm] CreateProjectViewModel model,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -54,7 +55,37 @@ public class ProjectsController : ControllerBase
         try
         {
             var dto = _mapper.Map<CreateProjectDto>(model);
-            var result = await _projectService.CreateProjectAsync(dto, clientId, cancellationToken);
+            
+            // Convert IFormFile to FileUploadInfo
+            List<FileUploadInfo>? files = null;
+            if (model.Files != null && model.Files.Count > 0)
+            {
+                files = model.Files.Select(f => new FileUploadInfo(
+                    f.OpenReadStream(),
+                    f.FileName,
+                    f.ContentType,
+                    f.Length
+                )).ToList();
+            }
+
+            FileUploadInfo? thumbnail = null;
+            if (model.Thumbnail != null)
+            {
+                thumbnail = new FileUploadInfo(
+                    model.Thumbnail.OpenReadStream(),
+                    model.Thumbnail.FileName,
+                    model.Thumbnail.ContentType,
+                    model.Thumbnail.Length
+                );
+            }
+
+            var result = await _projectService.CreateProjectAsync(
+                dto, 
+                clientId, 
+                files, 
+                thumbnail, 
+                cancellationToken);
+                
             var viewModel = _mapper.Map<ProjectViewModel>(result);
 
             return CreatedAtAction(

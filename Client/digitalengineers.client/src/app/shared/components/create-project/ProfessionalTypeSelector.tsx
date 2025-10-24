@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Spinner } from 'react-bootstrap';
 import lookupService from '@/services/lookupService';
 import type { Profession, LicenseType, SelectedProfession } from '@/types/lookup';
 import ProfessionBadge from './ProfessionBadge';
@@ -143,7 +143,12 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 	const allSelectedLicenseTypes = selectedProfessions.flatMap((sp) => sp.licenseTypes);
 
 	if (loading) {
-		return <div className="text-muted">Loading professions...</div>;
+		return (
+			<div className="d-flex align-items-center justify-content-center py-5">
+				<Spinner animation="border" variant="primary" className="me-2" />
+				<span className="text-muted">Loading professions...</span>
+			</div>
+		);
 	}
 
 	return (
