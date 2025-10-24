@@ -11,7 +11,7 @@ export default function Projects() {
         <Routes>
             <Route path="/*" element={<Outlet />}>
                 <Route path="*" element={<List />} />
-                <Route path="details" element={<Details />} />
+                <Route path="details/:id" element={<Details />} />
                 <Route path="gantt" element={<Gantt />} />
                 <Route path="create" element={<Create />} />
             </Route>

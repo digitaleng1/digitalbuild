@@ -12,7 +12,6 @@ public class CreateProjectDto
     public string ZipCode { get; init; } = string.Empty;
     public int ProjectScope { get; init; }
     public string Description { get; init; } = string.Empty;
-    public string[] DocumentUrls { get; init; } = [];
 }
 
 public class ProjectDto
@@ -43,8 +42,8 @@ public class ProjectDetailsDto
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
-    public string[] DocumentUrls { get; set; } = [];
     public int[] LicenseTypeIds { get; set; } = [];
+    public LicenseTypeDto[] LicenseTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }

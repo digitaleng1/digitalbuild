@@ -3,7 +3,6 @@ using DigitalEngineers.Infrastructure.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace DigitalEngineers.Infrastructure.Data;
 
@@ -41,7 +40,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         // Configure Profession
         builder.Entity<Profession>(entity =>        {
             entity.ToTable("Professions");
-            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.HasMany(e => e.LicenseTypes)
                   .WithOne(e => e.Profession)
@@ -74,12 +72,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ZipCode).HasMaxLength(10).IsRequired();
             entity.Property(e => e.ProjectScope).IsRequired();
             entity.Property(e => e.ThumbnailUrl).HasMaxLength(1000);
-            entity.Property(e => e.DocumentUrls)
-                .HasColumnType("jsonb")
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
-                );
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
             

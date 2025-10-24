@@ -20,7 +20,6 @@ public class Project
     
     // Project details
     public ProjectScope ProjectScope { get; set; }
-    public List<string> DocumentUrls { get; set; } = [];
     public string? ThumbnailUrl { get; set; }
     
     // Timestamps

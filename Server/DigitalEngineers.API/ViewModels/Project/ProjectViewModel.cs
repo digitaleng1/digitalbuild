@@ -28,9 +28,28 @@ public class ProjectDetailsViewModel
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
-    public string[] DocumentUrls { get; set; } = [];
     public int[] LicenseTypeIds { get; set; } = [];
+    public LicenseTypeViewModel[] LicenseTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }
+    public ProjectFileViewModel[] Files { get; set; } = [];
+}
+
+public class ProjectFileViewModel
+{
+    public int Id { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public DateTime UploadedAt { get; set; }
+}
+
+public class LicenseTypeViewModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int ProfessionId { get; set; }
 }

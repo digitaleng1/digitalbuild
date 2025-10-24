@@ -1,7 +1,26 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { CreateProjectRequest, ProjectDto } from '@/types/project';
+import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto } from '@/types/project';
 
 class ProjectService {
+	/**
+	 * Get all projects for current user
+	 */
+	async getProjects(): Promise<ProjectDto[]> {
+		const data = await httpClient.get<ProjectDto[]>('/api/projects');
+		return data as ProjectDto[];
+	}
+
+	/**
+	 * Get project by ID
+	 */
+	async getProjectById(id: number): Promise<ProjectDetailsDto> {
+		const data = await httpClient.get<ProjectDetailsDto>(`/api/projects/${id}`);
+		return data as ProjectDetailsDto;
+	}
+
+	/**
+	 * Create a new project
+	 */
 	async createProject(data: CreateProjectRequest): Promise<ProjectDto> {
 		const formData = new FormData();
 		
@@ -31,13 +50,13 @@ class ProjectService {
 			formData.append('thumbnail', data.thumbnail);
 		}
 		
-		const response = await httpClient.post('/api/projects', formData, {
+		const result = await httpClient.post('/api/projects', formData, {
 			headers: {
 				'Content-Type': 'multipart/form-data',
 			},
 		});
 		
-		return response.data;
+		return result as ProjectDto;
 	}
 }
 

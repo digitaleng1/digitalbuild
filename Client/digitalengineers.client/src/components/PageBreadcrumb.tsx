@@ -34,7 +34,7 @@ const PageBreadcrumb = ({ subName, title, children }: PageTitleProps) => {
 						<div className="page-title-box">
 							<div className="page-title-right">
 								<Breadcrumb listProps={{ className: 'm-0' }}>
-									<BreadcrumbItem as={'li'}>Hyper</BreadcrumbItem>
+									<BreadcrumbItem as={'li'}>Digital Engineers</BreadcrumbItem>
 									<BreadcrumbItem as={'li'}>{subName}</BreadcrumbItem>
 									<BreadcrumbItem as={'li'} active>
 										{title}

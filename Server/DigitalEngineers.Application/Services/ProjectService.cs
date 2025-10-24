@@ -77,7 +77,6 @@ public class ProjectService : IProjectService
                 State = dto.State,
                 ZipCode = dto.ZipCode,
                 ProjectScope = (ProjectScope)dto.ProjectScope,
-                DocumentUrls = dto.DocumentUrls.ToList(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -217,6 +216,7 @@ public class ProjectService : IProjectService
     {
         var project = await _context.Projects
             .Include(p => p.ProjectLicenseTypes)
+                .ThenInclude(plt => plt.LicenseType)
             .Include(p => p.Files)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
@@ -227,6 +227,17 @@ public class ProjectService : IProjectService
 
         var licenseTypeIds = project.ProjectLicenseTypes
             .Select(plt => plt.LicenseTypeId)
+            .ToArray();
+
+        // Получаем полные данные о LicenseTypes
+        var licenseTypes = project.ProjectLicenseTypes
+            .Select(plt => new LicenseTypeDto
+            {
+                Id = plt.LicenseType.Id,
+                Name = plt.LicenseType.Name,
+                Description = plt.LicenseType.Description,
+                ProfessionId = plt.LicenseType.ProfessionId
+            })
             .ToArray();
 
         // Generate presigned URLs for thumbnail
@@ -261,8 +272,8 @@ public class ProjectService : IProjectService
             State = project.State,
             ZipCode = project.ZipCode,
             ProjectScope = (int)project.ProjectScope,
-            DocumentUrls = project.DocumentUrls.ToArray(),
             LicenseTypeIds = licenseTypeIds,
+            LicenseTypes = licenseTypes,
             CreatedAt = project.CreatedAt,
             UpdatedAt = project.UpdatedAt,
             ThumbnailUrl = thumbnailPresignedUrl,

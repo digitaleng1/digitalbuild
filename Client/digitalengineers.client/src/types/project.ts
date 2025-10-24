@@ -1,3 +1,19 @@
+// Project Status Enum
+export enum ProjectStatus {
+	Draft = 'Draft',
+	Active = 'Active',
+	InProgress = 'InProgress',
+	Completed = 'Completed',
+	Cancelled = 'Cancelled'
+}
+
+// Project Scope Enum
+export enum ProjectScope {
+	Small = 1,
+	Medium = 2,
+	Large = 3
+}
+
 export interface ProjectFormData {
 	// Step 1
 	name: string;
@@ -29,12 +45,47 @@ export interface CreateProjectRequest {
 	thumbnail: File | null;
 }
 
+export interface LicenseType {
+	id: number;
+	name: string;
+	description: string;
+	professionId: number;
+}
+
+// Synchronized with ProjectViewModel from server
 export interface ProjectDto {
 	id: number;
 	name: string;
 	description: string;
 	status: string;
 	createdAt: string;
+	thumbnailUrl?: string;
+	streetAddress: string;
+	city: string;
+	state: string;
+	zipCode: string;
+	projectScope: number;
+	licenseTypeIds: number[];
+}
+
+// Synchronized with ProjectDetailsViewModel from server
+export interface ProjectDetailsDto {
+	id: number;
+	name: string;
+	description: string;
+	status: string;
+	clientId: string;
+	streetAddress: string;
+	city: string;
+	state: string;
+	zipCode: string;
+	projectScope: number;
+	licenseTypeIds: number[];
+	licenseTypes: LicenseType[];
+	createdAt: string;
+	updatedAt: string;
+	thumbnailUrl?: string;
+	files: ProjectFile[];
 }
 
 export interface ProjectFile {

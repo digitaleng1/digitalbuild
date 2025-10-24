@@ -15,5 +15,9 @@ public class ProjectMappingProfile : Profile
         CreateMap<ProjectDto, ProjectViewModel>();
         
         CreateMap<ProjectDetailsDto, ProjectDetailsViewModel>();
+
+        CreateMap<ProjectFileDto, ProjectFileViewModel>();
+
+        CreateMap<LicenseTypeDto, LicenseTypeViewModel>();
     }
 }
