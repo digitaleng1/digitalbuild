@@ -1,5 +1,5 @@
 using AutoMapper;
-using DigitalEngineers.API.ViewModels.Dictionary;
+using DigitalEngineers.API.ViewModels;
 using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

@@ -78,6 +78,7 @@ public class ProjectService : IProjectService
                 State = dto.State,
                 ZipCode = dto.ZipCode,
                 ProjectScope = (ProjectScope)dto.ProjectScope,
+                ManagementType = dto.ManagementType,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -182,6 +183,7 @@ public class ProjectService : IProjectService
                 State = project.State,
                 ZipCode = project.ZipCode,
                 ProjectScope = (int)project.ProjectScope,
+                ManagementType = project.ManagementType.ToString(),
                 LicenseTypeIds = dto.LicenseTypeIds
             };
         }
@@ -273,6 +275,7 @@ public class ProjectService : IProjectService
             State = project.State,
             ZipCode = project.ZipCode,
             ProjectScope = (int)project.ProjectScope,
+            ManagementType = project.ManagementType.ToString(),
             LicenseTypeIds = licenseTypeIds,
             LicenseTypes = licenseTypes,
             CreatedAt = project.CreatedAt,
@@ -333,6 +336,7 @@ public class ProjectService : IProjectService
                 State = p.Project.State,
                 ZipCode = p.Project.ZipCode,
                 ProjectScope = (int)p.Project.ProjectScope,
+                ManagementType = p.Project.ManagementType.ToString(),
                 LicenseTypeIds = p.LicenseTypeIds
             };
         });

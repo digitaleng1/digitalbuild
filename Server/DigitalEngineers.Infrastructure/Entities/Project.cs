@@ -20,6 +20,7 @@ public class Project
     
     // Project details
     public ProjectScope ProjectScope { get; set; }
+    public ProjectManagementType ManagementType { get; set; } = ProjectManagementType.DigitalEngineersManaged;
     public string? ThumbnailUrl { get; set; }
     
     // Timestamps
@@ -30,4 +31,5 @@ public class Project
     public ICollection<ProjectLicenseType> ProjectLicenseTypes { get; set; } = [];
     public ICollection<ProjectFile> Files { get; set; } = [];
     public ICollection<ProjectSpecialist> AssignedSpecialists { get; set; } = [];
+    public ICollection<BidRequest> BidRequests { get; set; } = [];
 }

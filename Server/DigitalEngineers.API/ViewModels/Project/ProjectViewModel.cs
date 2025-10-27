@@ -45,11 +45,3 @@ public class ProjectFileViewModel
     public string ContentType { get; set; } = string.Empty;
     public DateTime UploadedAt { get; set; }
 }
-
-public class LicenseTypeViewModel
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public int ProfessionId { get; set; }
-}

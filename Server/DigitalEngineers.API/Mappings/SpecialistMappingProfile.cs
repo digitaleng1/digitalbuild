@@ -1,5 +1,5 @@
 using AutoMapper;
-using DigitalEngineers.API.ViewModels.Dictionary;
+using DigitalEngineers.API.ViewModels;
 using DigitalEngineers.API.ViewModels.Specialist;
 using DigitalEngineers.Domain.DTOs;
 

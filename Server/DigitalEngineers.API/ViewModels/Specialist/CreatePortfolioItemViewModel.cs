@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace DigitalEngineers.API.ViewModels.Specialist;
 
@@ -14,4 +15,6 @@ public class CreatePortfolioItemViewModel
     
     [MaxLength(500)]
     public string? ProjectUrl { get; set; }
+    
+    public IFormFile? Thumbnail { get; set; }
 }

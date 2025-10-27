@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddScoped<ISpecialistService, SpecialistService>();
         services.AddScoped<IPortfolioService, PortfolioService>();
+        services.AddScoped<IBidService, BidService>();
 
         return services;
     }

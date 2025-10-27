@@ -22,6 +22,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SpecialistLicenseType> SpecialistLicenseTypes => Set<SpecialistLicenseType>();
     public DbSet<ProjectSpecialist> ProjectSpecialists => Set<ProjectSpecialist>();
     public DbSet<PortfolioItem> PortfolioItems => Set<PortfolioItem>();
+    public DbSet<BidRequest> BidRequests => Set<BidRequest>();
+    public DbSet<BidResponse> BidResponses => Set<BidResponse>();
+    public DbSet<BidMessage> BidMessages => Set<BidMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -230,6 +233,88 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
                 
             entity.HasIndex(e => e.SpecialistId);
+        });
+
+        // Configure BidRequest
+        builder.Entity<BidRequest>(entity =>
+        {
+            entity.ToTable("BidRequests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ProjectId).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.BudgetMin).HasPrecision(18, 2);
+            entity.Property(e => e.BudgetMax).HasPrecision(18, 2);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasOne(e => e.Project)
+                .WithMany(p => p.BidRequests)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Responses)
+                .WithOne(r => r.BidRequest)
+                .HasForeignKey(r => r.BidRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ProjectId);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // Configure BidResponse
+        builder.Entity<BidResponse>(entity =>
+        {
+            entity.ToTable("BidResponses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BidRequestId).IsRequired();
+            entity.Property(e => e.SpecialistId).IsRequired();
+            entity.Property(e => e.CoverLetter).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.ProposedPrice).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.EstimatedDays).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.RejectionReason).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasOne(e => e.BidRequest)
+                .WithMany(br => br.Responses)
+                .HasForeignKey(e => e.BidRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Specialist)
+                .WithMany()
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Messages)
+                .WithOne(m => m.BidResponse)
+                .HasForeignKey(m => m.BidResponseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.BidRequestId);
+            entity.HasIndex(e => e.SpecialistId);
+            entity.HasIndex(e => new { e.BidRequestId, e.SpecialistId }).IsUnique();
+        });
+
+        // Configure BidMessage
+        builder.Entity<BidMessage>(entity =>
+        {
+            entity.ToTable("BidMessages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BidResponseId).IsRequired();
+            entity.Property(e => e.SenderId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.MessageText).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasOne(e => e.BidResponse)
+                .WithMany(r => r.Messages)
+                .HasForeignKey(e => e.BidResponseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.BidResponseId);
+            entity.HasIndex(e => e.CreatedAt);
         });
 
         // Rename Identity tables

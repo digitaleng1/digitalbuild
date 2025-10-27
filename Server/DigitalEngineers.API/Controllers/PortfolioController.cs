@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DigitalEngineers.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]/{specialistId}")]
+[Route("api/[controller]")]
 [Authorize]
 public class PortfolioController : ControllerBase
 {
@@ -21,21 +21,20 @@ public class PortfolioController : ControllerBase
         _mapper = mapper;
     }
 
-    [HttpPost]
+    [HttpPost("specialists/{specialistId}")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(PortfolioItemViewModel), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PortfolioItemViewModel>> CreatePortfolioItem(
         int specialistId,
         [FromForm] CreatePortfolioItemViewModel model,
-        [FromForm] IFormFile? thumbnail,
         CancellationToken cancellationToken)
     {
         var dto = _mapper.Map<CreatePortfolioItemDto>(model);
 
-        Stream? thumbnailStream = thumbnail?.OpenReadStream();
-        string? fileName = thumbnail?.FileName;
-        string? contentType = thumbnail?.ContentType;
+        Stream? thumbnailStream = model.Thumbnail?.OpenReadStream();
+        string? fileName = model.Thumbnail?.FileName;
+        string? contentType = model.Thumbnail?.ContentType;
 
         var result = await _portfolioService.CreatePortfolioItemAsync(
             specialistId,
@@ -49,7 +48,7 @@ public class PortfolioController : ControllerBase
 
         return CreatedAtAction(
             nameof(GetPortfolioItemById),
-            new { specialistId, id = viewModel.Id },
+            new { id = viewModel.Id },
             viewModel);
     }
 
@@ -57,7 +56,6 @@ public class PortfolioController : ControllerBase
     [ProducesResponseType(typeof(PortfolioItemViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PortfolioItemViewModel>> GetPortfolioItemById(
-        int specialistId,
         int id,
         CancellationToken cancellationToken)
     {
@@ -70,9 +68,9 @@ public class PortfolioController : ControllerBase
         return Ok(viewModel);
     }
 
-    [HttpGet]
+    [HttpGet("specialists/{specialistId}")]
     [ProducesResponseType(typeof(IEnumerable<PortfolioItemViewModel>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<PortfolioItemViewModel>>> GetPortfolioItems(
+    public async Task<ActionResult<IEnumerable<PortfolioItemViewModel>>> GetPortfolioItemsBySpecialist(
         int specialistId,
         CancellationToken cancellationToken)
     {
@@ -85,7 +83,6 @@ public class PortfolioController : ControllerBase
     [ProducesResponseType(typeof(PortfolioItemViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PortfolioItemViewModel>> UpdatePortfolioItem(
-        int specialistId,
         int id,
         [FromBody] CreatePortfolioItemViewModel model,
         CancellationToken cancellationToken)
@@ -100,7 +97,6 @@ public class PortfolioController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePortfolioItem(
-        int specialistId,
         int id,
         CancellationToken cancellationToken)
     {

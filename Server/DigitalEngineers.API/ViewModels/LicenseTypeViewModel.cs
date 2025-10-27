@@ -1,8 +1,9 @@
-namespace DigitalEngineers.API.ViewModels.Dictionary;
+namespace DigitalEngineers.API.ViewModels;
 
-public record ProfessionalTypeViewModel
+public class LicenseTypeViewModel
 {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
+    public int ProfessionId { get; init; }
 }

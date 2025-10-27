@@ -1,4 +1,5 @@
 using AutoMapper;
+using DigitalEngineers.API.ViewModels;
 using DigitalEngineers.API.ViewModels.Project;
 using DigitalEngineers.Domain.DTOs;
 

@@ -11,6 +11,7 @@ public class CreateProjectDto
     public string State { get; init; } = string.Empty;
     public string ZipCode { get; init; } = string.Empty;
     public int ProjectScope { get; init; }
+    public ProjectManagementType ManagementType { get; init; } = ProjectManagementType.DigitalEngineersManaged;
     public string Description { get; init; } = string.Empty;
 }
 
@@ -27,6 +28,7 @@ public class ProjectDto
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
+    public string ManagementType { get; set; } = string.Empty;
     public int[] LicenseTypeIds { get; set; } = [];
 }
 
@@ -42,6 +44,7 @@ public class ProjectDetailsDto
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
+    public string ManagementType { get; set; } = string.Empty;
     public int[] LicenseTypeIds { get; set; } = [];
     public LicenseTypeDto[] LicenseTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }

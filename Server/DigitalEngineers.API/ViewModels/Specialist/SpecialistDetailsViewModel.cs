@@ -1,5 +1,3 @@
-using DigitalEngineers.API.ViewModels.Dictionary;
-
 namespace DigitalEngineers.API.ViewModels.Specialist;
 
 public class SpecialistDetailsViewModel
