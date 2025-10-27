@@ -11,6 +11,7 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 		key: 'dashboards',
 		label: 'Dashboards',
 		isTitle: false,
+		expanded: true,
 		icon: 'uil-home-alt',
 		children: [
 			{
@@ -45,6 +46,20 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 		isTitle: true,
 	},
 	{
+		key: 'projects',
+		label: 'Projects',
+		isTitle: false,
+		icon: 'uil-briefcase',
+		children: [
+			{
+				key: 'project-list-admin',
+				label: 'All Projects',
+				url: '/projects',
+				parentKey: 'projects',
+			},
+		],
+	},
+	{
 		key: 'users',
 		label: 'User Management',
 		isTitle: false,
@@ -76,6 +91,7 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 			},
 		],
 	},
+
 	{
 		key: 'system',
 		label: 'System Settings',
@@ -97,40 +113,8 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'apps',
-		label: 'Applications',
-		isTitle: true,
-	},
-	{
-		key: 'apps-projects',
-		label: 'Projects',
-		isTitle: false,
-		icon: 'uil-briefcase',
-		children: [
-			{
-				key: 'project-list',
-				label: 'All Projects',
-				url: '/apps/projects/list',
-				parentKey: 'apps-projects',
-			},
-			{
-				key: 'project-details',
-				label: 'Project Details',
-				url: '/apps/projects/details',
-				parentKey: 'apps-projects',
-			},
-		],
-	},
-	{
-		key: 'apps-tasks',
-		label: 'Tasks',
-		isTitle: false,
-		icon: 'uil-clipboard-alt',
-		url: '/apps/tasks/list',
-	},
-	{
-		key: 'pages',
-		label: 'Pages',
+		key: 'profile',
+		label: 'Profile',
 		isTitle: false,
 		icon: 'uil-copy-alt',
 		children: [
@@ -138,7 +122,7 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 				key: 'page-profile',
 				label: 'Profile',
 				url: '/pages/profile',
-				parentKey: 'pages',
+				parentKey: 'profile',
 			},
 		],
 	},
@@ -197,16 +181,11 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'apps',
-		label: 'Applications',
-		isTitle: true,
-	},
-	{
 		key: 'apps-projects',
 		label: 'Projects',
 		isTitle: false,
 		icon: 'uil-briefcase',
-		url: '/apps/projects/list',
+		url: '/admin/projects',
 	},
 	{
 		key: 'apps-tasks',
@@ -252,18 +231,6 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		icon: 'uil-home-alt',
 		url: '/dashboard/analytics',
 	},
-	//{
-	//	key: 'marketplace',
-	//	label: 'Marketplace',
-	//	isTitle: true,
-	//},
-	//{
-	//	key: 'engineers',
-	//	label: 'Find Engineers',
-	//	isTitle: false,
-	//	icon: 'uil-users-alt',
-	//	url: '/pages/engineers',
-	//},
 	{
 		key: 'projects',
 		label: 'Projects',
@@ -411,234 +378,10 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 ];
 
 // Horizontal menu variants
-export const HORIZONTAL_MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
-	{
-		key: 'dashboards',
-		icon: 'uil-dashboard',
-		label: 'Dashboards',
-		isTitle: true,
-		children: [
-			{
-				key: 'ds-analytics',
-				label: 'Analytics',
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-ecommerce',
-				label: 'Ecommerce',
-				url: '/dashboard/ecommerce',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-project',
-				label: 'Projects',
-			 url: '/dashboard/project',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-crm',
-				label: 'CRM',
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			},
-		],
-	},
-	{
-		key: 'management',
-		icon: 'uil-users-alt',
-		label: 'Management',
-		isTitle: true,
-		children: [
-			{
-				key: 'users-list',
-				label: 'All Users',
-				url: '/pages/users',
-				parentKey: 'management',
-			},
-			{
-				key: 'system-settings',
-				label: 'Settings',
-				url: '/pages/settings',
-				parentKey: 'management',
-			},
-		],
-	},
-	{
-		key: 'apps',
-		icon: 'uil-apps',
-		label: 'Apps',
-		isTitle: true,
-		children: [
-			{
-				key: 'apps-projects',
-				label: 'Projects',
-				url: '/apps/projects/list',
-				parentKey: 'apps',
-			},
-			{
-				key: 'apps-tasks',
-				label: 'Tasks',
-				url: '/apps/tasks/list',
-				parentKey: 'apps',
-			},
-		],
-	},
-];
+export const HORIZONTAL_MENU_ITEMS_SUPERADMIN: MenuItemType[] = MENU_ITEMS_SUPERADMIN;
 
-export const HORIZONTAL_MENU_ITEMS_ADMIN: MenuItemType[] = [
-	{
-		key: 'dashboards',
-		icon: 'uil-dashboard',
-		label: 'Dashboards',
-		isTitle: true,
-		children: [
-			{
-				key: 'ds-analytics',
-				label: 'Analytics',
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-crm',
-				label: 'CRM',
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			},
-		],
-	},
-	{
-		key: 'users',
-		icon: 'uil-users-alt',
-		label: 'Users',
-		isTitle: true,
-		children: [
-			{
-				key: 'users-providers',
-				label: 'Providers',
-				url: '/pages/providers',
-				parentKey: 'users',
-			},
-			{
-				key: 'users-clients',
-				label: 'Clients',
-				url: '/pages/clients',
-				parentKey: 'users',
-			},
-		],
-	},
-	{
-		key: 'apps',
-		icon: 'uil-apps',
-		label: 'Apps',
-		isTitle: true,
-		children: [
-			{
-				key: 'apps-projects',
-				label: 'Projects',
-				url: '/apps/projects/list',
-				parentKey: 'apps',
-			},
-			{
-				key: 'apps-calendar',
-				label: 'Calendar',
-				url: '/apps/calendar',
-				parentKey: 'apps',
-			},
-		],
-	},
-];
+export const HORIZONTAL_MENU_ITEMS_ADMIN: MenuItemType[] = MENU_ITEMS_ADMIN;
 
-export const HORIZONTAL_MENU_ITEMS_CLIENT: MenuItemType[] = [
-	{
-		key: 'dashboard',
-		icon: 'uil-dashboard',
-		label: 'Dashboard',
-		isTitle: true,
-		url: '/dashboard/analytics',
-	},
-	{
-		key: 'engineers',
-		icon: 'uil-users-alt',
-		label: 'Engineers',
-		isTitle: true,
-		url: '/pages/engineers',
-	},
-	{
-		key: 'my-work',
-		icon: 'uil-briefcase',
-		label: 'My Work',
-		isTitle: true,
-		children: [
-			{
-				key: 'projects',
-				label: 'Projects',
-				url: '/apps/projects/list',
-				parentKey: 'my-work',
-			},
-			{
-				key: 'orders',
-				label: 'Orders',
-				url: '/apps/ecommerce/orders',
-				parentKey: 'my-work',
-			},
-		],
-	},
-	{
-		key: 'profile',
-		icon: 'uil-user',
-		label: 'Profile',
-		isTitle: true,
-		url: '/pages/profile',
-	},
-];
+export const HORIZONTAL_MENU_ITEMS_CLIENT: MenuItemType[] = MENU_ITEMS_CLIENT;
 
-export const HORIZONTAL_MENU_ITEMS_PROVIDER: MenuItemType[] = [
-	{
-		key: 'dashboard',
-		icon: 'uil-dashboard',
-		label: 'Dashboard',
-		isTitle: true,
-		url: '/dashboard/project',
-	},
-	{
-		key: 'work',
-		icon: 'uil-briefcase',
-		label: 'My Work',
-		isTitle: true,
-		children: [
-			{
-				key: 'projects',
-				label: 'Projects',
-				url: '/apps/projects/list',
-				parentKey: 'work',
-			},
-			{
-				key: 'tasks',
-				label: 'Tasks',
-				url: '/apps/tasks/list',
-				parentKey: 'work',
-			},
-			{
-				key: 'orders',
-				label: 'Orders',
-				url: '/apps/ecommerce/orders',
-				parentKey: 'work',
-			},
-		],
-	},
-	{
-		key: 'calendar',
-		icon: 'uil-calender',
-		label: 'Calendar',
-		isTitle: true,
-		url: '/apps/calendar',
-	},
-	{
-		key: 'profile',
-		icon: 'uil-user',
-		label: 'Profile',
-		isTitle: true,
-		url: '/pages/profile',
-	},
-];
+export const HORIZONTAL_MENU_ITEMS_PROVIDER: MenuItemType[] = MENU_ITEMS_PROVIDER;

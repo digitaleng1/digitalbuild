@@ -58,6 +58,13 @@ class ProjectService {
 		
 		return result as ProjectDto;
 	}
+
+	/**
+	 * Update project status (Admin/SuperAdmin only)
+	 */
+	async updateProjectStatus(id: number, status: string): Promise<void> {
+		await httpClient.patch(`/api/projects/${id}/status`, { status });
+	}
 }
 
 export default new ProjectService();

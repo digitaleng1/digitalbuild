@@ -29,4 +29,5 @@ public class Project
     // Relationships
     public ICollection<ProjectLicenseType> ProjectLicenseTypes { get; set; } = [];
     public ICollection<ProjectFile> Files { get; set; } = [];
+    public ICollection<ProjectSpecialist> AssignedSpecialists { get; set; } = [];
 }

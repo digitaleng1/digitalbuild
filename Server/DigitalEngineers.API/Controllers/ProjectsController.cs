@@ -150,4 +150,22 @@ public class ProjectsController : ControllerBase
         
         return Ok(viewModels);
     }
+
+    /// <summary>
+    /// Update project status (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateProjectStatus(
+        int id,
+        [FromBody] UpdateProjectStatusViewModel model,
+        CancellationToken cancellationToken)
+    {
+        await _projectService.UpdateProjectStatusAsync(id, model.Status, cancellationToken);
+        return NoContent();
+    }
 }

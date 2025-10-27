@@ -6,12 +6,19 @@ import { getProjectScopeLabel } from '@/utils/projectUtils';
 
 interface ProjectCardProps {
 	project: ProjectDto;
+	basePath?: string;
 	variant?: 'default' | 'compact';
 	onEdit?: (projectId: number) => void;
 	onDelete?: (projectId: number) => void;
 }
 
-export default function ProjectCard({ project, variant = 'default', onEdit, onDelete }: ProjectCardProps) {
+export default function ProjectCard({ 
+	project, 
+	basePath = '/client/projects',
+	variant = 'default', 
+	onEdit, 
+	onDelete 
+}: ProjectCardProps) {
 	const hasImage = !!project.thumbnailUrl;
 
 	const getStatusVariant = (status: string) => {
@@ -22,6 +29,7 @@ export default function ProjectCard({ project, variant = 'default', onEdit, onDe
 			case 'active':
 				return 'primary';
 			case 'draft':
+			case 'new':
 				return 'secondary';
 			case 'cancelled':
 				return 'danger';
@@ -74,7 +82,7 @@ export default function ProjectCard({ project, variant = 'default', onEdit, onDe
 				)}
 
 				<h4 className="mt-0">
-					<Link to={`/client/projects/details/${project.id}`} className="text-title">
+					<Link to={`${basePath}/details/${project.id}`} className="text-title">
 						{project.name}
 					</Link>
 				</h4>
@@ -123,7 +131,7 @@ export default function ProjectCard({ project, variant = 'default', onEdit, onDe
 
 				<div className="mt-auto">
 					<Link 
-						to={`/client/projects/details/${project.id}`} 
+						to={`${basePath}/details/${project.id}`} 
 						className="btn btn-primary btn-sm w-100"
 					>
 						<i className="mdi mdi-eye me-1"></i>

@@ -7,6 +7,7 @@ const ListProject = () => {
 			<PageBreadcrumb title="Project List" subName="Projects" />
 			
 			<ProjectList 
+				basePath="/client/projects"
 				createProjectUrl="/client/projects/create"
 				showCreateButton={true}
 			/>

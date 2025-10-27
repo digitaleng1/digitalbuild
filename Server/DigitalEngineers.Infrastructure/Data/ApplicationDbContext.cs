@@ -18,6 +18,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectLicenseType> ProjectLicenseTypes => Set<ProjectLicenseType>();
     public DbSet<ProjectFile> ProjectFiles => Set<ProjectFile>();
+    public DbSet<Specialist> Specialists => Set<Specialist>();
+    public DbSet<SpecialistLicenseType> SpecialistLicenseTypes => Set<SpecialistLicenseType>();
+    public DbSet<ProjectSpecialist> ProjectSpecialists => Set<ProjectSpecialist>();
+    public DbSet<PortfolioItem> PortfolioItems => Set<PortfolioItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -38,7 +42,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         });
 
         // Configure Profession
-        builder.Entity<Profession>(entity =>        {
+        builder.Entity<Profession>(entity =>        {
             entity.ToTable("Professions");
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.HasMany(e => e.LicenseTypes)
@@ -89,6 +93,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithOne(e => e.Project)
                 .HasForeignKey(e => e.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasMany(e => e.AssignedSpecialists)
+                .WithOne(e => e.Project)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure ProjectFile
@@ -127,6 +136,100 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(plt => plt.LicenseTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure Specialist
+        builder.Entity<Specialist>(entity =>
+        {
+            entity.ToTable("Specialists");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.YearsOfExperience).IsRequired();
+            entity.Property(e => e.HourlyRate).HasPrecision(18, 2);
+            entity.Property(e => e.Rating).IsRequired();
+            entity.Property(e => e.IsAvailable).IsRequired();
+            entity.Property(e => e.Specialization).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.UserId).IsUnique();
+            
+            entity.HasMany(e => e.LicenseTypes)
+                .WithOne(e => e.Specialist)
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasMany(e => e.AssignedProjects)
+                .WithOne(e => e.Specialist)
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasMany(e => e.Portfolio)
+                .WithOne(e => e.Specialist)
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure SpecialistLicenseType (Many-to-Many)
+        builder.Entity<SpecialistLicenseType>(entity =>
+        {
+            entity.ToTable("SpecialistLicenseTypes");
+            entity.HasKey(slt => new { slt.SpecialistId, slt.LicenseTypeId });
+            
+            entity.HasOne(slt => slt.Specialist)
+                .WithMany(s => s.LicenseTypes)
+                .HasForeignKey(slt => slt.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(slt => slt.LicenseType)
+                .WithMany()
+                .HasForeignKey(slt => slt.LicenseTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure ProjectSpecialist (Many-to-Many with additional properties)
+        builder.Entity<ProjectSpecialist>(entity =>
+        {
+            entity.ToTable("ProjectSpecialists");
+            entity.HasKey(ps => new { ps.ProjectId, ps.SpecialistId });
+            
+            entity.Property(e => e.AssignedAt).IsRequired();
+            entity.Property(e => e.Role).HasMaxLength(100);
+            
+            entity.HasOne(ps => ps.Project)
+                .WithMany(p => p.AssignedSpecialists)
+                .HasForeignKey(ps => ps.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(ps => ps.Specialist)
+                .WithMany(s => s.AssignedProjects)
+                .HasForeignKey(ps => ps.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure PortfolioItem
+        builder.Entity<PortfolioItem>(entity =>
+        {
+            entity.ToTable("PortfolioItems");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SpecialistId).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.ThumbnailUrl).HasMaxLength(1000);
+            entity.Property(e => e.ProjectUrl).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Specialist)
+                .WithMany(s => s.Portfolio)
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.SpecialistId);
         });
 
         // Rename Identity tables

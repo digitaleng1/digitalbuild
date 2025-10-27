@@ -39,6 +39,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILookupService, LookupService>();
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IFileStorageService, FileStorageService>();
+        services.AddScoped<ISpecialistService, SpecialistService>();
+        services.AddScoped<IPortfolioService, PortfolioService>();
 
         return services;
     }

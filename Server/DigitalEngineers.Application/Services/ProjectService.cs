@@ -2,6 +2,7 @@ using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Infrastructure.Entities;
 using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
+using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -335,5 +336,31 @@ public class ProjectService : IProjectService
                 LicenseTypeIds = p.LicenseTypeIds
             };
         });
+    }
+
+    public async Task UpdateProjectStatusAsync(
+        int projectId, 
+        string status,
+        CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            _logger.LogWarning("Attempt to update status for non-existent project {ProjectId}", projectId);
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        if (!Enum.TryParse<ProjectStatus>(status, ignoreCase: true, out var newStatus))
+        {
+            _logger.LogWarning("Invalid status '{Status}' provided for project {ProjectId}", status, projectId);
+            throw new InvalidProjectStatusException(status);
+        }
+        
+        project.Status = newStatus;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

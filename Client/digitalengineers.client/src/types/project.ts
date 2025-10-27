@@ -1,7 +1,8 @@
 // Project Status Enum
 export enum ProjectStatus {
+	New = 'New',
 	Draft = 'Draft',
-	Active = 'Active',
+	Published = 'Published',
 	InProgress = 'InProgress',
 	Completed = 'Completed',
 	Cancelled = 'Cancelled'
@@ -58,6 +59,7 @@ export interface ProjectDto {
 	name: string;
 	description: string;
 	status: string;
+	clientId?: string;
 	createdAt: string;
 	thumbnailUrl?: string;
 	streetAddress: string;

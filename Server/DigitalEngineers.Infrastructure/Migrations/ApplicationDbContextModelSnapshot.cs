@@ -166,6 +166,45 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.ToTable("LicenseTypes", (string)null);
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.PortfolioItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("ProjectUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpecialistId");
+
+                    b.ToTable("PortfolioItems", (string)null);
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Profession", b =>
                 {
                     b.Property<int>("Id")
@@ -313,6 +352,87 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.ToTable("ProjectLicenseTypes", (string)null);
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectSpecialist", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("ProjectId", "SpecialistId");
+
+                    b.HasIndex("SpecialistId");
+
+                    b.ToTable("ProjectSpecialists", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Specialist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Specialization")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("YearsOfExperience")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Specialists", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", b =>
+                {
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LicenseTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("SpecialistId", "LicenseTypeId");
+
+                    b.HasIndex("LicenseTypeId");
+
+                    b.ToTable("SpecialistLicenseTypes", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -456,6 +576,17 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Profession");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.PortfolioItem", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Specialist", "Specialist")
+                        .WithMany("Portfolio")
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Specialist");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Project", b =>
                 {
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", null)
@@ -493,6 +624,55 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("LicenseType");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectSpecialist", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
+                        .WithMany("AssignedSpecialists")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Specialist", "Specialist")
+                        .WithMany("AssignedProjects")
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Specialist");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Specialist", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.LicenseType", "LicenseType")
+                        .WithMany()
+                        .HasForeignKey("LicenseTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Specialist", "Specialist")
+                        .WithMany("LicenseTypes")
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LicenseType");
+
+                    b.Navigation("Specialist");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -553,9 +733,20 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Project", b =>
                 {
+                    b.Navigation("AssignedSpecialists");
+
                     b.Navigation("Files");
 
                     b.Navigation("ProjectLicenseTypes");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Specialist", b =>
+                {
+                    b.Navigation("AssignedProjects");
+
+                    b.Navigation("LicenseTypes");
+
+                    b.Navigation("Portfolio");
                 });
 #pragma warning restore 612, 618
         }

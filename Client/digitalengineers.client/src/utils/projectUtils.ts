@@ -45,16 +45,18 @@ export function getFileExtension(filename: string): string {
  * @param status - Project status
  * @returns Bootstrap variant
  */
-export function getStatusBadgeVariant(status: string): 'success' | 'secondary' | 'warning' | 'danger' {
+export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'primary' | 'secondary' | 'warning' | 'danger' {
 	switch (status.toLowerCase()) {
+		case 'new':
+			return 'info';
+		case 'draft':
+			return 'secondary';
+		case 'published':
+			return 'primary';
+		case 'inprogress':
+			return 'warning';
 		case 'completed':
 			return 'success';
-		case 'inprogress':
-		case 'active':
-			return 'secondary';
-		case 'draft':
-		case 'new':
-			return 'warning';
 		case 'cancelled':
 			return 'danger';
 		default:
