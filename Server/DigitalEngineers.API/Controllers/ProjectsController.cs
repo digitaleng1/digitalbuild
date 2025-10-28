@@ -15,16 +15,13 @@ public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
     private readonly IMapper _mapper;
-    private readonly ILogger<ProjectsController> _logger;
 
     public ProjectsController(
         IProjectService projectService,
-        IMapper mapper,
-        ILogger<ProjectsController> logger)
+        IMapper mapper)
     {
         _projectService = projectService;
         _mapper = mapper;
-        _logger = logger;
     }
 
     /// <summary>
@@ -49,61 +46,48 @@ public class ProjectsController : ControllerBase
         
         if (string.IsNullOrEmpty(clientId))
         {
-            return Unauthorized(new { message = "User ID not found in token" });
+            throw new UnauthorizedAccessException("User ID not found in token");
         }
 
-        try
+        var dto = _mapper.Map<CreateProjectDto>(model);
+        
+        // Convert IFormFile to FileUploadInfo
+        List<FileUploadInfo>? files = null;
+        if (model.Files != null && model.Files.Count > 0)
         {
-            var dto = _mapper.Map<CreateProjectDto>(model);
-            
-            // Convert IFormFile to FileUploadInfo
-            List<FileUploadInfo>? files = null;
-            if (model.Files != null && model.Files.Count > 0)
-            {
-                files = model.Files.Select(f => new FileUploadInfo(
-                    f.OpenReadStream(),
-                    f.FileName,
-                    f.ContentType,
-                    f.Length
-                )).ToList();
-            }
+            files = model.Files.Select(f => new FileUploadInfo(
+                f.OpenReadStream(),
+                f.FileName,
+                f.ContentType,
+                f.Length
+            )).ToList();
+        }
 
-            FileUploadInfo? thumbnail = null;
-            if (model.Thumbnail != null)
-            {
-                thumbnail = new FileUploadInfo(
-                    model.Thumbnail.OpenReadStream(),
-                    model.Thumbnail.FileName,
-                    model.Thumbnail.ContentType,
-                    model.Thumbnail.Length
-                );
-            }
-
-            var result = await _projectService.CreateProjectAsync(
-                dto, 
-                clientId, 
-                files, 
-                thumbnail, 
-                cancellationToken);
-                
-            var viewModel = _mapper.Map<ProjectViewModel>(result);
-
-            return CreatedAtAction(
-                nameof(GetProjectById),
-                new { id = viewModel.Id },
-                viewModel
+        FileUploadInfo? thumbnail = null;
+        if (model.Thumbnail != null)
+        {
+            thumbnail = new FileUploadInfo(
+                model.Thumbnail.OpenReadStream(),
+                model.Thumbnail.FileName,
+                model.Thumbnail.ContentType,
+                model.Thumbnail.Length
             );
         }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, "Invalid project data submitted");
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating project");
-            return StatusCode(500, new { message = "An error occurred while creating the project" });
-        }
+
+        var result = await _projectService.CreateProjectAsync(
+            dto, 
+            clientId, 
+            files, 
+            thumbnail, 
+            cancellationToken);
+            
+        var viewModel = _mapper.Map<ProjectViewModel>(result);
+
+        return CreatedAtAction(
+            nameof(GetProjectById),
+            new { id = viewModel.Id },
+            viewModel
+        );
     }
 
     /// <summary>
@@ -118,11 +102,6 @@ public class ProjectsController : ControllerBase
     {
         var project = await _projectService.GetProjectByIdAsync(id, cancellationToken);
         
-        if (project == null)
-        {
-            return NotFound(new { message = "Project not found" });
-        }
-
         var viewModel = _mapper.Map<ProjectDetailsViewModel>(project);
         return Ok(viewModel);
     }
@@ -140,7 +119,7 @@ public class ProjectsController : ControllerBase
         
         if (string.IsNullOrEmpty(userId))
         {
-            return Unauthorized(new { message = "User ID not found in token" });
+            throw new UnauthorizedAccessException("User ID not found in token");
         }
 
         var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();

@@ -77,6 +77,9 @@ export interface ProjectDetailsDto {
 	description: string;
 	status: string;
 	clientId: string;
+	clientName: string;
+	clientEmail: string;
+	clientProfilePictureUrl?: string;
 	streetAddress: string;
 	city: string;
 	state: string;

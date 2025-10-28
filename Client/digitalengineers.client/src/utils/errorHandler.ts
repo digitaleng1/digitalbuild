@@ -2,9 +2,10 @@ import type { AxiosError } from 'axios';
 
 export interface ApiErrorResponse {
 	title?: string;
+	message?: string;
 	status?: number;
-	errors?: Record<string, string[]>;
 	traceId?: string;
+	errors?: Record<string, string[]>;
 }
 
 export const getErrorMessage = (error: unknown): string => {
@@ -16,7 +17,11 @@ export const getErrorMessage = (error: unknown): string => {
 	if (axiosError.response?.data) {
 		const data = axiosError.response.data;
 
-		// If there's a title, use it
+		// Приоритет: message > title > validation errors
+		if (data.message) {
+			return data.message;
+		}
+
 		if (data.title) {
 			return data.title;
 		}
@@ -46,6 +51,12 @@ export const getErrorMessage = (error: unknown): string => {
 export const getErrorTitle = (error: unknown): string => {
 	const axiosError = error as AxiosError<ApiErrorResponse>;
 
+	// Сначала проверяем title из response.data
+	if (axiosError.response?.data?.title) {
+		return axiosError.response.data.title;
+	}
+
+	// Затем определяем по статусу
 	if (axiosError.response?.status) {
 		switch (axiosError.response.status) {
 			case 400:

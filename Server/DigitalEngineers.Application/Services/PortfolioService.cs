@@ -82,13 +82,13 @@ public class PortfolioService : IPortfolioService
         };
     }
 
-    public async Task<PortfolioItemDto?> GetPortfolioItemByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PortfolioItemDto> GetPortfolioItemByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var portfolioItem = await _context.Set<PortfolioItem>()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
         if (portfolioItem == null)
-            return null;
+            throw new PortfolioItemNotFoundException(id);
 
         return new PortfolioItemDto
         {

@@ -23,6 +23,9 @@ public class ProjectDetailsViewModel
     public string Description { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string ClientId { get; set; } = string.Empty;
+    public string ClientName { get; set; } = string.Empty;
+    public string ClientEmail { get; set; } = string.Empty;
+    public string? ClientProfilePictureUrl { get; set; }
     public string StreetAddress { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;

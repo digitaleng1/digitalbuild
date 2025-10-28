@@ -66,7 +66,7 @@ public class BidService : IBidService
         };
     }
 
-    public async Task<BidRequestDetailsDto?> GetBidRequestByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<BidRequestDetailsDto> GetBidRequestByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var bidRequest = await _context.Set<BidRequest>()
             .Include(br => br.Project)
@@ -76,7 +76,7 @@ public class BidService : IBidService
             .FirstOrDefaultAsync(br => br.Id == id, cancellationToken);
 
         if (bidRequest == null)
-            return null;
+            throw new BidRequestNotFoundException(id);
 
         return new BidRequestDetailsDto
         {
@@ -295,7 +295,7 @@ public class BidService : IBidService
         };
     }
 
-    public async Task<BidResponseDetailsDto?> GetBidResponseByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<BidResponseDetailsDto> GetBidResponseByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
@@ -305,7 +305,7 @@ public class BidService : IBidService
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
-            return null;
+            throw new BidResponseNotFoundException(id);
 
         return new BidResponseDetailsDto
         {

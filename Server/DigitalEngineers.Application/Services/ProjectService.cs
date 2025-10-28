@@ -215,7 +215,7 @@ public class ProjectService : IProjectService
         }
     }
 
-    public async Task<ProjectDetailsDto?> GetProjectByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<ProjectDetailsDto> GetProjectByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
             .Include(p => p.ProjectLicenseTypes)
@@ -225,7 +225,35 @@ public class ProjectService : IProjectService
 
         if (project == null)
         {
-            return null;
+            throw new ProjectNotFoundException(id);
+        }
+
+        // Получаем информацию о клиенте
+        var client = await _context.Users
+            .Where(u => u.Id == project.ClientId)
+            .Select(u => new
+            {
+                u.Id,
+                u.FirstName,
+                u.LastName,
+                u.Email,
+                u.ProfilePictureUrl
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        string clientName = string.Empty;
+        string clientEmail = string.Empty;
+        string? clientProfilePictureUrl = null;
+
+        if (client != null)
+        {
+            clientName = $"{client.FirstName ?? ""} {client.LastName ?? ""}".Trim();
+            if (string.IsNullOrWhiteSpace(clientName))
+            {
+                clientName = client.Email ?? "Unknown Client";
+            }
+            clientEmail = client.Email ?? string.Empty;
+            clientProfilePictureUrl = client.ProfilePictureUrl;
         }
 
         var licenseTypeIds = project.ProjectLicenseTypes
@@ -270,6 +298,9 @@ public class ProjectService : IProjectService
             Description = project.Description,
             Status = project.Status.ToString(),
             ClientId = project.ClientId,
+            ClientName = clientName,
+            ClientEmail = clientEmail,
+            ClientProfilePictureUrl = clientProfilePictureUrl,
             StreetAddress = project.StreetAddress,
             City = project.City,
             State = project.State,

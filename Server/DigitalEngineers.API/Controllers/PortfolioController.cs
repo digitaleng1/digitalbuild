@@ -60,10 +60,6 @@ public class PortfolioController : ControllerBase
         CancellationToken cancellationToken)
     {
         var portfolioItem = await _portfolioService.GetPortfolioItemByIdAsync(id, cancellationToken);
-
-        if (portfolioItem == null)
-            return NotFound();
-
         var viewModel = _mapper.Map<PortfolioItemViewModel>(portfolioItem);
         return Ok(viewModel);
     }

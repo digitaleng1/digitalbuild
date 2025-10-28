@@ -1,5 +1,5 @@
 import { Row, Col, Card, CardBody, Badge, Spinner, Alert } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import TeamMembers from '@/app/client/projects/details/TeamMembers';
 import Comments from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
@@ -56,6 +56,9 @@ const AdminProjectDetails = () => {
 	const statusVariant = getStatusBadgeVariant(project.status);
 	const scopeLabel = getProjectScopeLabel(project.projectScope);
 
+	// Получаем первую букву имени клиента для аватара по умолчанию
+	const clientInitial = project.clientName ? project.clientName.charAt(0).toUpperCase() : '?';
+
 	return (
 		<>
 			<PageBreadcrumb title={project.name} subName="Admin" />
@@ -90,9 +93,43 @@ const AdminProjectDetails = () => {
 							)}
 
 							<h5>Client Information:</h5>
-							<p className="text-muted mb-4">
-								<strong>Client ID:</strong> {project.clientId}
-							</p>
+							<div className="d-flex align-items-center mb-4">
+								<Link 
+									to="#" 
+									className="text-decoration-none"
+									title={`View ${project.clientName}'s profile`}
+								>
+									<div className="d-flex align-items-center">
+										<div className="flex-shrink-0">
+											{project.clientProfilePictureUrl ? (
+												<img 
+													src={project.clientProfilePictureUrl} 
+													alt={project.clientName}
+													className="rounded-circle avatar-md"
+													style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+												/>
+											) : (
+												<div 
+													className="rounded-circle avatar-md d-flex align-items-center justify-content-center bg-primary text-white"
+													style={{ width: '48px', height: '48px', fontSize: '20px', fontWeight: 'bold' }}
+												>
+													{clientInitial}
+												</div>
+											)}
+										</div>
+										<div className="flex-grow-1 ms-3">
+											<h5 className="my-0 text-secondary">
+												{project.clientName || 'Unknown Client'}
+												<i className="mdi mdi-open-in-new ms-1" style={{ fontSize: '14px' }}></i>
+											</h5>
+											<p className="text-muted mb-0">
+												<i className="mdi mdi-email-outline me-1"></i>
+												{project.clientEmail || 'No email'}
+											</p>
+										</div>
+									</div>
+								</Link>
+							</div>
 
 							<h5>Project Overview:</h5>
 							<p className="text-muted mb-4">{project.description}</p>

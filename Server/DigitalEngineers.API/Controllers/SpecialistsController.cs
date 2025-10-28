@@ -4,7 +4,6 @@ using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DigitalEngineers.API.Controllers;
 
@@ -45,10 +44,6 @@ public class SpecialistsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var specialist = await _specialistService.GetSpecialistByIdAsync(id, cancellationToken);
-
-        if (specialist == null)
-            return NotFound();
-
         var viewModel = _mapper.Map<SpecialistDetailsViewModel>(specialist);
         return Ok(viewModel);
     }
@@ -61,10 +56,6 @@ public class SpecialistsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
-
-        if (specialist == null)
-            return NotFound();
-
         var viewModel = _mapper.Map<SpecialistDetailsViewModel>(specialist);
         return Ok(viewModel);
     }

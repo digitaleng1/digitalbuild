@@ -23,7 +23,7 @@ public static class DataSeeder
             await context.Database.MigrateAsync();
 
             await SeedRolesAsync(roleManager);
-            await SeedSuperAdminAsync(userManager);
+            await SeedAdminsAsync(userManager);
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
             await SeedlookupsDataAsync(context, logger);
@@ -48,8 +48,40 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedSuperAdminAsync(UserManager<ApplicationUser> userManager)
+    private static async Task SeedAdminsAsync(UserManager<ApplicationUser> userManager)
     {
+        var superAdminEmail = "super.admin@digitalengineers.com";
+        var existingSuperAdmin = await userManager.FindByEmailAsync(superAdminEmail);
+
+        if (existingSuperAdmin == null)
+        {
+            var superAdmin = new ApplicationUser
+            {
+                Id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                UserName = superAdminEmail,
+                Email = superAdminEmail,
+                EmailConfirmed = true,
+                FirstName = "Super",
+                LastName = "Admin",
+                PhoneNumber = "555-000-0000",
+                ProfilePictureUrl = "https://randomuser.me/api/portraits/lego/1.jpg",
+                Biography = "System super administrator for Digital Engineers platform.",
+                Location = "Remote",
+                Website = "https://digitalengineers.com",
+                IsAvailableForHire = false,
+                CreatedAt = DateTime.UtcNow.AddYears(-1),
+                UpdatedAt = DateTime.UtcNow.AddDays(-1),
+                LastActive = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            var result = await userManager.CreateAsync(superAdmin, "SuperAdmin123!@#");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+            }
+        }
+
         var adminEmail = "admin@digitalengineers.com";
         var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
 
@@ -57,14 +89,14 @@ public static class DataSeeder
         {
             var admin = new ApplicationUser
             {
-                Id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                Id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
                 UserName = adminEmail,
                 Email = adminEmail,
                 EmailConfirmed = true,
                 FirstName = "Admin",
                 LastName = "User",
-                PhoneNumber = "555-000-0000",
-                ProfilePictureUrl = "https://randomuser.me/api/portraits/lego/1.jpg",
+                PhoneNumber = "555-000-0001",
+                ProfilePictureUrl = "https://randomuser.me/api/portraits/lego/2.jpg",
                 Biography = "System administrator for Digital Engineers platform.",
                 Location = "Remote",
                 Website = "https://digitalengineers.com",
@@ -78,7 +110,7 @@ public static class DataSeeder
             var result = await userManager.CreateAsync(admin, "Admin123!@#");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(admin, "SuperAdmin");
+                await userManager.AddToRoleAsync(admin, "Admin");
             }
         }
     }

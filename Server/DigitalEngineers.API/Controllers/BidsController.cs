@@ -46,10 +46,6 @@ public class BidsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var bidRequest = await _bidService.GetBidRequestByIdAsync(id, cancellationToken);
-
-        if (bidRequest == null)
-            return NotFound();
-
         var viewModel = _mapper.Map<BidRequestDetailsViewModel>(bidRequest);
         return Ok(viewModel);
     }
@@ -90,7 +86,7 @@ public class BidsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (!Enum.TryParse<BidRequestStatus>(status, ignoreCase: true, out var parsedStatus))
-            return BadRequest(new { message = $"Invalid status: {status}" });
+            throw new ArgumentException($"Invalid status: {status}");
 
         var result = await _bidService.UpdateBidRequestStatusAsync(id, parsedStatus, cancellationToken);
         var viewModel = _mapper.Map<BidRequestViewModel>(result);
@@ -130,10 +126,6 @@ public class BidsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var bidResponse = await _bidService.GetBidResponseByIdAsync(id, cancellationToken);
-
-        if (bidResponse == null)
-            return NotFound();
-
         var viewModel = _mapper.Map<BidResponseDetailsViewModel>(bidResponse);
         return Ok(viewModel);
     }
@@ -196,7 +188,7 @@ public class BidsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
+            throw new UnauthorizedAccessException("User ID not found in token");
 
         var dto = new CreateBidMessageDto
         {

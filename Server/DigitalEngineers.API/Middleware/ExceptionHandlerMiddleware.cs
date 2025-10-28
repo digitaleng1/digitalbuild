@@ -32,33 +32,44 @@ namespace DigitalEngineers.API.Middleware
         {
             ErrorResponse errorResponse;
 
-            context.Response.StatusCode = exception switch
+            var statusCode = exception switch
             {
                 // 404 - Not Found
                 ProjectNotFoundException => StatusCodes.Status404NotFound,
+                SpecialistNotFoundException => StatusCodes.Status404NotFound,
+                PortfolioItemNotFoundException => StatusCodes.Status404NotFound,
+                BidRequestNotFoundException => StatusCodes.Status404NotFound,
+                BidResponseNotFoundException => StatusCodes.Status404NotFound,
 
                 // 400 - Bad Request (валидация)
                 InvalidProjectStatusException => StatusCodes.Status400BadRequest,
+                InvalidBidStatusException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status400BadRequest,
 
                 // 401 - Unauthorized
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                UnauthorizedBidAccessException => StatusCodes.Status401Unauthorized,
 
                 // 500 - Internal Server Error (все остальное)
                 _ => StatusCodes.Status500InternalServerError
             };
 
-            errorResponse = exception switch
+            context.Response.StatusCode = statusCode;
+
+            errorResponse = new ErrorResponse(
+                exception.Message, 
+                statusCode
+            )
             {
-                ProjectNotFoundException ex => new ErrorResponse(ex.Message),
-                InvalidProjectStatusException ex => new ErrorResponse(ex.Message),
-                ArgumentException ex => new ErrorResponse(ex.Message),
-                UnauthorizedAccessException => new ErrorResponse("Unauthorized access"),
-                _ => new ErrorResponse("An unexpected error occurred. Please try again later.")
+                TraceId = context.TraceIdentifier
             };
 
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse));
+            var json = JsonConvert.SerializeObject(errorResponse, new JsonSerializerSettings
+            {
+                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+            });
+            await context.Response.WriteAsync(json);
         }
     }
 

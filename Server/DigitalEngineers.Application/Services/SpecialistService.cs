@@ -92,7 +92,7 @@ public class SpecialistService : ISpecialistService
         };
     }
 
-    public async Task<SpecialistDetailsDto?> GetSpecialistByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<SpecialistDetailsDto> GetSpecialistByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var specialist = await _context.Set<Specialist>()
             .Include(s => s.User)
@@ -104,12 +104,12 @@ public class SpecialistService : ISpecialistService
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
         if (specialist == null)
-            return null;
+            throw new SpecialistNotFoundException(id);
 
         return MapToDetailsDto(specialist);
     }
 
-    public async Task<SpecialistDetailsDto?> GetSpecialistByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<SpecialistDetailsDto> GetSpecialistByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         var specialist = await _context.Set<Specialist>()
             .Include(s => s.User)
@@ -121,7 +121,7 @@ public class SpecialistService : ISpecialistService
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
 
         if (specialist == null)
-            return null;
+            throw new ArgumentException($"Specialist with user ID {userId} not found");
 
         return MapToDetailsDto(specialist);
     }
