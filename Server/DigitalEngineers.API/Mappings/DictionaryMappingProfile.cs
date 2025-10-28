@@ -9,7 +9,6 @@ public class DictionaryMappingProfile : Profile
     public DictionaryMappingProfile()
     {
         // DTO to ViewModel
-        CreateMap<ProfessionalTypeDto, ProfessionalTypeViewModel>();
         CreateMap<StateDto, StateViewModel>();
         CreateMap<ProfessionDto, ProfessionViewModel>();
         CreateMap<LicenseTypeDto, LicenseTypeViewModel>();
