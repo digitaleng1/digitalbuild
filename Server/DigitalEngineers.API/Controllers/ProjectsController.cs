@@ -147,4 +147,30 @@ public class ProjectsController : ControllerBase
         await _projectService.UpdateProjectStatusAsync(id, model.Status, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Get project specialists with role-based filtering
+    /// </summary>
+    [HttpGet("{id}/specialists")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectSpecialistViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<ProjectSpecialistViewModel>>> GetProjectSpecialists(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+
+        var specialists = await _projectService.GetProjectSpecialistsAsync(id, userId, roles, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<ProjectSpecialistViewModel>>(specialists);
+        
+        return Ok(viewModels);
+    }
 }

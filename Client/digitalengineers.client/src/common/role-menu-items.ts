@@ -181,11 +181,18 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'apps-projects',
+		key: 'projects',
 		label: 'Projects',
 		isTitle: false,
 		icon: 'uil-briefcase',
-		url: '/admin/projects',
+		children: [
+			{
+				key: 'project-list-admin',
+				label: 'All Projects',
+				url: '/projects',
+				parentKey: 'projects',
+			},
+		],
 	},
 	{
 		key: 'apps-tasks',

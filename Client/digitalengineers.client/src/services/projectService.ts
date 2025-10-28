@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto } from '@/types/project';
+import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto, ProjectSpecialistDto } from '@/types/project';
 
 class ProjectService {
 	/**
@@ -16,6 +16,14 @@ class ProjectService {
 	async getProjectById(id: number): Promise<ProjectDetailsDto> {
 		const data = await httpClient.get<ProjectDetailsDto>(`/api/projects/${id}`);
 		return data as ProjectDetailsDto;
+	}
+
+	/**
+	 * Get project specialists with role-based filtering
+	 */
+	async getProjectSpecialists(id: number): Promise<ProjectSpecialistDto[]> {
+		const data = await httpClient.get<ProjectSpecialistDto[]>(`/api/projects/${id}/specialists`);
+		return data as ProjectSpecialistDto[];
 	}
 
 	/**

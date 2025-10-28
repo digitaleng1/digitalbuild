@@ -13,6 +13,7 @@ public class ProjectViewModel
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
+    public string ManagementType { get; set; } = string.Empty;
     public int[] LicenseTypeIds { get; set; } = [];
 }
 
@@ -31,6 +32,7 @@ public class ProjectDetailsViewModel
     public string State { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     public int ProjectScope { get; set; }
+    public string ManagementType { get; set; } = string.Empty;
     public int[] LicenseTypeIds { get; set; } = [];
     public LicenseTypeViewModel[] LicenseTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }
@@ -47,4 +49,23 @@ public class ProjectFileViewModel
     public long FileSize { get; set; }
     public string ContentType { get; set; } = string.Empty;
     public DateTime UploadedAt { get; set; }
+}
+
+public class ProjectSpecialistViewModel
+{
+    public int SpecialistId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? ProfilePictureUrl { get; set; }
+    public string? Role { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public SpecialistLicenseInfoViewModel[] LicenseTypes { get; set; } = [];
+}
+
+public class SpecialistLicenseInfoViewModel
+{
+    public int LicenseTypeId { get; set; }
+    public string LicenseTypeName { get; set; } = string.Empty;
+    public int ProfessionId { get; set; }
+    public string ProfessionName { get; set; } = string.Empty;
 }

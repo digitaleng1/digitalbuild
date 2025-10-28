@@ -398,4 +398,71 @@ public class ProjectService : IProjectService
         
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<ProjectSpecialistDto>> GetProjectSpecialistsAsync(
+        int projectId,
+        string userId,
+        string[] userRoles,
+        CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+
+        // Для клиента с DigitalEngineersManaged проектом возвращаем placeholder
+        if (isClient && project.ManagementType == ProjectManagementType.DigitalEngineersManaged)
+        {
+            return
+            [
+                new ProjectSpecialistDto
+                {
+                    SpecialistId = 0,
+                    UserId = string.Empty,
+                    Name = "Digital Engineers",
+                    ProfilePictureUrl = null,
+                    Role = "Team",
+                    AssignedAt = project.CreatedAt,
+                    LicenseTypes = []
+                }
+            ];
+        }
+
+        // Для Admin или ClientManaged проектов возвращаем полную информацию
+        var specialists = await _context.ProjectSpecialists
+            .AsNoTracking()
+            .Where(ps => ps.ProjectId == projectId)
+            .Include(ps => ps.Specialist)
+                .ThenInclude(s => s.User)
+            .Include(ps => ps.Specialist)
+                .ThenInclude(s => s.LicenseTypes)
+                    .ThenInclude(slt => slt.LicenseType)
+                        .ThenInclude(lt => lt.Profession)
+            .Select(ps => new ProjectSpecialistDto
+            {
+                SpecialistId = ps.SpecialistId,
+                UserId = ps.Specialist.UserId,
+                Name = $"{ps.Specialist.User.FirstName ?? ""} {ps.Specialist.User.LastName ?? ""}".Trim(),
+                ProfilePictureUrl = ps.Specialist.User.ProfilePictureUrl,
+                Role = ps.Role,
+                AssignedAt = ps.AssignedAt,
+                LicenseTypes = ps.Specialist.LicenseTypes.Select(slt => new SpecialistLicenseInfoDto
+                {
+                    LicenseTypeId = slt.LicenseTypeId,
+                    LicenseTypeName = slt.LicenseType.Name,
+                    ProfessionId = slt.LicenseType.ProfessionId,
+                    ProfessionName = slt.LicenseType.Profession.Name
+                }).ToArray()
+            })
+            .ToListAsync(cancellationToken);
+
+        return specialists;
+    }
 }

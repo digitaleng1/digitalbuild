@@ -26,4 +26,19 @@ public interface IProjectService
         int projectId, 
         string status, 
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets project specialists with role-based filtering
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="userId">User ID</param>
+    /// <param name="userRoles">User roles</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of assigned specialists or placeholder for DE-managed projects</returns>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    Task<IEnumerable<ProjectSpecialistDto>> GetProjectSpecialistsAsync(
+        int projectId,
+        string userId,
+        string[] userRoles,
+        CancellationToken cancellationToken = default);
 }

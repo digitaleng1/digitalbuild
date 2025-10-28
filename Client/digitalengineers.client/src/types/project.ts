@@ -15,6 +15,12 @@ export enum ProjectScope {
 	Large = 3
 }
 
+// Project Management Type Enum
+export enum ProjectManagementType {
+	ClientManaged = 'ClientManaged',
+	DigitalEngineersManaged = 'DigitalEngineersManaged'
+}
+
 export interface ProjectFormData {
 	// Step 1
 	name: string;
@@ -67,6 +73,7 @@ export interface ProjectDto {
 	state: string;
 	zipCode: string;
 	projectScope: number;
+	managementType: string;
 	licenseTypeIds: number[];
 }
 
@@ -85,6 +92,7 @@ export interface ProjectDetailsDto {
 	state: string;
 	zipCode: string;
 	projectScope: number;
+	managementType: string;
 	licenseTypeIds: number[];
 	licenseTypes: LicenseType[];
 	createdAt: string;
@@ -100,4 +108,21 @@ export interface ProjectFile {
 	fileSize: number;
 	contentType: string;
 	uploadedAt: string;
+}
+
+export interface ProjectSpecialistDto {
+	specialistId: number;
+	userId: string;
+	name: string;
+	profilePictureUrl?: string;
+	role?: string;
+	assignedAt: string;
+	licenseTypes: SpecialistLicenseInfo[];
+}
+
+export interface SpecialistLicenseInfo {
+	licenseTypeId: number;
+	licenseTypeName: string;
+	professionId: number;
+	professionName: string;
 }

@@ -55,3 +55,22 @@ public class ProjectDetailsDto
     public string? ThumbnailUrl { get; set; }
     public ProjectFileDto[] Files { get; set; } = [];
 }
+
+public class ProjectSpecialistDto
+{
+    public int SpecialistId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? ProfilePictureUrl { get; set; }
+    public string? Role { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public SpecialistLicenseInfoDto[] LicenseTypes { get; set; } = [];
+}
+
+public class SpecialistLicenseInfoDto
+{
+    public int LicenseTypeId { get; set; }
+    public string LicenseTypeName { get; set; } = string.Empty;
+    public int ProfessionId { get; set; }
+    public string ProfessionName { get; set; } = string.Empty;
+}
