@@ -13,11 +13,13 @@ namespace DigitalEngineers.API.Controllers;
 public class SpecialistsController : ControllerBase
 {
     private readonly ISpecialistService _specialistService;
+    private readonly IProjectService _projectService;
     private readonly IMapper _mapper;
 
-    public SpecialistsController(ISpecialistService specialistService, IMapper mapper)
+    public SpecialistsController(ISpecialistService specialistService, IProjectService projectService, IMapper mapper)
     {
         _specialistService = specialistService;
+        _projectService = projectService;
         _mapper = mapper;
     }
 
@@ -134,5 +136,40 @@ public class SpecialistsController : ControllerBase
     {
         await _specialistService.RemoveSpecialistFromProjectAsync(projectId, specialistId, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("by-license-types")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(IEnumerable<AvailableSpecialistViewModel>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<AvailableSpecialistViewModel>>> GetSpecialistsByLicenseTypes(
+        [FromQuery] int[] licenseTypeIds,
+        CancellationToken cancellationToken)
+    {
+        var specialists = await _specialistService.GetSpecialistsByLicenseTypesAsync(licenseTypeIds, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);
+
+        return Ok(viewModels);
+    }
+
+    /// <summary>
+    /// Get available specialists for a project based on required license types
+    /// </summary>
+    [HttpGet("projects/{projectId}/available")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(IEnumerable<AvailableSpecialistViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<AvailableSpecialistViewModel>>> GetAvailableSpecialistsForProject(
+        int projectId,
+        CancellationToken cancellationToken)
+    {
+        var project = await _projectService.GetProjectByIdAsync(projectId, cancellationToken);
+        
+        var specialists = await _specialistService.GetSpecialistsByLicenseTypesAsync(
+            project.LicenseTypeIds.ToArray(), 
+            cancellationToken);
+        
+        var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);
+
+        return Ok(viewModels);
     }
 }

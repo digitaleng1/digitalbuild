@@ -73,18 +73,18 @@ const LeftSidebar = ({ isCondensed, leftbarDark }: LeftSidebarProps) => {
 	return (
 		<div className="leftside-menu" ref={menuNodeRef}>
 			<Link to="/" className={`logo ${leftbarDark ? 'logo-light' : 'logo-dark'}`}>
-				{/*<span className="logo-lg">*/}
-				{/*	<img src={leftbarDark ? logo : logoDark} alt="logo" height={22} width={isCondensed ? 32 : 104} />*/}
-				{/*</span>*/}
-				{/*<span className="logo-sm">*/}
-				{/*	<img src={leftbarDark ? logoSm : logoDarkSm} alt="logo" height={22} width={isCondensed ? 32 : 104} />*/}
-				{/*</span>*/}
-				<span className={`logo-lg  font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>
-					Digital Engineers
+				<span className="logo-lg">
+					<img src={leftbarDark ? logo : logoDark} alt="logo"  />
 				</span>
-				<span className={`logo-sm font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>
-					DE
+				<span className="logo-sm">
+					<img src={leftbarDark ? logoSm : logoDarkSm} alt="logo" />
 				</span>
+				{/*<span className={`logo-lg  font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>*/}
+				{/*	Digital Engineers*/}
+				{/*</span>*/}
+				{/*<span className={`logo-sm font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>*/}
+				{/*	DE*/}
+				{/*</span>*/}
 			</Link>
 
 			{!isCondensed && (

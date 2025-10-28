@@ -27,6 +27,7 @@ public static class DataSeeder
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
             await SeedlookupsDataAsync(context, logger);
+            await SeedSpecialistsAsync(context, logger);
         }
         catch (Exception ex)
         {
@@ -317,5 +318,80 @@ public static class DataSeeder
 
         await context.LicenseTypes.AddRangeAsync(licenseTypes);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedSpecialistsAsync(ApplicationDbContext context, ILogger logger)
+    {
+        if (await context.Specialists.AnyAsync())
+        {
+            return;
+        }
+
+        var providerUserIds = new[]
+        {
+            "11111111-1111-1111-1111-111111111111",
+            "22222222-2222-2222-2222-222222222222",
+            "33333333-3333-3333-3333-333333333333",
+            "44444444-4444-4444-4444-444444444444",
+            "55555555-5555-5555-5555-555555555555",
+            "66666666-6666-6666-6666-666666666666",
+            "77777777-7777-7777-7777-777777777777",
+            "88888888-8888-8888-8888-888888888888",
+            "99999999-9999-9999-9999-999999999999"
+        };
+
+        var allLicenseTypes = await context.LicenseTypes.Select(lt => lt.Id).ToListAsync();
+        
+        if (allLicenseTypes.Count == 0)
+        {
+            logger.LogError("No license types found. Cannot seed specialists.");
+            return;
+        }
+
+        var specialists = new List<Specialist>();
+        var specialistLicenseTypes = new List<SpecialistLicenseType>();
+
+        foreach (var userId in providerUserIds)
+        {
+            var specialist = new Specialist
+            {
+                UserId = userId,
+                YearsOfExperience = Random.Shared.Next(2, 21),
+                HourlyRate = Random.Shared.Next(50, 201),
+                Rating = Math.Round(Random.Shared.NextDouble() * 2 + 3, 1),
+                IsAvailable = true,
+                Specialization = null,
+                CreatedAt = DateTime.UtcNow.AddMonths(-Random.Shared.Next(6, 24)),
+                UpdatedAt = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30))
+            };
+
+            specialists.Add(specialist);
+        }
+
+        await context.Specialists.AddRangeAsync(specialists);
+        await context.SaveChangesAsync();
+
+        foreach (var specialist in specialists)
+        {
+            var licenseCount = Random.Shared.Next(5, 11);
+            var selectedLicenseIds = allLicenseTypes
+                .OrderBy(_ => Random.Shared.Next())
+                .Take(licenseCount)
+                .ToList();
+
+            foreach (var licenseId in selectedLicenseIds)
+            {
+                specialistLicenseTypes.Add(new SpecialistLicenseType
+                {
+                    SpecialistId = specialist.Id,
+                    LicenseTypeId = licenseId
+                });
+            }
+        }
+
+        await context.SpecialistLicenseTypes.AddRangeAsync(specialistLicenseTypes);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {SpecialistCount} specialists with random licenses (5-10 per specialist)", specialists.Count);
     }
 }

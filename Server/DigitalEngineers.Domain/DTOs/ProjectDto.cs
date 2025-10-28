@@ -62,8 +62,8 @@ public class ProjectSpecialistDto
     public string UserId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
-    public string? Role { get; set; }
-    public DateTime AssignedAt { get; set; }
+    public bool IsAssigned { get; set; } // true = assigned, false = pending bid
+    public DateTime AssignedOrBidSentAt { get; set; }
     public SpecialistLicenseInfoDto[] LicenseTypes { get; set; } = [];
 }
 

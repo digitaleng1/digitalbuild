@@ -9,16 +9,18 @@ public class BidRequest
     public int ProjectId { get; set; }
     public Project Project { get; set; } = null!;
     
+    public int SpecialistId { get; set; }
+    public Specialist Specialist { get; set; } = null!;
+    
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public BidRequestStatus Status { get; set; } = BidRequestStatus.Open;
     
-    public decimal? BudgetMin { get; set; }
-    public decimal? BudgetMax { get; set; }
+    public decimal ProposedBudget { get; set; }
     public DateTime? Deadline { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    public ICollection<BidResponse> Responses { get; set; } = [];
+    public BidResponse? Response { get; set; }
 }

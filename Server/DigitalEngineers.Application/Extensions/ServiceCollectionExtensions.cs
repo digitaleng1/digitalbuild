@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISpecialistService, SpecialistService>();
         services.AddScoped<IPortfolioService, PortfolioService>();
         services.AddScoped<IBidService, BidService>();
+        services.AddScoped<IEmailService, EmailService>();
 
         return services;
     }

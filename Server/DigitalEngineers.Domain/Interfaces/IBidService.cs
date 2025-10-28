@@ -22,4 +22,7 @@ public interface IBidService
     Task<BidMessageDto> CreateMessageAsync(CreateBidMessageDto dto, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidMessageDto>> GetMessagesByBidResponseIdAsync(int responseId, CancellationToken cancellationToken = default);
     Task DeleteMessageAsync(int id, CancellationToken cancellationToken = default);
+    
+    Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, CancellationToken cancellationToken = default);
 }

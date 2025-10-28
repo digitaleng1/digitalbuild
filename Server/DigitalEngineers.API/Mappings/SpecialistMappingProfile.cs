@@ -20,5 +20,6 @@ public class SpecialistMappingProfile : Profile
         CreateMap<PortfolioItemDto, PortfolioItemViewModel>();
         CreateMap<AssignedProjectDto, AssignedProjectViewModel>();
         CreateMap<LicenseTypeDto, LicenseTypeViewModel>();
+        CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
     }
 }

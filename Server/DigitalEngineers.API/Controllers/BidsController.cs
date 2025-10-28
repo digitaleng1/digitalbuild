@@ -1,5 +1,6 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.Bid;
+using DigitalEngineers.API.ViewModels.Specialist;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
@@ -221,5 +222,40 @@ public class BidsController : ControllerBase
     {
         await _bidService.DeleteMessageAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("send")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<int>> SendBidRequest(
+        [FromBody] SendBidRequestViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var clientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(clientId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        var dto = _mapper.Map<SendBidRequestDto>(model);
+        await _bidService.SendBidRequestAsync(dto, clientId, cancellationToken);
+
+        return Ok(new { message = $"Bid requests sent to {dto.SpecialistUserIds.Length} specialist(s)" });
+    }
+
+    [HttpGet("projects/{projectId}/available-specialists")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(IEnumerable<AvailableSpecialistViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<AvailableSpecialistViewModel>>> GetAvailableSpecialists(
+        int projectId,
+        CancellationToken cancellationToken)
+    {
+        var specialists = await _bidService.GetAvailableSpecialistsForProjectAsync(projectId, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);
+
+        return Ok(viewModels);
     }
 }

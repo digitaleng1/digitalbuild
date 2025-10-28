@@ -19,10 +19,10 @@ class ProjectService {
 	}
 
 	/**
-	 * Get project specialists with role-based filtering
+	 * Get project team members (assigned + pending bids)
 	 */
-	async getProjectSpecialists(id: number): Promise<ProjectSpecialistDto[]> {
-		const data = await httpClient.get<ProjectSpecialistDto[]>(`/api/projects/${id}/specialists`);
+	async getProjectTeamMembers(id: number): Promise<ProjectSpecialistDto[]> {
+		const data = await httpClient.get<ProjectSpecialistDto[]>(`/api/projects/${id}/team-members`);
 		return data as ProjectSpecialistDto[];
 	}
 

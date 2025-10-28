@@ -241,11 +241,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.ToTable("BidRequests");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.ProjectId).IsRequired();
+            entity.Property(e => e.SpecialistId).IsRequired();
             entity.Property(e => e.Title).HasMaxLength(300).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.BudgetMin).HasPrecision(18, 2);
-            entity.Property(e => e.BudgetMax).HasPrecision(18, 2);
+            entity.Property(e => e.ProposedBudget).HasPrecision(18, 2).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
@@ -254,12 +254,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasMany(e => e.Responses)
+            entity.HasOne(e => e.Specialist)
+                .WithMany()
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Response)
                 .WithOne(r => r.BidRequest)
-                .HasForeignKey(r => r.BidRequestId)
+                .HasForeignKey<BidResponse>(r => r.BidRequestId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => e.ProjectId);
+            entity.HasIndex(e => e.SpecialistId);
             entity.HasIndex(e => e.Status);
         });
 
@@ -278,11 +284,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            entity.HasOne(e => e.BidRequest)
-                .WithMany(br => br.Responses)
-                .HasForeignKey(e => e.BidRequestId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             entity.HasOne(e => e.Specialist)
                 .WithMany()
                 .HasForeignKey(e => e.SpecialistId)
@@ -293,9 +294,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(m => m.BidResponseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(e => e.BidRequestId);
+            entity.HasIndex(e => e.BidRequestId).IsUnique();
             entity.HasIndex(e => e.SpecialistId);
-            entity.HasIndex(e => new { e.BidRequestId, e.SpecialistId }).IsUnique();
         });
 
         // Configure BidMessage

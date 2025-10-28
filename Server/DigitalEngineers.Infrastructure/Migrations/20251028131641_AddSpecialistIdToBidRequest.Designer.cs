@@ -3,6 +3,7 @@ using System;
 using DigitalEngineers.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DigitalEngineers.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251028131641_AddSpecialistIdToBidRequest")]
+    partial class AddSpecialistIdToBidRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,14 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("BudgetMax")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("BudgetMin")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -76,10 +87,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.Property<int>("ProjectId")
                         .HasColumnType("integer");
-
-                    b.Property<decimal>("ProposedBudget")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int>("SpecialistId")
                         .HasColumnType("integer");
@@ -147,10 +154,12 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BidRequestId")
-                        .IsUnique();
+                    b.HasIndex("BidRequestId");
 
                     b.HasIndex("SpecialistId");
+
+                    b.HasIndex("BidRequestId", "SpecialistId")
+                        .IsUnique();
 
                     b.ToTable("BidResponses", (string)null);
                 });
@@ -723,7 +732,7 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.Specialist", "Specialist")
                         .WithMany()
                         .HasForeignKey("SpecialistId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Project");
@@ -734,8 +743,8 @@ namespace DigitalEngineers.Infrastructure.Migrations
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.BidResponse", b =>
                 {
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.BidRequest", "BidRequest")
-                        .WithOne("Response")
-                        .HasForeignKey("DigitalEngineers.Infrastructure.Entities.BidResponse", "BidRequestId")
+                        .WithMany("Responses")
+                        .HasForeignKey("BidRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -913,7 +922,7 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.BidRequest", b =>
                 {
-                    b.Navigation("Response");
+                    b.Navigation("Responses");
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.BidResponse", b =>

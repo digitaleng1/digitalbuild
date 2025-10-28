@@ -110,7 +110,7 @@ const ProjectDetailsPage = () => {
 
 							{project.thumbnailUrl && (
 								<Row className="mb-4">
-									<Col md={6}>
+									<Col md={8}>
 										<img
 											src={project.thumbnailUrl}
 											alt={project.name}
@@ -118,7 +118,7 @@ const ProjectDetailsPage = () => {
 											style={{ maxHeight: '300px', objectFit: 'cover', width: '100%' }}
 										/>
 									</Col>
-									<Col md={6}>
+									<Col md={4}>
 										{/* Client Information */}
 										<div className="mb-4">
 											<h5 className="mb-3">Client Information:</h5>
@@ -219,7 +219,11 @@ const ProjectDetailsPage = () => {
 								</>
 							)}
 
-							<TeamMembers projectId={project.id} />
+							<TeamMembers 
+								projectId={project.id} 
+								isAdmin={isAdmin} 
+								requiredLicenseTypes={project.licenseTypes || []} 
+							/>
 						</CardBody>
 					</Card>
 

@@ -16,7 +16,7 @@ public class ProjectService : IProjectService
     private readonly ILogger<ProjectService> _logger;
 
     public ProjectService(
-        ApplicationDbContext context, 
+        ApplicationDbContext context,
         IFileStorageService fileStorageService,
         ILogger<ProjectService> logger)
     {
@@ -26,13 +26,12 @@ public class ProjectService : IProjectService
     }
 
     public async Task<ProjectDto> CreateProjectAsync(
-        CreateProjectDto dto, 
+        CreateProjectDto dto,
         string clientId,
         List<FileUploadInfo>? files = null,
         FileUploadInfo? thumbnail = null,
         CancellationToken cancellationToken = default)
     {
-        // Validate ClientId exists
         var clientExists = await _context.Users.AnyAsync(u => u.Id == clientId, cancellationToken);
         if (!clientExists)
         {
@@ -40,7 +39,6 @@ public class ProjectService : IProjectService
             throw new ArgumentException($"Client with ID {clientId} not found", nameof(clientId));
         }
 
-        // Validate LicenseTypeIds exist
         var existingLicenseTypeIds = await _context.LicenseTypes
             .Where(lt => dto.LicenseTypeIds.Contains(lt.Id))
             .Select(lt => lt.Id)
@@ -53,20 +51,17 @@ public class ProjectService : IProjectService
             throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
         }
 
-        // Validate project scope
         if (!Enum.IsDefined(typeof(ProjectScope), dto.ProjectScope))
         {
             _logger.LogWarning("Invalid project scope: {ProjectScope}", dto.ProjectScope);
             throw new ArgumentException($"Invalid project scope: {dto.ProjectScope}", nameof(dto.ProjectScope));
         }
 
-        // Track uploaded S3 keys for rollback
         var uploadedS3Keys = new List<string>();
 
         using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            // Create project entity
             var project = new Project
             {
                 Name = dto.Name,
@@ -83,11 +78,9 @@ public class ProjectService : IProjectService
                 UpdatedAt = DateTime.UtcNow
             };
 
-            // Add project to context
             _context.Projects.Add(project);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Upload thumbnail if provided
             if (thumbnail != null)
             {
                 try
@@ -109,7 +102,6 @@ public class ProjectService : IProjectService
                 }
             }
 
-            // Upload files if provided
             if (files != null && files.Count > 0)
             {
                 foreach (var file in files)
@@ -150,7 +142,6 @@ public class ProjectService : IProjectService
                 }
             }
 
-            // Create license type associations
             var projectLicenseTypes = dto.LicenseTypeIds
                 .Select(ltId => new ProjectLicenseType
                 {
@@ -193,7 +184,6 @@ public class ProjectService : IProjectService
             _logger.LogError(ex, "Error creating project '{Name}' for client {ClientId}. Rolling back transaction and cleaning up uploaded files.", 
                 dto.Name, clientId);
 
-            // Cleanup uploaded files from S3
             if (uploadedS3Keys.Count > 0)
             {
                 _logger.LogWarning("Cleaning up {FileCount} uploaded files from S3", uploadedS3Keys.Count);
@@ -228,7 +218,6 @@ public class ProjectService : IProjectService
             throw new ProjectNotFoundException(id);
         }
 
-        // Получаем информацию о клиенте
         var client = await _context.Users
             .Where(u => u.Id == project.ClientId)
             .Select(u => new
@@ -260,7 +249,6 @@ public class ProjectService : IProjectService
             .Select(plt => plt.LicenseTypeId)
             .ToArray();
 
-        // Получаем полные данные о LicenseTypes
         var licenseTypes = project.ProjectLicenseTypes
             .Select(plt => new LicenseTypeDto
             {
@@ -271,14 +259,12 @@ public class ProjectService : IProjectService
             })
             .ToArray();
 
-        // Generate presigned URLs for thumbnail
         string? thumbnailPresignedUrl = null;
         if (!string.IsNullOrEmpty(project.ThumbnailUrl))
         {
             thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
         }
 
-        // Generate presigned URLs for project files
         var filesWithPresignedUrls = project.Files
             .Select(pf => new ProjectFileDto
             {
@@ -417,26 +403,14 @@ public class ProjectService : IProjectService
         var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
         var isClient = userRoles.Contains("Client");
 
-        // Для клиента с DigitalEngineersManaged проектом возвращаем placeholder
         if (isClient && project.ManagementType == ProjectManagementType.DigitalEngineersManaged)
         {
-            return
-            [
-                new ProjectSpecialistDto
-                {
-                    SpecialistId = 0,
-                    UserId = string.Empty,
-                    Name = "Digital Engineers",
-                    ProfilePictureUrl = null,
-                    Role = "Team",
-                    AssignedAt = project.CreatedAt,
-                    LicenseTypes = []
-                }
-            ];
+            return [];
         }
 
-        // Для Admin или ClientManaged проектов возвращаем полную информацию
-        var specialists = await _context.ProjectSpecialists
+        var specialists = new List<ProjectSpecialistDto>();
+
+        var assignedSpecialists = await _context.ProjectSpecialists
             .AsNoTracking()
             .Where(ps => ps.ProjectId == projectId)
             .Include(ps => ps.Specialist)
@@ -451,8 +425,8 @@ public class ProjectService : IProjectService
                 UserId = ps.Specialist.UserId,
                 Name = $"{ps.Specialist.User.FirstName ?? ""} {ps.Specialist.User.LastName ?? ""}".Trim(),
                 ProfilePictureUrl = ps.Specialist.User.ProfilePictureUrl,
-                Role = ps.Role,
-                AssignedAt = ps.AssignedAt,
+                IsAssigned = true,
+                AssignedOrBidSentAt = ps.AssignedAt,
                 LicenseTypes = ps.Specialist.LicenseTypes.Select(slt => new SpecialistLicenseInfoDto
                 {
                     LicenseTypeId = slt.LicenseTypeId,
@@ -463,6 +437,55 @@ public class ProjectService : IProjectService
             })
             .ToListAsync(cancellationToken);
 
-        return specialists;
+        specialists.AddRange(assignedSpecialists);
+
+        if (isAdmin)
+        {
+            var assignedSpecialistIds = assignedSpecialists.Select(s => s.SpecialistId).ToHashSet();
+
+            var pendingBidSpecialists = await _context.BidRequests
+                .AsNoTracking()
+                .Where(br => br.ProjectId == projectId && br.Status == BidRequestStatus.Open)
+                .Include(br => br.Specialist)
+                    .ThenInclude(s => s.User)
+                .Include(br => br.Specialist)
+                    .ThenInclude(s => s.LicenseTypes)
+                        .ThenInclude(slt => slt.LicenseType)
+                            .ThenInclude(lt => lt.Profession)
+                .Select(br => new
+                {
+                    SpecialistId = br.SpecialistId,
+                    UserId = br.Specialist.UserId,
+                    FirstName = br.Specialist.User.FirstName,
+                    LastName = br.Specialist.User.LastName,
+                    ProfilePictureUrl = br.Specialist.User.ProfilePictureUrl,
+                    SentAt = br.CreatedAt,
+                    LicenseTypes = br.Specialist.LicenseTypes.Select(slt => new SpecialistLicenseInfoDto
+                    {
+                        LicenseTypeId = slt.LicenseTypeId,
+                        LicenseTypeName = slt.LicenseType.Name,
+                        ProfessionId = slt.LicenseType.ProfessionId,
+                        ProfessionName = slt.LicenseType.Profession.Name
+                    }).ToArray()
+                })
+                .Where(x => !assignedSpecialistIds.Contains(x.SpecialistId))
+                .ToListAsync(cancellationToken);
+
+            var pendingMembers = pendingBidSpecialists.Select(pbs => new ProjectSpecialistDto
+            {
+                SpecialistId = pbs.SpecialistId,
+                UserId = pbs.UserId,
+                Name = $"{pbs.FirstName ?? ""} {pbs.LastName ?? ""}".Trim(),
+                ProfilePictureUrl = pbs.ProfilePictureUrl,
+                IsAssigned = false,
+                AssignedOrBidSentAt = pbs.SentAt,
+                LicenseTypes = pbs.LicenseTypes
+            });
+
+            specialists.AddRange(pendingMembers);
+        }
+
+        return specialists.OrderByDescending(s => s.IsAssigned)
+                         .ThenByDescending(s => s.AssignedOrBidSentAt);
     }
 }

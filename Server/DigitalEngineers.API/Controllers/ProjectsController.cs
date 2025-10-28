@@ -149,7 +149,7 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Get project specialists with role-based filtering
+    /// Get project specialists (assigned + pending bids) with role-based filtering
     /// </summary>
     [HttpGet("{id}/specialists")]
     [ProducesResponseType(typeof(IEnumerable<ProjectSpecialistViewModel>), StatusCodes.Status200OK)]
@@ -172,5 +172,21 @@ public class ProjectsController : ControllerBase
         var viewModels = _mapper.Map<IEnumerable<ProjectSpecialistViewModel>>(specialists);
         
         return Ok(viewModels);
+    }
+
+    /// <summary>
+    /// Get project team members (assigned specialists + pending bid specialists)
+    /// Alias for GetProjectSpecialists for backward compatibility
+    /// </summary>
+    [HttpGet("{id}/team-members")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectSpecialistViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<ProjectSpecialistViewModel>>> GetProjectTeamMembers(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        // Redirect to GetProjectSpecialists
+        return await GetProjectSpecialists(id, cancellationToken);
     }
 }

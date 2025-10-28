@@ -1,19 +1,40 @@
 import { Link } from 'react-router';
-import { OverlayTrigger, Tooltip, Spinner, Badge } from 'react-bootstrap';
-import { useMemo } from 'react';
-import { useProjectSpecialists } from '@/app/shared/hooks';
+import { OverlayTrigger, Tooltip, Spinner, Badge, Button } from 'react-bootstrap';
+import { useMemo, useState, useCallback } from 'react';
+import { useProjectTeamMembers } from '@/app/shared/hooks';
 import type { ProjectSpecialistDto } from '@/types/project';
+import type { LicenseType } from '@/types/lookup';
+import SendBidsModal from './SendBidsModal';
 
 type TeamMembersProps = {
 	projectId?: number;
+	isAdmin?: boolean;
+	requiredLicenseTypes?: LicenseType[];
 };
 
-const TeamMembers = ({ projectId }: TeamMembersProps) => {
-	const { specialists, loading, error } = useProjectSpecialists(projectId);
+const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: TeamMembersProps) => {
+	const { teamMembers, loading, error, refetch } = useProjectTeamMembers(projectId);
+	const [showSendBidsModal, setShowSendBidsModal] = useState(false);
 
-	const isPlaceholder = useMemo(() => {
-		return specialists.length === 1 && specialists[0].specialistId === 0;
-	}, [specialists]);
+	const assignedMembers = useMemo(() => {
+		return teamMembers.filter(member => member.isAssigned);
+	}, [teamMembers]);
+
+	const pendingMembers = useMemo(() => {
+		return teamMembers.filter(member => !member.isAssigned);
+	}, [teamMembers]);
+
+	const handleOpenSendBidsModal = useCallback(() => {
+		setShowSendBidsModal(true);
+	}, []);
+
+	const handleCloseSendBidsModal = useCallback(() => {
+		setShowSendBidsModal(false);
+	}, []);
+
+	const handleBidsSentSuccess = useCallback(() => {
+		refetch();
+	}, [refetch]);
 
 	if (loading) {
 		return (
@@ -38,70 +59,106 @@ const TeamMembers = ({ projectId }: TeamMembersProps) => {
 		);
 	}
 
-	if (specialists.length === 0) {
+	if (teamMembers.length === 0) {
 		return (
 			<>
-				<h5>Team Members:</h5>
+				<div className="d-flex justify-content-between align-items-center mb-2">
+					<h5 className="mb-0">Team Members:</h5>
+					{isAdmin && projectId && (
+						<Button
+							variant="primary"
+							size="sm"
+							onClick={handleOpenSendBidsModal}
+						>
+							<i className="mdi mdi-send me-1"></i>
+							Send Bids
+						</Button>
+					)}
+				</div>
 				<div className="text-muted">No specialists assigned yet</div>
+
+				{isAdmin && projectId && (
+					<SendBidsModal
+						show={showSendBidsModal}
+						onHide={handleCloseSendBidsModal}
+						projectId={projectId}
+						requiredLicenseTypes={requiredLicenseTypes}
+						onSuccess={handleBidsSentSuccess}
+					/>
+				)}
 			</>
 		);
 	}
 
-	if (isPlaceholder) {
-		return (
-			<>
-				<h5>Team Members:</h5>
-				<Badge bg="primary" className="p-2" style={{ fontSize: '0.875rem' }}>
-					<i className="mdi mdi-account-group me-1"></i>
-					Digital Engineers Team
-				</Badge>
-			</>
-		);
-	}
-
-	const renderTooltipContent = (specialist: ProjectSpecialistDto) => {
-		const professions = specialist.licenseTypes.map(lt => lt.professionName);
+	const renderTooltipContent = (member: ProjectSpecialistDto) => {
+		const professions = member.licenseTypes.map(lt => lt.professionName);
 		const uniqueProfessions = [...new Set(professions)];
-		const licenses = specialist.licenseTypes.map(lt => lt.licenseTypeName).join(', ');
+		const licenses = member.licenseTypes.map(lt => lt.licenseTypeName).join(', ');
+		const statusLabel = member.isAssigned ? 'Assigned' : 'Pending Bid';
+		const dateLabel = member.isAssigned ? 'Assigned' : 'Bid Sent';
+		const date = new Date(member.assignedOrBidSentAt).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
 
 		return (
-			<div style={{ textAlign: 'left' }}>
-				<div><strong>{specialist.name}</strong></div>
+			<div style={{ textAlign: 'left', maxWidth: '250px' }}>
+				<div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{member.name}</div>
+				<div style={{ fontSize: '0.85rem', marginBottom: '4px' }}>
+					<Badge bg={member.isAssigned ? 'success' : 'warning'} className="me-1">
+						{statusLabel}
+					</Badge>
+				</div>
 				{uniqueProfessions.length > 0 && (
-					<div className="text-muted" style={{ fontSize: '0.85rem' }}>
+					<div style={{ fontSize: '0.85rem', marginBottom: '2px', color: '#6c757d' }}>
 						{uniqueProfessions.join(', ')}
 					</div>
 				)}
 				{licenses && (
-					<div className="text-muted" style={{ fontSize: '0.85rem' }}>
+					<div style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#6c757d' }}>
 						{licenses}
 					</div>
 				)}
+				<div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#6c757d' }}>
+					{dateLabel}: {date}
+				</div>
 			</div>
 		);
 	};
 
-	const renderSpecialistAvatar = (specialist: ProjectSpecialistDto) => {
-		if (specialist.profilePictureUrl) {
+	const renderMemberAvatar = (member: ProjectSpecialistDto) => {
+		const avatarClass = member.isAssigned 
+			? 'rounded-circle img-thumbnail avatar-sm' 
+			: 'rounded-circle img-thumbnail avatar-sm border-warning';
+		
+		const avatarStyle = member.isAssigned 
+			? { width: '32px', height: '32px', objectFit: 'cover' as const }
+			: { width: '32px', height: '32px', objectFit: 'cover' as const, opacity: 0.7 };
+
+		if (member.profilePictureUrl) {
 			return (
 				<img 
-					src={specialist.profilePictureUrl} 
-					className="rounded-circle img-thumbnail avatar-sm" 
-					alt={specialist.name}
-					style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+					src={member.profilePictureUrl} 
+					className={avatarClass}
+					alt={member.name}
+					style={avatarStyle}
 				/>
 			);
 		}
 
-		const initial = specialist.name.charAt(0).toUpperCase();
+		const initial = member.name.charAt(0).toUpperCase();
+		const bgClass = member.isAssigned ? 'bg-primary' : 'bg-warning';
+		
 		return (
 			<div 
-				className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white"
+				className={`rounded-circle d-flex align-items-center justify-content-center ${bgClass} text-white`}
 				style={{ 
 					width: '32px', 
 					height: '32px', 
 					fontSize: '14px', 
-					fontWeight: 'bold' 
+					fontWeight: 'bold',
+					opacity: member.isAssigned ? 1 : 0.7
 				}}
 			>
 				{initial}
@@ -111,18 +168,65 @@ const TeamMembers = ({ projectId }: TeamMembersProps) => {
 
 	return (
 		<>
-			<h5>Team Members:</h5>
-			{specialists.map((specialist) => (
-				<OverlayTrigger
-					key={specialist.specialistId}
-					placement="top"
-					overlay={<Tooltip>{renderTooltipContent(specialist)}</Tooltip>}
-				>
-					<Link to="" className="d-inline-block me-1">
-						{renderSpecialistAvatar(specialist)}
-					</Link>
-				</OverlayTrigger>
-			))}
+			<div className="d-flex justify-content-between align-items-center mb-2">
+				<h5 className="mb-0">Team Members:</h5>
+				{isAdmin && projectId && (
+					<Button
+						variant="primary"
+						size="sm"
+						onClick={handleOpenSendBidsModal}
+					>
+						<i className="mdi mdi-send me-1"></i>
+						Send Bids
+					</Button>
+				)}
+			</div>
+			
+			{assignedMembers.length > 0 && (
+				<div className="mb-2">
+					{assignedMembers.map((member) => (
+						<OverlayTrigger
+							key={`assigned-${member.specialistId}`}
+							placement="top"
+							overlay={<Tooltip>{renderTooltipContent(member)}</Tooltip>}
+						>
+							<Link to="" className="d-inline-block me-1">
+								{renderMemberAvatar(member)}
+							</Link>
+						</OverlayTrigger>
+					))}
+				</div>
+			)}
+			
+			{pendingMembers.length > 0 && (
+				<div>
+					<small className="text-muted d-block mb-1">
+						<i className="mdi mdi-clock-outline me-1"></i>
+						Pending Bids:
+					</small>
+					{pendingMembers.map((member) => (
+						<OverlayTrigger
+							key={`pending-${member.specialistId}`}
+							placement="top"
+							overlay={<Tooltip>{renderTooltipContent(member)}</Tooltip>}
+						>
+							<Link to="" className="d-inline-block me-1">
+								{renderMemberAvatar(member)}
+							</Link>
+						</OverlayTrigger>
+					))}
+				</div>
+			)}
+
+			{isAdmin && projectId && (
+				<SendBidsModal
+					show={showSendBidsModal}
+					onHide={handleCloseSendBidsModal}
+					projectId={projectId}
+					requiredLicenseTypes={requiredLicenseTypes}
+					onSuccess={handleBidsSentSuccess}
+				/>
+			)}
 		</>
 	);
 };

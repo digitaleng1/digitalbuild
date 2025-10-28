@@ -110,19 +110,21 @@ export interface ProjectFile {
 	uploadedAt: string;
 }
 
-export interface ProjectSpecialistDto {
-	specialistId: number;
-	userId: string;
-	name: string;
-	profilePictureUrl?: string;
-	role?: string;
-	assignedAt: string;
-	licenseTypes: SpecialistLicenseInfo[];
-}
-
 export interface SpecialistLicenseInfo {
 	licenseTypeId: number;
 	licenseTypeName: string;
 	professionId: number;
 	professionName: string;
+}
+
+// Synchronized with ProjectTeamMemberDto from server
+// Universal interface for both assigned specialists and pending bids
+export interface ProjectSpecialistDto {
+	specialistId: number;
+	userId: string;
+	name: string;
+	profilePictureUrl?: string;
+	isAssigned: boolean; // true = assigned, false = pending bid
+	assignedOrBidSentAt: string;
+	licenseTypes: SpecialistLicenseInfo[];
 }

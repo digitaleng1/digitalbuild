@@ -1,5 +1,6 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.Bid;
+using DigitalEngineers.API.ViewModels.Specialist;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
 
@@ -24,5 +25,8 @@ public class BidMappingProfile : Profile
 
         CreateMap<CreateBidMessageViewModel, CreateBidMessageDto>();
         CreateMap<BidMessageDto, BidMessageViewModel>();
+        
+        CreateMap<SendBidRequestViewModel, SendBidRequestDto>();
+        CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
     }
 }

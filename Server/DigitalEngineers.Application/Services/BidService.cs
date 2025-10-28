@@ -13,15 +13,18 @@ public class BidService : IBidService
 {
     private readonly ApplicationDbContext _context;
     private readonly ISpecialistService _specialistService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<BidService> _logger;
 
     public BidService(
         ApplicationDbContext context,
         ISpecialistService specialistService,
+        IEmailService emailService,
         ILogger<BidService> logger)
     {
         _context = context;
         _specialistService = specialistService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -36,8 +39,7 @@ public class BidService : IBidService
             ProjectId = dto.ProjectId,
             Title = dto.Title,
             Description = dto.Description,
-            BudgetMin = dto.BudgetMin,
-            BudgetMax = dto.BudgetMax,
+            ProposedBudget = dto.ProposedBudget,
             Deadline = dto.Deadline,
             Status = BidRequestStatus.Open,
             CreatedAt = DateTime.UtcNow,
@@ -57,10 +59,9 @@ public class BidService : IBidService
             Title = bidRequest.Title,
             Description = bidRequest.Description,
             Status = bidRequest.Status.ToString(),
-            BudgetMin = bidRequest.BudgetMin,
-            BudgetMax = bidRequest.BudgetMax,
+            ProposedBudget = bidRequest.ProposedBudget,
             Deadline = bidRequest.Deadline,
-            ResponseCount = 0,
+            HasResponse = false,
             CreatedAt = bidRequest.CreatedAt,
             UpdatedAt = bidRequest.UpdatedAt
         };
@@ -70,13 +71,34 @@ public class BidService : IBidService
     {
         var bidRequest = await _context.Set<BidRequest>()
             .Include(br => br.Project)
-            .Include(br => br.Responses)
-                .ThenInclude(r => r.Specialist)
+            .Include(br => br.Response)
+                .ThenInclude(r => r!.Specialist)
                     .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(br => br.Id == id, cancellationToken);
 
         if (bidRequest == null)
             throw new BidRequestNotFoundException(id);
+
+        BidResponseDto? responseDto = null;
+        if (bidRequest.Response != null)
+        {
+            var response = bidRequest.Response;
+            responseDto = new BidResponseDto
+            {
+                Id = response.Id,
+                BidRequestId = response.BidRequestId,
+                SpecialistId = response.SpecialistId,
+                SpecialistName = $"{response.Specialist.User.FirstName} {response.Specialist.User.LastName}",
+                SpecialistProfilePicture = response.Specialist.User.ProfilePictureUrl,
+                SpecialistRating = response.Specialist.Rating,
+                CoverLetter = response.CoverLetter,
+                ProposedPrice = response.ProposedPrice,
+                EstimatedDays = response.EstimatedDays,
+                Status = response.Status.ToString(),
+                CreatedAt = response.CreatedAt,
+                UpdatedAt = response.UpdatedAt
+            };
+        }
 
         return new BidRequestDetailsDto
         {
@@ -86,26 +108,11 @@ public class BidService : IBidService
             Title = bidRequest.Title,
             Description = bidRequest.Description,
             Status = bidRequest.Status.ToString(),
-            BudgetMin = bidRequest.BudgetMin,
-            BudgetMax = bidRequest.BudgetMax,
+            ProposedBudget = bidRequest.ProposedBudget,
             Deadline = bidRequest.Deadline,
             CreatedAt = bidRequest.CreatedAt,
             UpdatedAt = bidRequest.UpdatedAt,
-            Responses = bidRequest.Responses.Select(r => new BidResponseDto
-            {
-                Id = r.Id,
-                BidRequestId = r.BidRequestId,
-                SpecialistId = r.SpecialistId,
-                SpecialistName = $"{r.Specialist.User.FirstName} {r.Specialist.User.LastName}",
-                SpecialistProfilePicture = r.Specialist.User.ProfilePictureUrl,
-                SpecialistRating = r.Specialist.Rating,
-                CoverLetter = r.CoverLetter,
-                ProposedPrice = r.ProposedPrice,
-                EstimatedDays = r.EstimatedDays,
-                Status = r.Status.ToString(),
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt
-            }).ToArray()
+            Response = responseDto
         };
     }
 
@@ -113,7 +120,7 @@ public class BidService : IBidService
     {
         var bidRequests = await _context.Set<BidRequest>()
             .Include(br => br.Project)
-            .Include(br => br.Responses)
+            .Include(br => br.Response)
             .Where(br => br.ProjectId == projectId)
             .OrderByDescending(br => br.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -126,10 +133,9 @@ public class BidService : IBidService
             Title = br.Title,
             Description = br.Description,
             Status = br.Status.ToString(),
-            BudgetMin = br.BudgetMin,
-            BudgetMax = br.BudgetMax,
+            ProposedBudget = br.ProposedBudget,
             Deadline = br.Deadline,
-            ResponseCount = br.Responses.Count,
+            HasResponse = br.Response != null,
             CreatedAt = br.CreatedAt,
             UpdatedAt = br.UpdatedAt
         });
@@ -139,7 +145,7 @@ public class BidService : IBidService
     {
         var bidRequest = await _context.Set<BidRequest>()
             .Include(br => br.Project)
-            .Include(br => br.Responses)
+            .Include(br => br.Response)
             .FirstOrDefaultAsync(br => br.Id == id, cancellationToken);
 
         if (bidRequest == null)
@@ -151,11 +157,8 @@ public class BidService : IBidService
         if (dto.Description != null)
             bidRequest.Description = dto.Description;
 
-        if (dto.BudgetMin.HasValue)
-            bidRequest.BudgetMin = dto.BudgetMin.Value;
-
-        if (dto.BudgetMax.HasValue)
-            bidRequest.BudgetMax = dto.BudgetMax.Value;
+        if (dto.ProposedBudget.HasValue)
+            bidRequest.ProposedBudget = dto.ProposedBudget.Value;
 
         if (dto.Deadline.HasValue)
             bidRequest.Deadline = dto.Deadline.Value;
@@ -175,10 +178,9 @@ public class BidService : IBidService
             Title = bidRequest.Title,
             Description = bidRequest.Description,
             Status = bidRequest.Status.ToString(),
-            BudgetMin = bidRequest.BudgetMin,
-            BudgetMax = bidRequest.BudgetMax,
+            ProposedBudget = bidRequest.ProposedBudget,
             Deadline = bidRequest.Deadline,
-            ResponseCount = bidRequest.Responses.Count,
+            HasResponse = bidRequest.Response != null,
             CreatedAt = bidRequest.CreatedAt,
             UpdatedAt = bidRequest.UpdatedAt
         };
@@ -188,7 +190,7 @@ public class BidService : IBidService
     {
         var bidRequest = await _context.Set<BidRequest>()
             .Include(br => br.Project)
-            .Include(br => br.Responses)
+            .Include(br => br.Response)
             .FirstOrDefaultAsync(br => br.Id == id, cancellationToken);
 
         if (bidRequest == null)
@@ -207,10 +209,9 @@ public class BidService : IBidService
             Title = bidRequest.Title,
             Description = bidRequest.Description,
             Status = bidRequest.Status.ToString(),
-            BudgetMin = bidRequest.BudgetMin,
-            BudgetMax = bidRequest.BudgetMax,
+            ProposedBudget = bidRequest.ProposedBudget,
             Deadline = bidRequest.Deadline,
-            ResponseCount = bidRequest.Responses.Count,
+            HasResponse = bidRequest.Response != null,
             CreatedAt = bidRequest.CreatedAt,
             UpdatedAt = bidRequest.UpdatedAt
         };
@@ -525,5 +526,103 @@ public class BidService : IBidService
 
         _context.Set<BidMessage>().Remove(message);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects.FindAsync([dto.ProjectId], cancellationToken);
+        if (project == null)
+            throw new ProjectNotFoundException(dto.ProjectId);
+
+        var user = await _context.Users.FindAsync(clientId);
+        if (user == null)
+            throw new UnauthorizedAccessException("User not found");
+
+        var userRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == clientId)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
+
+        if (project.ClientId != clientId && !isAdminOrSuperAdmin)
+            throw new UnauthorizedAccessException("You are not the owner of this project");
+
+        var specialists = await _context.Specialists
+            .Include(s => s.User)
+            .Where(s => dto.SpecialistUserIds.Contains(s.UserId))
+            .ToListAsync(cancellationToken);
+
+        if (specialists.Count != dto.SpecialistUserIds.Length)
+            throw new InvalidBidRequestException("One or more specialists not found");
+
+        foreach (var specialist in specialists)
+        {
+            var bidRequest = new BidRequest
+            {
+                ProjectId = dto.ProjectId,
+                SpecialistId = specialist.Id,
+                Title = $"Bid Request for {project.Name}",
+                Description = dto.Description,
+                Status = BidRequestStatus.Open,
+                ProposedBudget = dto.Price,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.BidRequests.Add(bidRequest);
+            
+            await _emailService.SendBidRequestNotificationAsync(
+                specialist.User.Email!,
+                $"{specialist.User.FirstName} {specialist.User.LastName}",
+                project.Name,
+                dto.Description,
+                dto.Price,
+                cancellationToken);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .Include(p => p.ProjectLicenseTypes)
+            .ThenInclude(plt => plt.LicenseType)
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+
+        if (project == null)
+            throw new ProjectNotFoundException(projectId);
+
+        var requiredLicenseTypeIds = project.ProjectLicenseTypes
+            .Select(plt => plt.LicenseTypeId)
+            .ToArray();
+
+        var specialists = await _context.Specialists
+            .Include(s => s.User)
+            .Include(s => s.LicenseTypes)
+            .ThenInclude(slt => slt.LicenseType)
+            .ThenInclude(lt => lt.Profession)
+            .Where(s => s.IsAvailable
+                && s.User.IsAvailableForHire
+                && s.LicenseTypes.Any(slt => requiredLicenseTypeIds.Contains(slt.LicenseTypeId)))
+            .ToListAsync(cancellationToken);
+
+        return specialists.Select(s => new AvailableSpecialistDto
+        {
+            UserId = s.UserId,
+            Name = $"{s.User.FirstName} {s.User.LastName}",
+            Email = s.User.Email!,
+            ProfilePictureUrl = s.User.ProfilePictureUrl,
+            Location = s.User.Location,
+            IsAvailableForHire = s.User.IsAvailableForHire,
+            LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
+            {
+                Id = slt.LicenseType.Id,
+                Name = slt.LicenseType.Name,
+                Description = slt.LicenseType.Description,
+                ProfessionId = slt.LicenseType.ProfessionId
+            }).ToList()
+        });
     }
 }
