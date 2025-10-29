@@ -5,6 +5,5 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="src\app\client\projects\hooks\" />
-    <Folder Include="src\app\provider\" />
   </ItemGroup>
 </Project>

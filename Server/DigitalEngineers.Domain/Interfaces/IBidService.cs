@@ -24,5 +24,6 @@ public interface IBidService
     Task DeleteMessageAsync(int id, CancellationToken cancellationToken = default);
     
     Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAsync(int specialistId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAndStatusAsync(int specialistId, BidRequestStatus? status, CancellationToken cancellationToken = default);
 }

@@ -584,45 +584,72 @@ public class BidService : IBidService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAsync(int specialistId, CancellationToken cancellationToken = default)
     {
-        var project = await _context.Projects
-            .Include(p => p.ProjectLicenseTypes)
-            .ThenInclude(plt => plt.LicenseType)
-            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        var specialistExists = await _context.Specialists
+            .AnyAsync(s => s.Id == specialistId, cancellationToken);
+            
+        if (!specialistExists)
+            throw new SpecialistNotFoundException(specialistId);
 
-        if (project == null)
-            throw new ProjectNotFoundException(projectId);
-
-        var requiredLicenseTypeIds = project.ProjectLicenseTypes
-            .Select(plt => plt.LicenseTypeId)
-            .ToArray();
-
-        var specialists = await _context.Specialists
-            .Include(s => s.User)
-            .Include(s => s.LicenseTypes)
-            .ThenInclude(slt => slt.LicenseType)
-            .ThenInclude(lt => lt.Profession)
-            .Where(s => s.IsAvailable
-                && s.User.IsAvailableForHire
-                && s.LicenseTypes.Any(slt => requiredLicenseTypeIds.Contains(slt.LicenseTypeId)))
+        var bidRequests = await _context.BidRequests
+            .Include(br => br.Project)
+            .Include(br => br.Response)
+            .Where(br => br.SpecialistId == specialistId)
+            .OrderByDescending(br => br.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return specialists.Select(s => new AvailableSpecialistDto
+        return bidRequests.Select(br => new BidRequestDto
         {
-            UserId = s.UserId,
-            Name = $"{s.User.FirstName} {s.User.LastName}",
-            Email = s.User.Email!,
-            ProfilePictureUrl = s.User.ProfilePictureUrl,
-            Location = s.User.Location,
-            IsAvailableForHire = s.User.IsAvailableForHire,
-            LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
-            {
-                Id = slt.LicenseType.Id,
-                Name = slt.LicenseType.Name,
-                Description = slt.LicenseType.Description,
-                ProfessionId = slt.LicenseType.ProfessionId
-            }).ToList()
+            Id = br.Id,
+            ProjectId = br.ProjectId,
+            ProjectName = br.Project.Name,
+            Title = br.Title,
+            Description = br.Description,
+            Status = br.Status.ToString(),
+            ProposedBudget = br.ProposedBudget,
+            Deadline = br.Deadline,
+            HasResponse = br.Response != null,
+            CreatedAt = br.CreatedAt,
+            UpdatedAt = br.UpdatedAt
+        });
+    }
+
+    public async Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAndStatusAsync(int specialistId, BidRequestStatus? status, CancellationToken cancellationToken = default)
+    {
+        var specialistExists = await _context.Specialists
+            .AnyAsync(s => s.Id == specialistId, cancellationToken);
+            
+        if (!specialistExists)
+            throw new SpecialistNotFoundException(specialistId);
+
+        var query = _context.BidRequests
+            .Include(br => br.Project)
+            .Include(br => br.Response)
+            .Where(br => br.SpecialistId == specialistId);
+
+        if (status.HasValue)
+        {
+            query = query.Where(br => br.Status == status.Value);
+        }
+
+        var bidRequests = await query
+            .OrderByDescending(br => br.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return bidRequests.Select(br => new BidRequestDto
+        {
+            Id = br.Id,
+            ProjectId = br.ProjectId,
+            ProjectName = br.Project.Name,
+            Title = br.Title,
+            Description = br.Description,
+            Status = br.Status.ToString(),
+            ProposedBudget = br.ProposedBudget,
+            Deadline = br.Deadline,
+            HasResponse = br.Response != null,
+            CreatedAt = br.CreatedAt,
+            UpdatedAt = br.UpdatedAt
         });
     }
 }

@@ -21,3 +21,91 @@ export interface BidFormData {
 	price: string;
 	description: string;
 }
+
+// Provider Bid Types
+export enum BidRequestStatus {
+	Pending = 'Pending',
+	Open = 'Open',
+	Accepted = 'Accepted',
+	Rejected = 'Rejected',
+	Cancelled = 'Cancelled'
+}
+
+export enum BidResponseStatus {
+	Pending = 'Pending',
+	Accepted = 'Accepted',
+	Rejected = 'Rejected',
+	Withdrawn = 'Withdrawn'
+}
+
+// Synchronized with server BidRequestViewModel
+export interface BidRequestDto {
+	id: number;
+	projectId: number;
+	projectName: string;
+	specialistUserId: string;
+	specialistName: string;
+	title: string;
+	description: string;
+	status: BidRequestStatus;
+	sentAt: string;
+	respondedAt?: string;
+	message?: string;
+	budgetMin?: number;
+	budgetMax?: number;
+	deadline?: string;
+	hasResponse: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface BidRequestDetailsDto {
+	id: number;
+	projectId: number;
+	projectName: string;
+	projectDescription: string;
+	projectThumbnailUrl?: string;
+	specialistUserId: string;
+	specialistName: string;
+	title: string;
+	description: string;
+	status: BidRequestStatus;
+	sentAt: string;
+	respondedAt?: string;
+	message?: string;
+	budgetMin?: number;
+	budgetMax?: number;
+	deadline?: string;
+	hasResponse: boolean;
+	createdAt: string;
+	updatedAt: string;
+	clientId: string;
+	clientName: string;
+	clientEmail: string;
+	bidResponse?: BidResponseDto;
+	response?: BidResponseDto;
+}
+
+export interface BidResponseDto {
+	id: number;
+	bidRequestId: number;
+	specialistUserId: string;
+	proposedRate: number;
+	estimatedHours: number;
+	message: string;
+	totalAmount: number;
+	coverLetter: string;
+	attachments: string[];
+	status: BidResponseStatus;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateBidResponseDto {
+	bidRequestId: number;
+	proposedRate: number;
+	estimatedHours: number;
+	message: string;
+	coverLetter: string;
+	attachments?: string[];
+}

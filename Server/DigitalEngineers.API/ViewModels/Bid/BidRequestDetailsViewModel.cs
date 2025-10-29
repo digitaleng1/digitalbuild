@@ -8,8 +8,7 @@ public class BidRequestDetailsViewModel
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public decimal? BudgetMin { get; set; }
-    public decimal? BudgetMax { get; set; }
+    public decimal? ProposedBudget { get; set; }
     public DateTime? Deadline { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

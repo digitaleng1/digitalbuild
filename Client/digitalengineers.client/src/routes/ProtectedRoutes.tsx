@@ -10,6 +10,7 @@ const Dashboard = lazy(() => import('../app/dashboards'));
 const Apps = lazy(() => import('../app/apps'));
 const Client = lazy(() => import('../app/client'));
 const Admin = lazy(() => import('../app/admin'));
+const Specialist = lazy(() => import('../app/specialist'));
 const OtherPages = lazy(() => import('../app/pages'));
 const UI = lazy(() => import('../app/ui'));
 const Error404Alt = lazy(() => import('../app/pages/404-alt/page'));
@@ -38,8 +39,9 @@ export default function ProtectedRoutes() {
             </Route>
 
             <Route element={<RoleProtectedLayout allowedRoles={['Provider']} />}>
-                <Route path="/provider/*" element={<Layout />}>
+                <Route path="/specialist/*" element={<Layout />}>
                     <Route index element={<Root />} />
+                    <Route path="*" element={<Specialist />} />
                     {/*Template menu items*/}
                     <Route path="dashboards/*" element={<Dashboard />} />
                     <Route path="apps/*" element={<Apps />} />

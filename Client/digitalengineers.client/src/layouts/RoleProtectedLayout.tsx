@@ -23,7 +23,7 @@ const RoleProtectedLayout = ({ allowedRoles }: RoleProtectedLayoutProps) => {
         if (primaryRole === 'Admin' || primaryRole === 'SuperAdmin') {
             redirectPath = '/admin/dashboard';
         } else if (primaryRole === 'Provider') {
-            redirectPath = '/provider/dashboard';
+            redirectPath = '/specialist/dashboard';
         } else if (primaryRole === 'Client') {
             redirectPath = '/client/dashboard';
         }

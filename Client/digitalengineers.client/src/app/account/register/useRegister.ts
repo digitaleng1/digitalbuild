@@ -59,7 +59,7 @@ export default function useRegister() {
 				type: 'success',
 			});
 
-			const redirectPath = role === 'Provider' ? '/provider/dashboard' : '/client/dashboard';
+			const redirectPath = role === 'Provider' ? '/specialist/dashboard' : '/client/dashboard';
 			navigate(redirectPath);
 		} catch (e: any) {
 			const errorMessage = e.response?.data?.message || e.message || 'Registration failed';

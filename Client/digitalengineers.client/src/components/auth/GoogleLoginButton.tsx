@@ -53,7 +53,7 @@ const GoogleLoginButton = () => {
 
                         const primaryRole = tokenResponse.user.roles[0];
                         const redirectPath = primaryRole === 'Provider' 
-                            ? '/provider/dashboard' 
+                            ? '/specialist/dashboard' 
                             : '/client/dashboard';
                         navigate(redirectPath);
                     } catch (error: any) {

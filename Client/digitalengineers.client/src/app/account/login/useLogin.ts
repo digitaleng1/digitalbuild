@@ -53,7 +53,7 @@ export default function useLogin() {
 				if (primaryRole === 'Admin' || primaryRole === 'SuperAdmin') {
 					navigate('/admin/dashboard');
 				} else if (primaryRole === 'Provider') {
-					navigate('/provider/dashboard');
+					navigate('/specialist/dashboard');
 				} else {
 					navigate('/client/dashboard');
 				}

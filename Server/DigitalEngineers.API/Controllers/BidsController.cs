@@ -3,9 +3,12 @@ using DigitalEngineers.API.ViewModels.Bid;
 using DigitalEngineers.API.ViewModels.Specialist;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
+using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Domain.Interfaces;
+using DigitalEngineers.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace DigitalEngineers.API.Controllers;
@@ -17,11 +20,13 @@ public class BidsController : ControllerBase
 {
     private readonly IBidService _bidService;
     private readonly IMapper _mapper;
+    private readonly ApplicationDbContext _context;
 
-    public BidsController(IBidService bidService, IMapper mapper)
+    public BidsController(IBidService bidService, IMapper mapper, ApplicationDbContext context)
     {
         _bidService = bidService;
         _mapper = mapper;
+        _context = context;
     }
 
     [HttpPost("requests")]
@@ -105,7 +110,7 @@ public class BidsController : ControllerBase
     }
 
     [HttpPost("responses")]
-    [Authorize(Roles = "Specialist")]
+    [Authorize(Roles = "Provider")]
     [ProducesResponseType(typeof(BidResponseViewModel), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BidResponseViewModel>> CreateBidResponse(
@@ -143,7 +148,7 @@ public class BidsController : ControllerBase
     }
 
     [HttpPut("responses/{id}")]
-    [Authorize(Roles = "Specialist")]
+    [Authorize(Roles = "Provider")]
     [ProducesResponseType(typeof(BidResponseViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BidResponseViewModel>> UpdateBidResponse(
@@ -243,19 +248,5 @@ public class BidsController : ControllerBase
         await _bidService.SendBidRequestAsync(dto, clientId, cancellationToken);
 
         return Ok(new { message = $"Bid requests sent to {dto.SpecialistUserIds.Length} specialist(s)" });
-    }
-
-    [HttpGet("projects/{projectId}/available-specialists")]
-    [Authorize(Roles = "Client,Admin,SuperAdmin")]
-    [ProducesResponseType(typeof(IEnumerable<AvailableSpecialistViewModel>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<AvailableSpecialistViewModel>>> GetAvailableSpecialists(
-        int projectId,
-        CancellationToken cancellationToken)
-    {
-        var specialists = await _bidService.GetAvailableSpecialistsForProjectAsync(projectId, cancellationToken);
-        var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);
-
-        return Ok(viewModels);
     }
 }

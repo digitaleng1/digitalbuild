@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router';
 
-type RolePrefix = 'admin' | 'client' | 'provider' | null;
+type RolePrefix = 'admin' | 'client' | 'specialist' | null;
 
 export const useRolePrefix = (): RolePrefix => {
 	const location = useLocation();
@@ -12,8 +12,8 @@ export const useRolePrefix = (): RolePrefix => {
 	if (pathname.startsWith('/client')) {
 		return 'client';
 	}
-	if (pathname.startsWith('/provider')) {
-		return 'provider';
+	if (pathname.startsWith('/specialist')) {
+		return 'specialist';
 	}
 
 	return null;

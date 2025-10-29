@@ -298,6 +298,13 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		isTitle: true,
 	},
 	{
+		key: 'bids',
+		label: 'Bid Requests',
+		isTitle: false,
+		icon: 'uil-file-alt',
+		url: '/bids',
+	},
+	{
 		key: 'my-projects',
 		label: 'My Projects',
 		isTitle: false,
