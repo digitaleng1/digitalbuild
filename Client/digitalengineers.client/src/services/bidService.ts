@@ -1,15 +1,8 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { SpecialistForBid, SendBidDto, BidRequestDto, BidRequestDetailsDto, CreateBidResponseDto, BidResponseDto } from '@/types/bid';
+import type { SendBidDto, BidRequestDto, BidRequestDetailsDto, CreateBidResponseDto, BidResponseDto } from '@/types/bid';
+import type { AdminBidListItem } from '@/types/admin-bid';
 
 class BidService {
-	/**
-	 * Get specialists matching project's required license types
-	 */
-	async getSpecialistsForProject(projectId: number): Promise<SpecialistForBid[]> {
-		const data = await httpClient.get<SpecialistForBid[]>(`/api/specialists/projects/${projectId}/available`);
-		return data as SpecialistForBid[];
-	}
-
 	/**
 	 * Send bids to selected specialists
 	 */
@@ -41,6 +34,14 @@ class BidService {
 	async submitBidResponse(response: CreateBidResponseDto): Promise<BidResponseDto> {
 		const data = await httpClient.post<BidResponseDto>('/api/bids/responses', response);
 		return data as BidResponseDto;
+	}
+
+	/**
+	 * Get admin bid statistics (Admin only)
+	 */
+	async getAdminBidStatistics(): Promise<AdminBidListItem[]> {
+		const data = await httpClient.get<AdminBidListItem[]>('/api/bids/admin/project-statistics');
+		return data as AdminBidListItem[];
 	}
 }
 

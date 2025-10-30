@@ -117,8 +117,28 @@ public class BidsController : ControllerBase
         [FromBody] CreateBidResponseViewModel model,
         CancellationToken cancellationToken)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        var specialist = await _context.Specialists
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        
+        if (specialist == null)
+            throw new SpecialistNotFoundException($"Specialist profile not found for user {userId}");
+
         var dto = _mapper.Map<CreateBidResponseDto>(model);
-        var result = await _bidService.CreateBidResponseAsync(dto, cancellationToken);
+        
+        var dtoWithSpecialist = new CreateBidResponseDto
+        {
+            BidRequestId = dto.BidRequestId,
+            SpecialistId = specialist.Id,
+            CoverLetter = dto.CoverLetter,
+            ProposedPrice = dto.ProposedPrice,
+            EstimatedDays = dto.EstimatedDays
+        };
+        
+        var result = await _bidService.CreateBidResponseAsync(dtoWithSpecialist, cancellationToken);
         var viewModel = _mapper.Map<BidResponseViewModel>(result);
 
         return CreatedAtAction(nameof(GetBidResponseById), new { id = viewModel.Id }, viewModel);
@@ -248,5 +268,53 @@ public class BidsController : ControllerBase
         await _bidService.SendBidRequestAsync(dto, clientId, cancellationToken);
 
         return Ok(new { message = $"Bid requests sent to {dto.SpecialistUserIds.Length} specialist(s)" });
+    }
+
+    [HttpGet("my-requests")]
+    [Authorize(Roles = "Provider")]
+    [ProducesResponseType(typeof(IEnumerable<BidRequestViewModel>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<BidRequestViewModel>>> GetMyBidRequests(
+        [FromQuery] string? status,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        var specialist = await _context.Specialists
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        
+        if (specialist == null)
+            throw new SpecialistNotFoundException($"Specialist profile not found for user {userId}");
+
+        IEnumerable<BidRequestDto> bidRequests;
+
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<BidRequestStatus>(status, ignoreCase: true, out var parsedStatus))
+        {
+            bidRequests = await _bidService.GetBidRequestsBySpecialistIdAndStatusAsync(
+                specialist.Id, 
+                parsedStatus, 
+                cancellationToken);
+        }
+        else
+        {
+            bidRequests = await _bidService.GetBidRequestsBySpecialistIdAsync(
+                specialist.Id, 
+                cancellationToken);
+        }
+
+        var viewModels = _mapper.Map<IEnumerable<BidRequestViewModel>>(bidRequests);
+        return Ok(viewModels);
+    }
+
+    [HttpGet("admin/project-statistics")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectBidStatisticsViewModel>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ProjectBidStatisticsViewModel>>> GetProjectBidStatistics(
+        CancellationToken cancellationToken)
+    {
+        var statistics = await _bidService.GetProjectBidStatisticsAsync(cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<ProjectBidStatisticsViewModel>>(statistics);
+        return Ok(viewModels);
     }
 }

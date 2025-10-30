@@ -15,17 +15,20 @@ public class BidService : IBidService
     private readonly ISpecialistService _specialistService;
     private readonly IEmailService _emailService;
     private readonly ILogger<BidService> _logger;
+    private readonly IFileStorageService _fileStorageService;
 
     public BidService(
         ApplicationDbContext context,
         ISpecialistService specialistService,
         IEmailService emailService,
-        ILogger<BidService> logger)
+        ILogger<BidService> logger,
+        IFileStorageService fileStorageService)
     {
         _context = context;
         _specialistService = specialistService;
         _emailService = emailService;
         _logger = logger;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<BidRequestDto> CreateBidRequestAsync(CreateBidRequestDto dto, CancellationToken cancellationToken = default)
@@ -41,7 +44,7 @@ public class BidService : IBidService
             Description = dto.Description,
             ProposedBudget = dto.ProposedBudget,
             Deadline = dto.Deadline,
-            Status = BidRequestStatus.Open,
+            Status = BidRequestStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -79,6 +82,21 @@ public class BidService : IBidService
         if (bidRequest == null)
             throw new BidRequestNotFoundException(id);
 
+        string clientName;
+        string clientEmail;
+
+        if (bidRequest.Project.ManagementType == ProjectManagementType.ClientManaged)
+        {
+            var client = await _context.Users.FindAsync(bidRequest.Project.ClientId);
+            clientName = client != null ? $"{client.FirstName} {client.LastName}" : "Unknown";
+            clientEmail = client?.Email ?? string.Empty;
+        }
+        else
+        {
+            clientName = "DigitalEngineers Platform";
+            clientEmail = string.Empty;
+        }
+
         BidResponseDto? responseDto = null;
         if (bidRequest.Response != null)
         {
@@ -100,18 +118,29 @@ public class BidService : IBidService
             };
         }
 
+        string? projectThumbnailPresignedUrl = null;
+        if (!string.IsNullOrEmpty(bidRequest.Project.ThumbnailUrl))
+        {
+            projectThumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(bidRequest.Project.ThumbnailUrl);
+        }
+
         return new BidRequestDetailsDto
         {
             Id = bidRequest.Id,
             ProjectId = bidRequest.ProjectId,
             ProjectName = bidRequest.Project.Name,
+            ProjectDescription = bidRequest.Project.Description,
+            ProjectThumbnailUrl = projectThumbnailPresignedUrl,
             Title = bidRequest.Title,
             Description = bidRequest.Description,
             Status = bidRequest.Status.ToString(),
             ProposedBudget = bidRequest.ProposedBudget,
             Deadline = bidRequest.Deadline,
+            HasResponse = bidRequest.Response != null,
             CreatedAt = bidRequest.CreatedAt,
             UpdatedAt = bidRequest.UpdatedAt,
+            ClientName = clientName,
+            ClientEmail = clientEmail,
             Response = responseDto
         };
     }
@@ -236,8 +265,8 @@ public class BidService : IBidService
         if (bidRequest == null)
             throw new BidRequestNotFoundException(dto.BidRequestId);
 
-        if (bidRequest.Status != BidRequestStatus.Open && bidRequest.Status != BidRequestStatus.Active)
-            throw new InvalidBidStatusException(bidRequest.Status, BidRequestStatus.Open);
+        if (bidRequest.Status != BidRequestStatus.Pending && bidRequest.Status != BidRequestStatus.Responded)
+            throw new InvalidBidStatusException(bidRequest.Status, BidRequestStatus.Pending);
 
         var specialistExists = await _context.Set<Specialist>().AnyAsync(s => s.Id == dto.SpecialistId, cancellationToken);
         if (!specialistExists)
@@ -267,9 +296,9 @@ public class BidService : IBidService
 
         _context.Set<BidResponse>().Add(bidResponse);
 
-        if (bidRequest.Status == BidRequestStatus.Open)
+        if (bidRequest.Status == BidRequestStatus.Pending)
         {
-            bidRequest.Status = BidRequestStatus.Active;
+            bidRequest.Status = BidRequestStatus.Responded;
             bidRequest.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -424,7 +453,7 @@ public class BidService : IBidService
         bidResponse.Status = BidResponseStatus.Accepted;
         bidResponse.UpdatedAt = DateTime.UtcNow;
 
-        bidResponse.BidRequest.Status = BidRequestStatus.Closed;
+        bidResponse.BidRequest.Status = BidRequestStatus.Approved;
         bidResponse.BidRequest.UpdatedAt = DateTime.UtcNow;
 
         await _specialistService.AssignSpecialistToProjectAsync(
@@ -564,7 +593,7 @@ public class BidService : IBidService
                 SpecialistId = specialist.Id,
                 Title = $"Bid Request for {project.Name}",
                 Description = dto.Description,
-                Status = BidRequestStatus.Open,
+                Status = BidRequestStatus.Pending,
                 ProposedBudget = dto.Price,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -651,5 +680,24 @@ public class BidService : IBidService
             CreatedAt = br.CreatedAt,
             UpdatedAt = br.UpdatedAt
         });
+    }
+
+    public async Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(CancellationToken cancellationToken = default)
+    {
+        var statistics = await _context.Projects
+            .Include(p => p.BidRequests)
+            .Select(p => new ProjectBidStatisticsDto
+            {
+                ProjectId = p.Id,
+                ProjectName = p.Name,
+                ProjectStatus = p.Status.ToString(),
+                ProjectBudget = p.Budget,
+                StartDate = p.StartDate,
+                PendingBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Pending),
+                RespondedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Responded)
+            })
+            .ToListAsync(cancellationToken);
+
+        return statistics;
     }
 }

@@ -22,6 +22,8 @@ public class Project
     public ProjectScope ProjectScope { get; set; }
     public ProjectManagementType ManagementType { get; set; } = ProjectManagementType.DigitalEngineersManaged;
     public string? ThumbnailUrl { get; set; }
+    public decimal Budget { get; set; }
+    public DateTime? StartDate { get; set; }
     
     // Timestamps
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

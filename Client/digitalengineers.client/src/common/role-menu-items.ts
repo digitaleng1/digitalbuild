@@ -1,132 +1,5 @@
 import type { MenuItemType } from './menu-items';
 
-// SuperAdmin - Full Access
-export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
-	{
-		key: 'navigation',
-		label: 'Navigation',
-		isTitle: true,
-	},
-	{
-		key: 'dashboards',
-		label: 'Dashboards',
-		isTitle: false,
-		expanded: true,
-		icon: 'uil-home-alt',
-		children: [
-			{
-				key: 'ds-analytics',
-				label: 'Analytics',
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-ecommerce',
-				label: 'Ecommerce',
-				url: '/dashboard/ecommerce',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-project',
-				label: 'Projects',
-				url: '/dashboard/project',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-crm',
-				label: 'CRM',
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			},
-		],
-	},
-	{
-		key: 'management',
-		label: 'Management',
-		isTitle: true,
-	},
-	{
-		key: 'projects',
-		label: 'Projects',
-		isTitle: false,
-		icon: 'uil-briefcase',
-		children: [
-			{
-				key: 'project-list-admin',
-				label: 'All Projects',
-				url: '/projects',
-				parentKey: 'projects',
-			},
-		],
-	},
-	{
-		key: 'users',
-		label: 'User Management',
-		isTitle: false,
-		icon: 'uil-users-alt',
-		children: [
-			{
-				key: 'users-list',
-				label: 'All Users',
-				url: '/pages/users',
-				parentKey: 'users',
-			},
-			{
-				key: 'users-admins',
-				label: 'Admins',
-				url: '/pages/admins',
-				parentKey: 'users',
-			},
-			{
-				key: 'users-providers',
-				label: 'Providers',
-				url: '/pages/providers',
-				parentKey: 'users',
-			},
-			{
-				key: 'users-clients',
-				label: 'Clients',
-				url: '/pages/clients',
-				parentKey: 'users',
-			},
-		],
-	},
-
-	{
-		key: 'system',
-		label: 'System Settings',
-		isTitle: false,
-		icon: 'uil-cog',
-		children: [
-			{
-				key: 'system-settings',
-				label: 'Settings',
-				url: '/pages/settings',
-				parentKey: 'system',
-			},
-			{
-				key: 'system-logs',
-				label: 'System Logs',
-				url: '/pages/logs',
-				parentKey: 'system',
-			},
-		],
-	},
-	{
-		key: 'profile',
-		label: 'Profile',
-		isTitle: false,
-		icon: 'uil-copy-alt',
-		children: [
-			{
-				key: 'page-profile',
-				label: 'Profile',
-				url: '/pages/profile',
-				parentKey: 'profile',
-			},
-		],
-	},
-];
 
 // Admin - System Management
 export const MENU_ITEMS_ADMIN: MenuItemType[] = [
@@ -157,7 +30,7 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'management',
-		label: 'Management',
+		label: 'Users Management',
 		isTitle: true,
 	},
 	{
@@ -181,16 +54,22 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'projects',
-		label: 'Projects',
+		key: 'projects-management',
+		label: 'Projects Management',
 		isTitle: false,
 		icon: 'uil-briefcase',
 		children: [
 			{
-				key: 'project-list-admin',
-				label: 'All Projects',
+				key: 'project-list',
+				label: 'Projects',
 				url: '/projects',
-				parentKey: 'projects',
+				parentKey: 'projects-management',
+			},
+			{
+				key: 'project-bids',
+				label: 'Bids',
+				url: '/bids',
+				parentKey: 'projects-management',
 			},
 		],
 	},
@@ -223,6 +102,10 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 ];
+// SuperAdmin - Full Access
+export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = MENU_ITEMS_ADMIN;
+
+
 
 // Client - View Projects & Engineers
 export const MENU_ITEMS_CLIENT: MenuItemType[] = [

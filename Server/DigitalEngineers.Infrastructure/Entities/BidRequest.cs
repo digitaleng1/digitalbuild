@@ -14,7 +14,7 @@ public class BidRequest
     
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public BidRequestStatus Status { get; set; } = BidRequestStatus.Open;
+    public BidRequestStatus Status { get; set; } = BidRequestStatus.Pending;
     
     public decimal ProposedBudget { get; set; }
     public DateTime? Deadline { get; set; }

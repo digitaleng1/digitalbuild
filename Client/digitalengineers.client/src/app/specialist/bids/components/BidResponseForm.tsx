@@ -11,8 +11,8 @@ interface BidResponseFormProps {
 const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidResponseFormProps) => {
 	const [formData, setFormData] = useState<CreateBidResponseDto>({
 		bidRequestId,
-		proposedRate: 0,
-		estimatedHours: 0,
+		proposedPrice: 0,
+		estimatedDays: 0,
 		coverLetter: ''
 	});
 
@@ -21,17 +21,15 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 		await onSubmit(formData);
 	};
 
-	const totalEstimate = formData.proposedRate * formData.estimatedHours;
-
 	return (
-		<Card>
+		<Card className="mt-3">
 			<Card.Header>
 				<h5 className="mb-0">Submit Your Proposal</h5>
 			</Card.Header>
 			<Card.Body>
 				<Form onSubmit={handleSubmit}>
 					<Form.Group className="mb-3">
-						<Form.Label>Proposed Hourly Rate ($)</Form.Label>
+						<Form.Label>Proposed Price ($)</Form.Label>
 						<InputGroup>
 							<InputGroup.Text>$</InputGroup.Text>
 							<Form.Control
@@ -39,23 +37,30 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 								min="0"
 								step="0.01"
 								required
-								value={formData.proposedRate || ''}
-								onChange={(e) => setFormData({ ...formData, proposedRate: parseFloat(e.target.value) || 0 })}
-								placeholder="Enter your hourly rate"
+								value={formData.proposedPrice || ''}
+								onChange={(e) => setFormData({ ...formData, proposedPrice: parseFloat(e.target.value) || 0 })}
+								placeholder="Enter total project price"
 							/>
 						</InputGroup>
+						<Form.Text className="text-muted">
+							Total price for the entire project
+						</Form.Text>
 					</Form.Group>
 
 					<Form.Group className="mb-3">
-						<Form.Label>Estimated Hours</Form.Label>
+						<Form.Label>Estimated Days</Form.Label>
 						<Form.Control
 							type="number"
 							min="1"
+							max="365"
 							required
-							value={formData.estimatedHours || ''}
-							onChange={(e) => setFormData({ ...formData, estimatedHours: parseInt(e.target.value) || 0 })}
-							placeholder="Enter estimated hours"
+							value={formData.estimatedDays || ''}
+							onChange={(e) => setFormData({ ...formData, estimatedDays: parseInt(e.target.value) || 0 })}
+							placeholder="Enter estimated days to complete"
 						/>
+						<Form.Text className="text-muted">
+							Number of days needed to complete the project
+						</Form.Text>
 					</Form.Group>
 
 					<Form.Group className="mb-3">
@@ -75,9 +80,11 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 
 					<div className="d-flex justify-content-between align-items-center">
 						<div className="text-muted">
-							<strong>Total Estimate:</strong> ${totalEstimate.toFixed(2)}
+							<strong>Total:</strong> ${formData.proposedPrice.toFixed(2)}
+							<br />
+							<small>Estimated completion: {formData.estimatedDays} day{formData.estimatedDays !== 1 ? 's' : ''}</small>
 						</div>
-						<Button type="submit" variant="primary" disabled={isSubmitting || totalEstimate === 0}>
+						<Button type="submit" variant="primary" disabled={isSubmitting || formData.proposedPrice === 0 || formData.estimatedDays === 0}>
 							{isSubmitting ? (
 								<>
 									<span className="spinner-border spinner-border-sm me-2" />

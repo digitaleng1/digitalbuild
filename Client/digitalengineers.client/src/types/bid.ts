@@ -75,6 +75,7 @@ export interface BidRequestDetailsDto {
 	message?: string;
 	budgetMin?: number;
 	budgetMax?: number;
+	proposedBudget?: number;
 	deadline?: string;
 	hasResponse: boolean;
 	createdAt: string;
@@ -86,26 +87,26 @@ export interface BidRequestDetailsDto {
 	response?: BidResponseDto;
 }
 
+// Synchronized with server BidResponseDto
 export interface BidResponseDto {
 	id: number;
 	bidRequestId: number;
-	specialistUserId: string;
-	proposedRate: number;
-	estimatedHours: number;
-	message: string;
-	totalAmount: number;
+	specialistId: number;
+	specialistName: string;
+	specialistProfilePicture?: string;
+	specialistRating: number;
 	coverLetter: string;
-	attachments: string[];
+	proposedPrice: number;
+	estimatedDays: number;
 	status: BidResponseStatus;
 	createdAt: string;
 	updatedAt: string;
 }
 
+// Synchronized with server CreateBidResponseViewModel
 export interface CreateBidResponseDto {
 	bidRequestId: number;
-	proposedRate: number;
-	estimatedHours: number;
-	message: string;
 	coverLetter: string;
-	attachments?: string[];
+	proposedPrice: number;
+	estimatedDays: number;
 }

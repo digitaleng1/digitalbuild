@@ -445,7 +445,7 @@ public class ProjectService : IProjectService
 
             var pendingBidSpecialists = await _context.BidRequests
                 .AsNoTracking()
-                .Where(br => br.ProjectId == projectId && br.Status == BidRequestStatus.Open)
+                .Where(br => br.ProjectId == projectId && br.Status == BidRequestStatus.Pending)
                 .Include(br => br.Specialist)
                     .ThenInclude(s => s.User)
                 .Include(br => br.Specialist)

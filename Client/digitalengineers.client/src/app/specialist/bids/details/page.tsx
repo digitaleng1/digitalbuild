@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
@@ -10,234 +9,220 @@ import BidResponseForm from '../components/BidResponseForm';
 import { useToast } from '@/contexts';
 
 const BidDetails = () => {
-	const { id } = useParams<{ id: string }>();
-	const navigate = useNavigate();
-	const { showSuccess, showError } = useToast();
-	const [bid, setBid] = useState<BidRequestDetailsDto | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { showSuccess, showError } = useToast();
+    const [bid, setBid] = useState<BidRequestDetailsDto | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-	useEffect(() => {
-		if (id) {
-			loadBidDetails(parseInt(id));
-		}
-	}, [id]);
+    useEffect(() => {
+        if (id) {
+            loadBidDetails(parseInt(id));
+        }
+    }, [id]);
 
-	const loadBidDetails = async (bidId: number) => {
-		try {
-			setLoading(true);
-			setError(null);
-			const data = await bidService.getBidRequestDetails(bidId);
-			setBid(data);
-		} catch (err: any) {
-			setError(err.message || 'Failed to load bid request details');
-		} finally {
-			setLoading(false);
-		}
-	};
+    const loadBidDetails = async (bidId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await bidService.getBidRequestDetails(bidId);
+            setBid(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load bid request details');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-	const handleSubmitResponse = async (response: CreateBidResponseDto) => {
-		try {
-			setIsSubmitting(true);
-			await bidService.submitBidResponse(response);
-			showSuccess('Success', 'Your proposal has been submitted successfully');
-			
-			if (id) {
-				await loadBidDetails(parseInt(id));
-			}
-		} catch (err: any) {
-			showError('Error', err.message || 'Failed to submit proposal');
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+    const handleSubmitResponse = async (response: CreateBidResponseDto) => {
+        try {
+            setIsSubmitting(true);
+            await bidService.submitBidResponse(response);
+            showSuccess('Success', 'Your proposal has been submitted successfully');
 
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	};
+            if (id) {
+                await loadBidDetails(parseInt(id));
+            }
+        } catch (err: any) {
+            showError('Error', err.message || 'Failed to submit proposal');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-	if (loading) {
-		return (
-			<>
-				<PageBreadcrumb title="Bid Details" subName="Bids" />
-				<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-					<Spinner animation="border" variant="primary" />
-				</div>
-			</>
-		);
-	}
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            //hour: '2-digit',
+            //minute: '2-digit'
+        });
+    };
 
-	if (error || !bid) {
-		return (
-			<>
-				<PageBreadcrumb title="Bid Details" subName="Bids" />
-				<Alert variant="danger">
-					{error || 'Bid request not found'}
-				</Alert>
-				<Button variant="secondary" onClick={() => navigate('/specialist/bids')}>
-					Back to Bids
-				</Button>
-			</>
-		);
-	}
+    if (loading) {
+        return (
+            <>
+                <PageBreadcrumb title="Bid Details" subName="Bids" />
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                    <Spinner animation="border" variant="primary" />
+                </div>
+            </>
+        );
+    }
 
-	const canSubmitResponse = bid.status === 'Open' && !bid.hasResponse;
+    if (error || !bid) {
+        return (
+            <>
+                <PageBreadcrumb title="Bid Details" subName="Bids" />
+                <Alert variant="danger">
+                    {error || 'Bid request not found'}
+                </Alert>
+                <Button variant="secondary" onClick={() => navigate('/specialist/bids')}>
+                    Back to Bids
+                </Button>
+            </>
+        );
+    }
 
-	return (
-		<>
-			<PageBreadcrumb title="Bid Request Details" subName="Bids" />
+    const canSubmitResponse = bid.status === 'Open' && !bid.hasResponse;
 
-			<Row>
-				<Col lg={8}>
-					{/* Bid Info */}
-					<Card className="mb-3">
-						<Card.Body>
-							<div className="d-flex justify-content-between align-items-start mb-3">
-								<div>
-									<h4 className="mb-2">{bid.title}</h4>
-									<p className="text-muted mb-2">Project: {bid.projectName}</p>
-									<BidStatusBadge status={bid.status} />
-								</div>
-								<Button variant="outline-secondary" size="sm" onClick={() => navigate('/specialist/bids')}>
-									<i className="mdi mdi-arrow-left me-1"></i>
-									Back to List
-								</Button>
-							</div>
+    return (
+        <>
+            <PageBreadcrumb title="Bid Request Details" subName="Bids" />
 
-							{bid.projectThumbnailUrl && (
-								<img 
-									src={bid.projectThumbnailUrl} 
-									alt={bid.projectName}
-									className="img-fluid rounded mb-3"
-									style={{ maxHeight: '300px', width: '100%', objectFit: 'cover' }}
-								/>
-							)}
+            <Row>
+                <Col lg={8}>
+                    {/* Bid Info */}
+                    <Card className="mb-3">
+                        <Card.Body>
+                            <div className="d-flex justify-content-between align-items-start mb-3">
+                                <div className="w-100">
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <h4 className="mb-0">{bid.title}</h4>
+                                        <Button variant="outline-secondary" size="sm" onClick={() => navigate('/specialist/bids')}>
+                                            <i className="mdi mdi-arrow-left me-1"></i>
+                                            Back to List
+                                        </Button>
+                                    </div>
+                                    <div className="d-flex justify-content-between align-items-center mb-3 mt-3">
+                                        {bid.proposedBudget !== undefined && bid.proposedBudget !== null && (
+                                            <span className="text-muted">
+                                                Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>
+                                            </span>
+                                        )}
+                                        <span className="text-muted">
+                                            Client: <strong className="text-dark">{bid.clientName}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-							<h5>Bid Description</h5>
-							<p className="text-muted">{bid.description}</p>
+                            {bid.projectThumbnailUrl && (
+                                <img
+                                    src={bid.projectThumbnailUrl}
+                                    alt={bid.projectName}
+                                    className="img-fluid rounded mb-3"
+                                    style={{ maxHeight: '300px', width: '100%', objectFit: 'cover' }}
+                                />
+                            )}
 
-							<h5 className="mt-4">Project Description</h5>
-							<p className="text-muted">{bid.projectDescription}</p>
+                            <h5 className="mt-2">Project Description</h5>
+                            <p className="text-muted">{bid.projectDescription}</p>
 
-							<div className="mt-4">
-								<Row>
-									{bid.proposedBudget !== undefined && bid.proposedBudget !== null && (
-										<Col md={4}>
-											<div className="mb-3">
-												<h6 className="text-muted mb-1">Proposed Budget</h6>
-												<p className="h5 mb-0">${bid.proposedBudget.toFixed(2)}</p>
-											</div>
-										</Col>
-									)}
-									{bid.deadline && (
-										<Col md={4}>
-											<div className="mb-3">
-												<h6 className="text-muted mb-1">Deadline</h6>
-												<p className="mb-0">{formatDate(bid.deadline)}</p>
-											</div>
-										</Col>
-									)}
-									<Col md={4}>
-										<div className="mb-3">
-											<h6 className="text-muted mb-1">Created Date</h6>
-											<p className="mb-0">{formatDate(bid.createdAt)}</p>
-										</div>
-									</Col>
-								</Row>
-							</div>
-						</Card.Body>
-					</Card>
+                            <h5 className="mt-2">Bid Description</h5>
+                            <p className="text-muted">{bid.description}</p>
 
-					{/* Existing Response */}
-					{bid.response && (
-						<Card className="mb-3">
-							<Card.Header>
-								<h5 className="mb-0">Your Proposal</h5>
-							</Card.Header>
-							<Card.Body>
-								<Row>
-									<Col md={4}>
-										<h6 className="text-muted mb-1">Proposed Rate</h6>
-										<p className="h5 mb-3">${bid.response.proposedRate}/hr</p>
-									</Col>
-									<Col md={4}>
-										<h6 className="text-muted mb-1">Estimated Hours</h6>
-										<p className="h5 mb-3">{bid.response.estimatedHours} hrs</p>
-									</Col>
-									<Col md={4}>
-										<h6 className="text-muted mb-1">Total Estimate</h6>
-										<p className="h5 mb-3">${bid.response.totalAmount.toFixed(2)}</p>
-									</Col>
-								</Row>
-								<h6 className="text-muted mb-1">Cover Letter</h6>
-								<p className="mb-0">{bid.response.coverLetter}</p>
-								
-								<div className="mt-3 text-muted small">
-									<i className="mdi mdi-clock-outline me-1"></i>
-									Submitted: {formatDate(bid.response.createdAt)}
-								</div>
-							</Card.Body>
-						</Card>
-					)}
 
-					{/* Response Form */}
-					{canSubmitResponse && (
-						<BidResponseForm
-							bidRequestId={bid.id}
-							onSubmit={handleSubmitResponse}
-							isSubmitting={isSubmitting}
-						/>
-					)}
 
-					{bid.status === 'Rejected' && (
-						<Alert variant="danger">
-							<i className="mdi mdi-alert-circle-outline me-2"></i>
-							This bid request has been rejected.
-						</Alert>
-					)}
+                        </Card.Body>
+                    </Card>
 
-					{bid.status === 'Cancelled' && (
-						<Alert variant="warning">
-							<i className="mdi mdi-information-outline me-2"></i>
-							This bid request has been cancelled.
-						</Alert>
-					)}
-				</Col>
+                    {bid.status === 'Rejected' && (
+                        <Alert variant="danger">
+                            <i className="mdi mdi-alert-circle-outline me-2"></i>
+                            This bid request has been rejected.
+                        </Alert>
+                    )}
 
-				{/* Sidebar - Client Info */}
-				<Col lg={4}>
-					<Card>
-						<Card.Header>
-							<h5 className="mb-0">Client Information</h5>
-						</Card.Header>
-						<Card.Body>
-							<div className="mb-3">
-								<h6 className="text-muted mb-1">Name</h6>
-								<p className="mb-0">{bid.clientName}</p>
-							</div>
-							<div className="mb-3">
-								<h6 className="text-muted mb-1">Email</h6>
-								<p className="mb-0">
-									<a href={`mailto:${bid.clientEmail}`}>{bid.clientEmail}</a>
-								</p>
-							</div>
-							<div className="mb-0">
-								<h6 className="text-muted mb-1">Project ID</h6>
-								<p className="mb-0">#{bid.projectId}</p>
-							</div>
-						</Card.Body>
-					</Card>
-				</Col>
-			</Row>
-		</>
-	);
+                    {bid.status === 'Cancelled' && (
+                        <Alert variant="warning">
+                            <i className="mdi mdi-information-outline me-2"></i>
+                            This bid request has been cancelled.
+                        </Alert>
+                    )}
+                </Col>
+
+                {/* Sidebar - Info */}
+                <Col lg={4}>
+                    <Card>
+                        <Card.Header className='py-2'>
+                            <h5 className="mb-0">Status:  <BidStatusBadge status={bid.status} /></h5>
+                        </Card.Header>
+                        <Card.Body className='py-2'>
+                            <div className="mt-1">
+                                <Row>
+                                    <Col md={6}>
+                                        <div className="mb-3">
+                                            <h6 className="text-muted mb-1">Deadline</h6>
+                                            {bid.deadline && (
+                                                <p className="mb-0">{formatDate(bid.deadline)}</p>
+                                            )}
+                                        </div>
+                                    </Col>
+                                    <Col md={6}>
+                                        <div className="mb-3">
+                                            <h6 className="text-muted mb-1">Created Date</h6>
+                                            <p className="mb-0">{formatDate(bid.createdAt)}</p>
+                                        </div>
+                                    </Col>
+                                </Row>
+                            </div>
+                        </Card.Body>
+                    </Card>
+
+                    {/* Response Form */}
+                    {canSubmitResponse && (
+                        <BidResponseForm
+                            bidRequestId={bid.id}
+                            onSubmit={handleSubmitResponse}
+                            isSubmitting={isSubmitting}
+                        />
+                    )}
+
+                    {/* Existing Response */}
+                    {bid.response && (
+                        <Card className="mb-3">
+                            <Card.Header>
+                                <h5 className="mb-0">Your Proposal</h5>
+                            </Card.Header>
+                            <Card.Body>
+                                <Row>
+                                    <Col md={6}>
+                                        <h6 className="text-muted mb-1">Proposed Price</h6>
+                                        <p className="h5 mb-3">${bid.response.proposedPrice.toFixed(2)}</p>
+                                    </Col>
+                                    <Col md={6}>
+                                        <h6 className="text-muted mb-1">Estimated Days</h6>
+                                        <p className="h5 mb-3">{bid.response.estimatedDays} day{bid.response.estimatedDays !== 1 ? 's' : ''}</p>
+                                    </Col>
+                                </Row>
+                                <h6 className="text-muted mb-1">Cover Letter</h6>
+                                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>{bid.response.coverLetter}</p>
+
+                                <div className="mt-3 text-muted small">
+                                    <i className="mdi mdi-clock-outline me-1"></i>
+                                    Submitted: {formatDate(bid.response.createdAt)}
+                                </div>
+                            </Card.Body>
+                        </Card>
+                    )}
+                </Col>
+            </Row>
+        </>
+    );
 };
 
 export default BidDetails;

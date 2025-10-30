@@ -4,6 +4,7 @@ import Error404Alt from '../pages/404-alt/page';
 
 const Dashboards = lazy(() => import('../dashboards'));
 const Projects = lazy(() => import('./projects'));
+const Bids = lazy(() => import('./bids'));
 
 export default function Admin() {
     return (
@@ -11,6 +12,7 @@ export default function Admin() {
             <Route path="/*" element={<Outlet />}>
                 <Route path="dashboard/*" element={<Dashboards />} />
                 <Route path="projects/*" element={<Projects />} />
+                <Route path="bids/*" element={<Bids />} />
                 <Route path="*" element={<Error404Alt />} />
             </Route>
         </Routes>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import bidService from '@/services/bidService';
+import specialistService from '@/services/specialistService';
 import type { SpecialistForBid } from '@/types/bid';
 import { getErrorMessage } from '@/utils/errorHandler';
 
@@ -17,7 +17,7 @@ export const useAvailableSpecialists = (projectId: number | undefined) => {
 		try {
 			setLoading(true);
 			setError(null);
-			const data = await bidService.getSpecialistsForProject(projectId);
+			const data = await specialistService.getSpecialistsForProject(projectId);
 			setSpecialists(data);
 		} catch (err: any) {
 			const errorMessage = getErrorMessage(err);

@@ -2,8 +2,8 @@ namespace DigitalEngineers.Domain.Enums;
 
 public enum BidRequestStatus
 {
-    Open = 0,
-    Active = 1,
-    Closed = 2,
+    Pending = 0,
+    Responded = 1,
+    Approved = 2,
     Cancelled = 3
 }

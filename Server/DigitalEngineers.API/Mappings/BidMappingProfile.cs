@@ -18,7 +18,8 @@ public class BidMappingProfile : Profile
         CreateMap<BidRequestDto, BidRequestViewModel>();
         CreateMap<BidRequestDetailsDto, BidRequestDetailsViewModel>();
 
-        CreateMap<CreateBidResponseViewModel, CreateBidResponseDto>();
+        CreateMap<CreateBidResponseViewModel, CreateBidResponseDto>()
+            .ForMember(dest => dest.SpecialistId, opt => opt.Ignore());
         CreateMap<UpdateBidResponseViewModel, UpdateBidResponseDto>();
         CreateMap<BidResponseDto, BidResponseViewModel>();
         CreateMap<BidResponseDetailsDto, BidResponseDetailsViewModel>();
@@ -28,5 +29,7 @@ public class BidMappingProfile : Profile
         
         CreateMap<SendBidRequestViewModel, SendBidRequestDto>();
         CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
+        
+        CreateMap<ProjectBidStatisticsDto, ProjectBidStatisticsViewModel>();
     }
 }
