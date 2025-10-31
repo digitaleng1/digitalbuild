@@ -43,6 +43,14 @@ class BidService {
 		const data = await httpClient.get<AdminBidListItem[]>('/api/bids/admin/project-statistics');
 		return data as AdminBidListItem[];
 	}
+
+	async sendBidRequest(data: SendBidRequestDto): Promise<void> {
+		await httpClient.post('/api/bids/send', data);
+	}
+
+	async getBidResponsesByProjectId(projectId: number): Promise<BidResponseDto[]> {
+		return await httpClient.get<BidResponseDto[]>(`/api/bids/projects/${projectId}/responses`);
+	}
 }
 
 export default new BidService();

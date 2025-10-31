@@ -14,3 +14,38 @@ export interface AdminBidFilters {
     dateFrom?: string;
     dateTo?: string;
 }
+
+export interface BidResponseDto {
+    // Response info
+    id: number;
+    bidRequestId: number;
+    specialistId: number;
+    specialistName: string;
+    specialistEmail: string;
+    specialistProfilePicture: string | null;
+    licenseTypeId: number;
+    licenseTypeName: string;
+    status: string;
+    proposedPrice: number;
+    estimatedDays: number;
+    isAvailable: boolean;
+    coverLetter: string;
+    submittedAt: string;
+    
+    // Project info
+    projectId: number;
+    projectName: string;
+    projectThumbnailUrl: string | null;
+    projectBudget: number | null;
+    projectDeadline: string | null;
+    
+    // Client info
+    clientName: string;
+    clientProfilePictureUrl: string | null;
+}
+
+export interface GroupedBidResponses {
+    licenseTypeId: number;
+    licenseTypeName: string;
+    responses: BidResponseDto[];
+}

@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import classNames from 'classnames';
 import { Link } from 'react-router';
 import type { AdminBidListItem } from '@/types/admin-bid';
+import ProjectStatusBadge from '@/components/badges/ProjectStatusBadge';
 
 const columns: ColumnDef<AdminBidListItem>[] = [
     {
@@ -22,16 +22,7 @@ const columns: ColumnDef<AdminBidListItem>[] = [
         accessorKey: 'projectStatus',
         sortingFn: 'alphanumeric',
         cell: ({ row }) => (
-            <span
-                className={classNames('badge', {
-                    'bg-success': row.original.projectStatus === 'Active',
-                    'bg-info': row.original.projectStatus === 'Completed',
-                    'bg-warning': row.original.projectStatus === 'OnHold',
-                    'bg-danger': row.original.projectStatus === 'Cancelled',
-                })}
-            >
-                {row.original.projectStatus}
-            </span>
+            <ProjectStatusBadge status={row.original.projectStatus} />
         ),
     },
     {

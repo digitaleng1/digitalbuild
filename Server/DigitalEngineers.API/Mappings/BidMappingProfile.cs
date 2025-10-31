@@ -23,6 +23,7 @@ public class BidMappingProfile : Profile
         CreateMap<UpdateBidResponseViewModel, UpdateBidResponseDto>();
         CreateMap<BidResponseDto, BidResponseViewModel>();
         CreateMap<BidResponseDetailsDto, BidResponseDetailsViewModel>();
+        CreateMap<BidResponseByProjectDto, BidResponseByProjectViewModel>();
 
         CreateMap<CreateBidMessageViewModel, CreateBidMessageDto>();
         CreateMap<BidMessageDto, BidMessageViewModel>();

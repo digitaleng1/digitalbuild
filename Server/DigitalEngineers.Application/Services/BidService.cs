@@ -700,4 +700,77 @@ public class BidService : IBidService
 
         return statistics;
     }
+
+    public async Task<IEnumerable<BidResponseByProjectDto>> GetBidResponsesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+            
+        if (project == null)
+            throw new ProjectNotFoundException(projectId);
+
+        var bidResponses = await _context.Set<BidResponse>()
+            .Include(br => br.BidRequest)
+            .Include(br => br.Specialist)
+                .ThenInclude(s => s.User)
+            .Include(br => br.Specialist)
+                .ThenInclude(s => s.LicenseTypes)
+                    .ThenInclude(slt => slt.LicenseType)
+            .Where(br => br.BidRequest.ProjectId == projectId)
+            .OrderByDescending(br => br.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        // Admin always sees real client info
+        string clientName = "Unknown";
+        string? clientProfilePictureUrl = null;
+        
+        if (!string.IsNullOrEmpty(project.ClientId))
+        {
+            var client = await _context.Users.FindAsync(project.ClientId);
+            if (client != null)
+            {
+                clientName = $"{client.FirstName} {client.LastName}";
+                clientProfilePictureUrl = client.ProfilePictureUrl;
+            }
+        }
+
+        string? projectThumbnailUrl = null;
+        if (!string.IsNullOrEmpty(project.ThumbnailUrl))
+        {
+            projectThumbnailUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
+        }
+
+        return bidResponses.Select(br =>
+        {
+            var specialist = br.Specialist;
+            var licenseType = specialist.LicenseTypes.FirstOrDefault()?.LicenseType;
+
+            return new BidResponseByProjectDto
+            {
+                Id = br.Id,
+                BidRequestId = br.BidRequestId,
+                SpecialistId = specialist.Id,
+                SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
+                SpecialistEmail = specialist.User.Email ?? string.Empty,
+                SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
+                LicenseTypeId = licenseType?.Id ?? 0,
+                LicenseTypeName = licenseType?.Name ?? "N/A",
+                Status = br.Status.ToString(),
+                ProposedPrice = br.ProposedPrice,
+                EstimatedDays = br.EstimatedDays,
+                IsAvailable = specialist.IsAvailable,
+                CoverLetter = br.CoverLetter,
+                SubmittedAt = br.CreatedAt,
+                
+                ProjectId = project.Id,
+                ProjectName = project.Name,
+                ProjectThumbnailUrl = projectThumbnailUrl,
+                ProjectBudget = project.Budget,
+                ProjectDeadline = br.BidRequest.Deadline,
+                
+                ClientName = clientName,
+                ClientProfilePictureUrl = clientProfilePictureUrl
+            };
+        });
+    }
 }

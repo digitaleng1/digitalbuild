@@ -317,4 +317,12 @@ public class BidsController : ControllerBase
         var viewModels = _mapper.Map<IEnumerable<ProjectBidStatisticsViewModel>>(statistics);
         return Ok(viewModels);
     }
+
+    [HttpGet("projects/{projectId}/responses")]
+    public async Task<ActionResult<IEnumerable<BidResponseByProjectViewModel>>> GetBidResponsesByProjectId(int projectId, CancellationToken cancellationToken)
+    {
+        var dtos = await _bidService.GetBidResponsesByProjectIdAsync(projectId, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<BidResponseByProjectViewModel>>(dtos);
+        return Ok(viewModels);
+    }
 }

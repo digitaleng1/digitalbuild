@@ -74,20 +74,6 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'apps-tasks',
-		label: 'Tasks',
-		isTitle: false,
-		icon: 'uil-clipboard-alt',
-		url: '/apps/tasks/list',
-	},
-	{
-		key: 'apps-calendar',
-		label: 'Calendar',
-		isTitle: false,
-		icon: 'uil-calender',
-		url: '/apps/calendar',
-	},
-	{
 		key: 'pages',
 		label: 'Pages',
 		isTitle: false,
