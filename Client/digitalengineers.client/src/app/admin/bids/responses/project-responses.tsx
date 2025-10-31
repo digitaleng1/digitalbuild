@@ -3,23 +3,30 @@ import { Row, Col, Card, Spinner, Alert, Button } from 'react-bootstrap';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { useBidResponses } from '../hooks/useBidResponses';
 import ResponsesGroup from './components/ResponsesGroup';
+import AcceptBidModal from '@/components/modals/AcceptBidModal';
+import RejectBidModal from '@/components/modals/RejectBidModal';
 
 const BidResponsesByProjectPage = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const projectId = parseInt(id || '0', 10);
 
-	const { groupedResponses, loading, error } = useBidResponses(projectId);
-
-	const handleApprove = (responseId: number) => {
-		console.log('Approve response:', responseId);
-		// TODO: Implement approve logic
-	};
-
-	const handleReject = (responseId: number) => {
-		console.log('Reject response:', responseId);
-		// TODO: Implement reject logic
-	};
+	const { 
+		groupedResponses, 
+		loading, 
+		error,
+		showApproveModal,
+		selectedResponse,
+		handleOpenApproveModal,
+		handleCloseApproveModal,
+		handleApprove,
+		approving,
+		showRejectModal,
+		handleOpenRejectModal,
+		handleCloseRejectModal,
+		handleReject,
+		rejecting
+	} = useBidResponses(projectId);
 
 	const handleMessage = (responseId: number) => {
 		console.log('Message response:', responseId);
@@ -176,13 +183,32 @@ const BidResponsesByProjectPage = () => {
 							<ResponsesGroup 
 								key={group.licenseTypeId} 
 								group={group}
-								onApprove={handleApprove}
-								onReject={handleReject}
+								onApprove={handleOpenApproveModal}
+								onReject={handleOpenRejectModal}
 								onMessage={handleMessage}
 							/>
 						))}
 					</Col>
 				</Row>
+			)}
+
+			{selectedResponse && (
+				<>
+					<AcceptBidModal
+						show={showApproveModal}
+						onHide={handleCloseApproveModal}
+						onConfirm={handleApprove}
+						proposedPrice={selectedResponse.proposedPrice}
+						loading={approving}
+					/>
+					<RejectBidModal
+						show={showRejectModal}
+						onHide={handleCloseRejectModal}
+						onConfirm={handleReject}
+						specialistName={selectedResponse.specialistName}
+						loading={rejecting}
+					/>
+				</>
 			)}
 		</>
 	);

@@ -9,4 +9,5 @@ public class ProjectBidStatisticsDto
     public DateTime? StartDate { get; set; }
     public int PendingBidsCount { get; set; }
     public int RespondedBidsCount { get; set; }
+    public int RejectedBidsCount { get; set; }
 }

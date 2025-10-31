@@ -1,11 +1,11 @@
 import { Card } from 'react-bootstrap';
-import type { GroupedBidResponses } from '@/types/admin-bid';
+import type { GroupedBidResponses, BidResponseDto } from '@/types/admin-bid';
 import BidResponsesTable from './BidResponsesTable';
 
 interface ResponsesGroupProps {
 	group: GroupedBidResponses;
-	onApprove: (responseId: number) => void;
-	onReject: (responseId: number) => void;
+	onApprove: (response: BidResponseDto) => void;
+	onReject: (response: BidResponseDto) => void;
 	onMessage: (responseId: number) => void;
 }
 

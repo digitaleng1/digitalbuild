@@ -10,11 +10,13 @@ const BidStatusBadge = ({ status }: BidStatusBadgeProps) => {
 		switch (status) {
 			case 'Pending':
 				return 'warning';
+			case 'Responded':
+				return 'info';
 			case 'Accepted':
 				return 'success';
 			case 'Rejected':
 				return 'danger';
-			case 'Cancelled':
+			case 'Withdrawn':
 				return 'secondary';
 			default:
 				return 'secondary';

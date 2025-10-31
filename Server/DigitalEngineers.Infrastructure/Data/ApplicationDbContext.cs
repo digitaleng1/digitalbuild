@@ -279,7 +279,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.CoverLetter).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.ProposedPrice).HasPrecision(18, 2).IsRequired();
             entity.Property(e => e.EstimatedDays).IsRequired();
-            entity.Property(e => e.Status).IsRequired();
             entity.Property(e => e.RejectionReason).HasMaxLength(500);
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();

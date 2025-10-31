@@ -21,7 +21,11 @@ public class BidMappingProfile : Profile
         CreateMap<CreateBidResponseViewModel, CreateBidResponseDto>()
             .ForMember(dest => dest.SpecialistId, opt => opt.Ignore());
         CreateMap<UpdateBidResponseViewModel, UpdateBidResponseDto>();
-        CreateMap<BidResponseDto, BidResponseViewModel>();
+        CreateMap<BidResponseDto, BidResponseViewModel>()
+            .ForMember(dest => dest.FinalPrice, opt => opt.MapFrom(src => 
+                src.AdminMarkupPercentage.HasValue 
+                    ? src.ProposedPrice * (1 + src.AdminMarkupPercentage.Value / 100) 
+                    : (decimal?)null));
         CreateMap<BidResponseDetailsDto, BidResponseDetailsViewModel>();
         CreateMap<BidResponseByProjectDto, BidResponseByProjectViewModel>();
 

@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { SendBidDto, BidRequestDto, BidRequestDetailsDto, CreateBidResponseDto, BidResponseDto } from '@/types/bid';
+import type { SendBidDto, BidRequestDto, BidRequestDetailsDto, CreateBidResponseDto, BidResponseDto, AcceptBidResponseDto } from '@/types/bid';
 import type { AdminBidListItem } from '@/types/admin-bid';
 
 class BidService {
@@ -50,6 +50,20 @@ class BidService {
 
 	async getBidResponsesByProjectId(projectId: number): Promise<BidResponseDto[]> {
 		return await httpClient.get<BidResponseDto[]>(`/api/bids/projects/${projectId}/responses`);
+	}
+
+	/**
+	 * Accept bid response with markup and comment (Admin only)
+	 */
+	async acceptBidResponse(id: number, data: AcceptBidResponseDto): Promise<void> {
+		await httpClient.post(`/api/bids/responses/${id}/accept`, data);
+	}
+
+	/**
+	 * Reject bid response with reason (Admin only)
+	 */
+	async rejectBidResponse(id: number, reason: string): Promise<void> {
+		await httpClient.post(`/api/bids/responses/${id}/reject`, { reason });
 	}
 }
 

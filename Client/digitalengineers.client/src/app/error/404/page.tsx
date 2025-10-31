@@ -49,7 +49,7 @@ const Error404 = () => {
 				</Container>
 			</div>
 
-			<footer className="footer footer-alt">2018 - {new Date().getFullYear()} © Hyper - Coderthemes.com</footer>
+			<footer className="footer footer-alt">2018 - {new Date().getFullYear()} © Digital Engineers - digital-engineers.com</footer>
 		</>
 	);
 };

@@ -57,8 +57,6 @@ const BidDetails = () => {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-            //hour: '2-digit',
-            //minute: '2-digit'
         });
     };
 
@@ -87,7 +85,7 @@ const BidDetails = () => {
         );
     }
 
-    const canSubmitResponse = bid.status === 'Open' && !bid.hasResponse;
+    const canSubmitResponse = bid.status === 'Pending' && !bid.hasResponse;
 
     return (
         <>
@@ -101,18 +99,31 @@ const BidDetails = () => {
                             <div className="d-flex justify-content-between align-items-start mb-3">
                                 <div className="w-100">
                                     <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 className="mb-0">{bid.title}</h4>
+                                        <div className="d-flex align-items-center gap-2">
+                                            <h4 className="mb-0">{bid.title}</h4>
+                                            <BidStatusBadge status={bid.status} />
+                                        </div>
                                         <Button variant="outline-secondary" size="sm" onClick={() => navigate('/specialist/bids')}>
                                             <i className="mdi mdi-arrow-left me-1"></i>
                                             Back to List
                                         </Button>
                                     </div>
                                     <div className="d-flex justify-content-between align-items-center mb-3 mt-3">
-                                        {bid.proposedBudget !== undefined && bid.proposedBudget !== null && (
+                                        <div className="d-flex align-items-center gap-3">
+                                            {bid.proposedBudget !== undefined && bid.proposedBudget !== null && (
+                                                <span className="text-muted">
+                                                    Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>
+                                                </span>
+                                            )}
+                                            {bid.deadline && (
+                                                <span className="text-muted">
+                                                    Deadline: <strong className="text-dark">{formatDate(bid.deadline)}</strong>
+                                                </span>
+                                            )}
                                             <span className="text-muted">
-                                                Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>
+                                                Created: <strong className="text-dark">{formatDate(bid.createdAt)}</strong>
                                             </span>
-                                        )}
+                                        </div>
                                         <span className="text-muted">
                                             Client: <strong className="text-dark">{bid.clientName}</strong>
                                         </span>
@@ -135,8 +146,6 @@ const BidDetails = () => {
                             <h5 className="mt-2">Bid Description</h5>
                             <p className="text-muted">{bid.description}</p>
 
-
-
                         </Card.Body>
                     </Card>
 
@@ -157,32 +166,6 @@ const BidDetails = () => {
 
                 {/* Sidebar - Info */}
                 <Col lg={4}>
-                    <Card>
-                        <Card.Header className='py-2'>
-                            <h5 className="mb-0">Status:  <BidStatusBadge status={bid.status} /></h5>
-                        </Card.Header>
-                        <Card.Body className='py-2'>
-                            <div className="mt-1">
-                                <Row>
-                                    <Col md={6}>
-                                        <div className="mb-3">
-                                            <h6 className="text-muted mb-1">Deadline</h6>
-                                            {bid.deadline && (
-                                                <p className="mb-0">{formatDate(bid.deadline)}</p>
-                                            )}
-                                        </div>
-                                    </Col>
-                                    <Col md={6}>
-                                        <div className="mb-3">
-                                            <h6 className="text-muted mb-1">Created Date</h6>
-                                            <p className="mb-0">{formatDate(bid.createdAt)}</p>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </div>
-                        </Card.Body>
-                    </Card>
-
                     {/* Response Form */}
                     {canSubmitResponse && (
                         <BidResponseForm

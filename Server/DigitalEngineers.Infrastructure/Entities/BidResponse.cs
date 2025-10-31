@@ -15,9 +15,11 @@ public class BidResponse
     public string CoverLetter { get; set; } = string.Empty;
     public decimal ProposedPrice { get; set; }
     public int EstimatedDays { get; set; }
-    public BidResponseStatus Status { get; set; } = BidResponseStatus.Pending;
     
     public string? RejectionReason { get; set; }
+    
+    public decimal? AdminMarkupPercentage { get; set; }
+    public string? AdminComment { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

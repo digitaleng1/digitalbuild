@@ -186,9 +186,16 @@ public class BidsController : ControllerBase
     [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AcceptBidResponse(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> AcceptBidResponse(
+        int id, 
+        [FromBody] AcceptBidResponseViewModel model, 
+        CancellationToken cancellationToken)
     {
-        await _bidService.AcceptBidResponseAsync(id, cancellationToken);
+        await _bidService.AcceptBidResponseAsync(
+            id, 
+            model.AdminMarkupPercentage, 
+            model.AdminComment, 
+            cancellationToken);
         return NoContent();
     }
 

@@ -25,14 +25,7 @@ export interface BidFormData {
 // Provider Bid Types
 export enum BidRequestStatus {
 	Pending = 'Pending',
-	Open = 'Open',
-	Accepted = 'Accepted',
-	Rejected = 'Rejected',
-	Cancelled = 'Cancelled'
-}
-
-export enum BidResponseStatus {
-	Pending = 'Pending',
+	Responded = 'Responded',
 	Accepted = 'Accepted',
 	Rejected = 'Rejected',
 	Withdrawn = 'Withdrawn'
@@ -98,7 +91,9 @@ export interface BidResponseDto {
 	coverLetter: string;
 	proposedPrice: number;
 	estimatedDays: number;
-	status: BidResponseStatus;
+	adminMarkupPercentage?: number;
+	adminComment?: string;
+	finalPrice?: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -109,4 +104,10 @@ export interface CreateBidResponseDto {
 	coverLetter: string;
 	proposedPrice: number;
 	estimatedDays: number;
+}
+
+// Synchronized with server AcceptBidResponseViewModel
+export interface AcceptBidResponseDto {
+	adminMarkupPercentage: number;
+	adminComment?: string;
 }

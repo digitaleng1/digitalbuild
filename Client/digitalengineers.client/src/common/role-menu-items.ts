@@ -30,7 +30,7 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'management',
-		label: 'Users Management',
+		label: 'Management',
 		isTitle: true,
 	},
 	{
@@ -55,9 +55,10 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'projects-management',
-		label: 'Projects Management',
+		label: 'Projects',
 		isTitle: false,
 		icon: 'uil-briefcase',
+		expanded: true,
 		children: [
 			{
 				key: 'project-list',
@@ -74,8 +75,8 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'pages',
-		label: 'Pages',
+		key: 'account',
+		label: 'Account',
 		isTitle: false,
 		icon: 'uil-copy-alt',
 		children: [
@@ -83,7 +84,7 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 				key: 'page-profile',
 				label: 'Profile',
 				url: '/pages/profile',
-				parentKey: 'pages',
+				parentKey: 'account',
 			},
 		],
 	},
@@ -186,12 +187,6 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 				parentKey: 'my-projects',
 			},
 			{
-				key: 'projects-details',
-				label: 'Project Details',
-				url: '/apps/projects/details',
-				parentKey: 'my-projects',
-			},
-			{
 				key: 'projects-gantt',
 				label: 'Gantt Chart',
 			 url: '/apps/projects/gantt',
@@ -216,26 +211,6 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 				label: 'Kanban Board',
 				url: '/apps/tasks/kanban',
 				parentKey: 'my-tasks',
-			},
-		],
-	},
-	{
-		key: 'orders',
-		label: 'Orders',
-		isTitle: false,
-		icon: 'uil-shopping-cart',
-		children: [
-			{
-				key: 'orders-received',
-				label: 'Received Orders',
-				url: '/apps/ecommerce/orders',
-				parentKey: 'orders',
-			},
-			{
-				key: 'orders-history',
-				label: 'Order History',
-				url: '/apps/ecommerce/order-details',
-				parentKey: 'orders',
 			},
 		],
 	},

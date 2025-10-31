@@ -112,7 +112,6 @@ public class BidService : IBidService
                 CoverLetter = response.CoverLetter,
                 ProposedPrice = response.ProposedPrice,
                 EstimatedDays = response.EstimatedDays,
-                Status = response.Status.ToString(),
                 CreatedAt = response.CreatedAt,
                 UpdatedAt = response.UpdatedAt
             };
@@ -289,7 +288,6 @@ public class BidService : IBidService
             CoverLetter = dto.CoverLetter,
             ProposedPrice = dto.ProposedPrice,
             EstimatedDays = dto.EstimatedDays,
-            Status = BidResponseStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -319,7 +317,6 @@ public class BidService : IBidService
             CoverLetter = bidResponse.CoverLetter,
             ProposedPrice = bidResponse.ProposedPrice,
             EstimatedDays = bidResponse.EstimatedDays,
-            Status = bidResponse.Status.ToString(),
             CreatedAt = bidResponse.CreatedAt,
             UpdatedAt = bidResponse.UpdatedAt
         };
@@ -350,7 +347,7 @@ public class BidService : IBidService
             CoverLetter = bidResponse.CoverLetter,
             ProposedPrice = bidResponse.ProposedPrice,
             EstimatedDays = bidResponse.EstimatedDays,
-            Status = bidResponse.Status.ToString(),
+            Status = bidResponse.BidRequest.Status.ToString(),
             RejectionReason = bidResponse.RejectionReason,
             CreatedAt = bidResponse.CreatedAt,
             UpdatedAt = bidResponse.UpdatedAt,
@@ -386,7 +383,6 @@ public class BidService : IBidService
             CoverLetter = r.CoverLetter,
             ProposedPrice = r.ProposedPrice,
             EstimatedDays = r.EstimatedDays,
-            Status = r.Status.ToString(),
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         });
@@ -397,15 +393,17 @@ public class BidService : IBidService
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.Specialist)
                 .ThenInclude(s => s.User)
+            .Include(r => r.BidRequest)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
 
-        if (bidResponse.Status != BidResponseStatus.Pending)
+        if (bidResponse.BidRequest.Status != BidRequestStatus.Pending && bidResponse.BidRequest.Status != BidRequestStatus.Responded)
         {
-            _logger.LogWarning("Cannot update bid response {BidResponseId} with status {Status}", id, bidResponse.Status);
-            throw new InvalidBidStatusException(bidResponse.Status, BidResponseStatus.Pending);
+            _logger.LogWarning("Cannot update bid response {BidResponseId} with bid request status {Status}", 
+                id, bidResponse.BidRequest.Status);
+            throw new InvalidBidStatusException(bidResponse.BidRequest.Status, BidRequestStatus.Pending);
         }
 
         if (dto.CoverLetter != null)
@@ -432,13 +430,12 @@ public class BidService : IBidService
             CoverLetter = bidResponse.CoverLetter,
             ProposedPrice = bidResponse.ProposedPrice,
             EstimatedDays = bidResponse.EstimatedDays,
-            Status = bidResponse.Status.ToString(),
             CreatedAt = bidResponse.CreatedAt,
             UpdatedAt = bidResponse.UpdatedAt
         };
     }
 
-    public async Task AcceptBidResponseAsync(int id, CancellationToken cancellationToken = default)
+    public async Task AcceptBidResponseAsync(int id, decimal adminMarkupPercentage, string? adminComment, CancellationToken cancellationToken = default)
     {
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
@@ -447,13 +444,14 @@ public class BidService : IBidService
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
 
-        if (bidResponse.Status != BidResponseStatus.Pending)
-            throw new InvalidBidStatusException(bidResponse.Status, BidResponseStatus.Accepted);
+        if (bidResponse.BidRequest.Status != BidRequestStatus.Responded)
+            throw new InvalidBidStatusException(bidResponse.BidRequest.Status, BidRequestStatus.Accepted);
 
-        bidResponse.Status = BidResponseStatus.Accepted;
+        bidResponse.AdminMarkupPercentage = adminMarkupPercentage;
+        bidResponse.AdminComment = adminComment;
         bidResponse.UpdatedAt = DateTime.UtcNow;
 
-        bidResponse.BidRequest.Status = BidRequestStatus.Approved;
+        bidResponse.BidRequest.Status = BidRequestStatus.Accepted;
         bidResponse.BidRequest.UpdatedAt = DateTime.UtcNow;
 
         await _specialistService.AssignSpecialistToProjectAsync(
@@ -463,14 +461,19 @@ public class BidService : IBidService
             cancellationToken);
 
         var otherResponses = await _context.Set<BidResponse>()
-            .Where(r => r.BidRequestId == bidResponse.BidRequestId && r.Id != id && r.Status == BidResponseStatus.Pending)
+            .Include(r => r.BidRequest)
+            .Where(r => r.BidRequestId == bidResponse.BidRequestId && r.Id != id)
             .ToListAsync(cancellationToken);
 
         foreach (var response in otherResponses)
         {
-            response.Status = BidResponseStatus.Rejected;
-            response.RejectionReason = "Another specialist was selected";
-            response.UpdatedAt = DateTime.UtcNow;
+            if (response.BidRequest.Status == BidRequestStatus.Responded)
+            {
+                response.BidRequest.Status = BidRequestStatus.Rejected;
+                response.BidRequest.UpdatedAt = DateTime.UtcNow;
+                response.RejectionReason = "Another specialist was selected";
+                response.UpdatedAt = DateTime.UtcNow;
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -478,15 +481,15 @@ public class BidService : IBidService
 
     public async Task RejectBidResponseAsync(int id, string? reason = null, CancellationToken cancellationToken = default)
     {
-        var bidResponse = await _context.Set<BidResponse>().FindAsync([id], cancellationToken);
+        var bidResponse = await _context.Set<BidResponse>()
+            .Include(r => r.BidRequest)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
 
-        if (bidResponse.Status != BidResponseStatus.Pending)
-            throw new InvalidBidStatusException(bidResponse.Status, BidResponseStatus.Rejected);
-
-        bidResponse.Status = BidResponseStatus.Rejected;
+        bidResponse.BidRequest.Status = BidRequestStatus.Rejected;
+        bidResponse.BidRequest.UpdatedAt = DateTime.UtcNow;
         bidResponse.RejectionReason = reason;
         bidResponse.UpdatedAt = DateTime.UtcNow;
 
@@ -694,7 +697,8 @@ public class BidService : IBidService
                 ProjectBudget = p.Budget,
                 StartDate = p.StartDate,
                 PendingBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Pending),
-                RespondedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Responded)
+                RespondedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Responded),
+                RejectedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Rejected)
             })
             .ToListAsync(cancellationToken);
 
@@ -720,7 +724,7 @@ public class BidService : IBidService
             .OrderByDescending(br => br.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        // Admin always sees real client info
+        // Admin всегда видит реальные данные клиента
         string clientName = "Unknown";
         string? clientProfilePictureUrl = null;
         
@@ -755,7 +759,7 @@ public class BidService : IBidService
                 SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
                 LicenseTypeId = licenseType?.Id ?? 0,
                 LicenseTypeName = licenseType?.Name ?? "N/A",
-                Status = br.Status.ToString(),
+                Status = br.BidRequest.Status.ToString(),
                 ProposedPrice = br.ProposedPrice,
                 EstimatedDays = br.EstimatedDays,
                 IsAvailable = specialist.IsAvailable,

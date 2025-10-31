@@ -4,6 +4,7 @@ public enum BidRequestStatus
 {
     Pending = 0,
     Responded = 1,
-    Approved = 2,
-    Cancelled = 3
+    Accepted = 2,
+    Rejected = 3,
+    Withdrawn = 4
 }

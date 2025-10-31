@@ -9,7 +9,7 @@ import {useNavigate} from "react-router";
 const BottomLink = () => {
 	return (
 		<footer className="footer footer-alt">
-			<p className="text-muted">2018 - {new Date().getFullYear()} © Hyper - Coderthemes.com</p>
+			<p className="text-muted">2018 - {new Date().getFullYear()} © Digital Engineers - digital-engineers.com</p>
 		</footer>
 	);
 };

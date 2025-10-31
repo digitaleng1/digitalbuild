@@ -56,8 +56,11 @@ const columns: ColumnDef<AdminBidListItem>[] = [
                 <span className="badge bg-warning me-1">
                     {row.original.pendingBidsCount} Pending
                 </span>
-                <span className="badge bg-success">
+                <span className="badge bg-success me-1">
                     {row.original.respondedBidsCount} Responded
+                </span>
+                <span className="badge bg-danger">
+                    {row.original.rejectedBidsCount} Rejected
                 </span>
             </div>
         ),

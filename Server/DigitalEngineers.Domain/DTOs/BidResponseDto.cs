@@ -11,7 +11,9 @@ public class BidResponseDto
     public string CoverLetter { get; set; } = string.Empty;
     public decimal ProposedPrice { get; set; }
     public int EstimatedDays { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public decimal? AdminMarkupPercentage { get; set; }
+    public string? AdminComment { get; set; }
+    public decimal? FinalPrice { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
