@@ -372,4 +372,37 @@ public class SpecialistService : ISpecialistService
             }).ToList()
         });
     }
+
+    public async Task<IEnumerable<ProjectDto>> GetSpecialistProjectsAsync(int specialistId, CancellationToken cancellationToken = default)
+    {
+        var specialist = await _context.Set<Specialist>()
+            .AnyAsync(s => s.Id == specialistId, cancellationToken);
+
+        if (!specialist)
+            throw new SpecialistNotFoundException(specialistId);
+
+        var projects = await _context.Set<ProjectSpecialist>()
+            .Where(ps => ps.SpecialistId == specialistId)
+            .Include(ps => ps.Project)
+            .ThenInclude(p => p.ProjectLicenseTypes)
+            .Select(ps => ps.Project)
+            .ToListAsync(cancellationToken);
+
+        return projects.Select(p => new ProjectDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Description = p.Description,
+            Status = p.Status.ToString(),
+            CreatedAt = p.CreatedAt,
+            ThumbnailUrl = p.ThumbnailUrl,
+            StreetAddress = p.StreetAddress,
+            City = p.City,
+            State = p.State,
+            ZipCode = p.ZipCode,
+            ProjectScope = (int)p.ProjectScope,
+            ManagementType = p.ManagementType.ToString(),
+            LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray()
+        });
+    }
 }

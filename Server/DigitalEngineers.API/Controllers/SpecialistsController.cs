@@ -1,9 +1,11 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.Specialist;
+using DigitalEngineers.API.ViewModels.Project;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace DigitalEngineers.API.Controllers;
 
@@ -170,6 +172,22 @@ public class SpecialistsController : ControllerBase
         
         var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);
 
+        return Ok(viewModels);
+    }
+
+    /// <summary>
+    /// Get projects assigned to a specific specialist
+    /// </summary>
+    [HttpGet("{specialistId}/projects")]
+    [Authorize(Roles = "Specialist,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<ProjectViewModel>>> GetMyProjects(
+        int specialistId,
+        CancellationToken cancellationToken)
+    {
+        var projects = await _specialistService.GetSpecialistProjectsAsync(specialistId, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<ProjectViewModel>>(projects);
         return Ok(viewModels);
     }
 }
