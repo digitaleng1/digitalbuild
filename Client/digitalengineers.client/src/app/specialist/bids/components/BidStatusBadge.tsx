@@ -6,26 +6,53 @@ interface BidStatusBadgeProps {
 }
 
 const BidStatusBadge = ({ status }: BidStatusBadgeProps) => {
-	const getBadgeVariant = () => {
+	const getBadgeConfig = () => {
 		switch (status) {
 			case 'Pending':
-				return 'warning';
+				return { 
+					variant: 'warning', 
+					icon: 'mdi-clock-outline',
+					label: 'Pending'
+				};
 			case 'Responded':
-				return 'info';
+				return { 
+					variant: 'info', 
+					icon: 'mdi-reply',
+					label: 'Responded'
+				};
 			case 'Accepted':
-				return 'success';
+				return { 
+					variant: 'success', 
+					icon: 'mdi-check-circle',
+					label: 'Approved'
+				};
 			case 'Rejected':
-				return 'danger';
+				return { 
+					variant: 'danger', 
+					icon: 'mdi-close-circle',
+					label: 'Rejected'
+				};
 			case 'Withdrawn':
-				return 'secondary';
+				return { 
+					variant: 'secondary', 
+					icon: 'mdi-cancel',
+					label: 'Withdrawn'
+				};
 			default:
-				return 'secondary';
+				return { 
+					variant: 'secondary', 
+					icon: 'mdi-help-circle',
+					label: status
+				};
 		}
 	};
 
+	const config = getBadgeConfig();
+
 	return (
-		<Badge bg={getBadgeVariant()} className="me-1">
-			{status}
+		<Badge bg={config.variant} className="me-1">
+			<i className={`mdi ${config.icon} me-1`}></i>
+			{config.label}
 		</Badge>
 	);
 };

@@ -439,6 +439,9 @@ public class BidService : IBidService
     {
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
+                .ThenInclude(br => br.Project)
+            .Include(r => r.Specialist)
+                .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
@@ -454,27 +457,41 @@ public class BidService : IBidService
         bidResponse.BidRequest.Status = BidRequestStatus.Accepted;
         bidResponse.BidRequest.UpdatedAt = DateTime.UtcNow;
 
-        await _specialistService.AssignSpecialistToProjectAsync(
-            bidResponse.BidRequest.ProjectId,
-            bidResponse.SpecialistId,
-            "Bid Winner",
-            cancellationToken);
+        try
+        {
+            await _specialistService.AssignSpecialistToProjectAsync(
+                bidResponse.BidRequest.ProjectId,
+                bidResponse.SpecialistId,
+                "Specialist",
+                cancellationToken);
+        }
+        catch (SpecialistAlreadyAssignedException)
+        {
+            // Re-throw with specialist and project names for better UX
+            var specialistName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
+            var projectName = bidResponse.BidRequest.Project.Name;
+            throw new SpecialistAlreadyAssignedException(
+                bidResponse.SpecialistId,
+                bidResponse.BidRequest.ProjectId,
+                specialistName,
+                projectName);
+        }
 
         var otherResponses = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
             .Where(r => r.BidRequestId == bidResponse.BidRequestId && r.Id != id)
             .ToListAsync(cancellationToken);
 
-        foreach (var response in otherResponses)
-        {
-            if (response.BidRequest.Status == BidRequestStatus.Responded)
-            {
-                response.BidRequest.Status = BidRequestStatus.Rejected;
-                response.BidRequest.UpdatedAt = DateTime.UtcNow;
-                response.RejectionReason = "Another specialist was selected";
-                response.UpdatedAt = DateTime.UtcNow;
-            }
-        }
+        //foreach (var response in otherResponses)
+        //{
+        //    if (response.BidRequest.Status == BidRequestStatus.Responded)
+        //    {
+        //        response.BidRequest.Status = BidRequestStatus.Rejected;
+        //        response.BidRequest.UpdatedAt = DateTime.UtcNow;
+        //        response.RejectionReason = "Another specialist was selected";
+        //        response.UpdatedAt = DateTime.UtcNow;
+        //    }
+        //}
 
         await _context.SaveChangesAsync(cancellationToken);
     }
@@ -698,6 +715,7 @@ public class BidService : IBidService
                 StartDate = p.StartDate,
                 PendingBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Pending),
                 RespondedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Responded),
+                AcceptedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Accepted),
                 RejectedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Rejected)
             })
             .ToListAsync(cancellationToken);

@@ -4,7 +4,6 @@
     <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="src\app\admin\bids\responses\project\[id]\" />
     <Folder Include="src\app\client\projects\hooks\" />
   </ItemGroup>
 </Project>

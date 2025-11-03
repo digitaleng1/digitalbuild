@@ -52,15 +52,18 @@ const columns: ColumnDef<AdminBidListItem>[] = [
         header: 'Bids Status',
         accessorKey: 'pendingBidsCount',
         cell: ({ row }) => (
-            <div>
-                <span className="badge bg-warning me-1">
-                    {row.original.pendingBidsCount} Pending
+            <div className="d-flex flex-wrap gap-1" style={{ maxWidth: '200px' }}>
+                <span className="badge bg-warning">
+                   Pending: {row.original.pendingBidsCount}
                 </span>
-                <span className="badge bg-success me-1">
-                    {row.original.respondedBidsCount} Responded
+                <span className="badge bg-info">
+                  Responded: {row.original.respondedBidsCount}
+                </span>
+                <span className="badge bg-success">
+                    Approved: {row.original.acceptedBidsCount}
                 </span>
                 <span className="badge bg-danger">
-                    {row.original.rejectedBidsCount} Rejected
+                    Rejected: {row.original.rejectedBidsCount}
                 </span>
             </div>
         ),

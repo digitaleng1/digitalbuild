@@ -41,7 +41,7 @@ namespace DigitalEngineers.API.Middleware
                 BidRequestNotFoundException => StatusCodes.Status404NotFound,
                 BidResponseNotFoundException => StatusCodes.Status404NotFound,
 
-                // 400 - Bad Request (валидация)
+                // 400 - Bad Request
                 InvalidProjectStatusException => StatusCodes.Status400BadRequest,
                 InvalidBidStatusException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status400BadRequest,
@@ -50,7 +50,10 @@ namespace DigitalEngineers.API.Middleware
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
                 UnauthorizedBidAccessException => StatusCodes.Status401Unauthorized,
 
-                // 500 - Internal Server Error (все остальное)
+                // 409 - Conflict
+                SpecialistAlreadyAssignedException => StatusCodes.Status409Conflict,
+
+                // 500 - Internal Server Error
                 _ => StatusCodes.Status500InternalServerError
             };
 

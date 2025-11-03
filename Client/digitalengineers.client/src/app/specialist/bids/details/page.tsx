@@ -91,6 +91,43 @@ const BidDetails = () => {
         <>
             <PageBreadcrumb title="Bid Request Details" subName="Bids" />
 
+            {/* Status Alerts */}
+            {bid.status === 'Accepted' && (
+                <Alert variant="success" className="mb-3">
+                    <div className="d-flex align-items-center">
+                        <i className="mdi mdi-check-circle me-2" style={{ fontSize: '24px' }}></i>
+                        <div>
+                            <strong>Congratulations! Your proposal has been approved.</strong>
+                            <p className="mb-0 mt-1">The client has accepted your proposal. You will be contacted soon with next steps.</p>
+                        </div>
+                    </div>
+                </Alert>
+            )}
+
+            {bid.status === 'Rejected' && (
+                <Alert variant="danger" className="mb-3">
+                    <div className="d-flex align-items-center">
+                        <i className="mdi mdi-close-circle me-2" style={{ fontSize: '24px' }}></i>
+                        <div>
+                            <strong>Your proposal was not selected.</strong>
+                            <p className="mb-0 mt-1">Unfortunately, the client has selected another specialist for this project.</p>
+                        </div>
+                    </div>
+                </Alert>
+            )}
+
+            {bid.status === 'Withdrawn' && (
+                <Alert variant="warning" className="mb-3">
+                    <div className="d-flex align-items-center">
+                        <i className="mdi mdi-information-outline me-2" style={{ fontSize: '24px' }}></i>
+                        <div>
+                            <strong>This bid request has been withdrawn.</strong>
+                            <p className="mb-0 mt-1">The client has cancelled this bid request.</p>
+                        </div>
+                    </div>
+                </Alert>
+            )}
+
             <Row>
                 <Col lg={8}>
                     {/* Bid Info */}

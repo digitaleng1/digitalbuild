@@ -6,6 +6,7 @@ export interface AdminBidListItem {
     startDate: string | null;
     pendingBidsCount: number;
     respondedBidsCount: number;
+    acceptedBidsCount: number;
     rejectedBidsCount: number;
 }
 

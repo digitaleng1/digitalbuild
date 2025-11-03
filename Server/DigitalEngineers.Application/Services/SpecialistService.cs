@@ -266,10 +266,7 @@ public class SpecialistService : ISpecialistService
             .AnyAsync(ps => ps.ProjectId == projectId && ps.SpecialistId == specialistId, cancellationToken);
 
         if (assignmentExists)
-        {
-            _logger.LogWarning("Specialist {SpecialistId} is already assigned to project {ProjectId}", specialistId, projectId);
-            throw new InvalidOperationException($"Specialist {specialistId} is already assigned to project {projectId}");
-        }
+            throw new SpecialistAlreadyAssignedException(specialistId, projectId);
 
         var projectSpecialist = new ProjectSpecialist
         {

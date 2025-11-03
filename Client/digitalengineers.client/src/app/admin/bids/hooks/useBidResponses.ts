@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import bidService from '@/services/bidService';
 import type { BidResponseDto, GroupedBidResponses } from '@/types/admin-bid';
 import type { AcceptBidResponseDto } from '@/types/bid';
+import { useToast } from '@/contexts';
+import { getErrorMessage, getErrorTitle } from '@/utils/errorHandler';
 
 interface UseBidResponsesResult {
 	groupedResponses: GroupedBidResponses[];
@@ -22,6 +24,7 @@ interface UseBidResponsesResult {
 }
 
 export const useBidResponses = (projectId: number): UseBidResponsesResult => {
+	const { showSuccess, showError } = useToast();
 	const [responses, setResponses] = useState<BidResponseDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -40,9 +43,11 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 			console.log('✅ [useBidResponses] Received data:', data);
 			setResponses(data);
 		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to load bid responses';
+			const errorMessage = getErrorMessage(err);
+			const errorTitle = getErrorTitle(err);
 			console.error('❌ [useBidResponses] Error:', err);
 			setError(errorMessage);
+			showError(errorTitle, errorMessage);
 		} finally {
 			setLoading(false);
 		}
@@ -92,12 +97,14 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 		try {
 			setApproving(true);
 			await bidService.acceptBidResponse(selectedResponse.id, data);
+			showSuccess('Success', 'Bid response has been approved successfully');
 			await fetchResponses();
 			handleCloseApproveModal();
 		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to accept bid response';
+			const errorMessage = getErrorMessage(err);
+			const errorTitle = getErrorTitle(err);
 			console.error('❌ [useBidResponses] Error approving bid:', err);
-			setError(errorMessage);
+			showError(errorTitle, errorMessage);
 		} finally {
 			setApproving(false);
 		}
@@ -119,12 +126,14 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 		try {
 			setRejecting(true);
 			await bidService.rejectBidResponse(selectedResponse.id, reason);
+			showSuccess('Success', 'Bid response has been rejected');
 			await fetchResponses();
 			handleCloseRejectModal();
 		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to reject bid response';
+			const errorMessage = getErrorMessage(err);
+			const errorTitle = getErrorTitle(err);
 			console.error('❌ [useBidResponses] Error rejecting bid:', err);
-			setError(errorMessage);
+			showError(errorTitle, errorMessage);
 		} finally {
 			setRejecting(false);
 		}
