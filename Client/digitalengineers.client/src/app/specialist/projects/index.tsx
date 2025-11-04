@@ -10,7 +10,7 @@ export default function Projects() {
 		<Routes>
 			<Route path="/*" element={<Outlet />}>
 				<Route index element={<ListProject />} />
-				<Route path=":id" element={<ProjectDetails />} />
+				<Route path="details/:id" element={<ProjectDetails />} />
 				<Route path="*" element={<Error404Alt />} />
 			</Route>
 		</Routes>

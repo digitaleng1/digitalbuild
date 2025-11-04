@@ -19,7 +19,9 @@ export const useLogout = () => {
                 message: 'You have been logged out successfully',
                 type: 'success',
             });
-            navigate('/account/login');
+            
+            // Force redirect to main page (bypass React Router)
+            window.location.href = '/main';
         }
     };
 

@@ -1,30 +1,16 @@
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { SpecialistProjectList } from '@/app/shared/components/projects';
-import { useAuthContext } from '@/common/context/useAuthContext';
-import { Alert } from 'react-bootstrap';
+import { ProjectList } from '@/app/shared/components/projects';
 
 const ListProject = () => {
-	const { user } = useAuthContext();
-
-	if (!user?.specialistId) {
-		return (
-			<>
-				<PageBreadcrumb title="Project List" subName="Projects" />
-				<Alert variant="warning">
-					<Alert.Heading>Specialist Profile Not Found</Alert.Heading>
-					<p>Your specialist profile is not set up yet. Please contact support.</p>
-				</Alert>
-			</>
-		);
-	}
-
 	return (
 		<>
 			<PageBreadcrumb title="Project List" subName="Projects" />
 			
-			<SpecialistProjectList 
-				specialistId={user.specialistId}
+			<ProjectList 
 				basePath="/specialist/projects"
+				showCreateButton={false}
+				emptyTitle="No Assigned Projects"
+				emptyDescription="You don't have any assigned projects yet."
 			/>
 		</>
 	);

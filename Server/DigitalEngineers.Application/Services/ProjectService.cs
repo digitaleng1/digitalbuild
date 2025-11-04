@@ -317,6 +317,21 @@ public class ProjectService : IProjectService
         {
             query = query.Where(p => p.ClientId == userId);
         }
+        else if (userRoles.Contains("Provider"))
+        {
+            var specialist = await _context.Specialists
+                .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+            
+            if (specialist == null)
+                return Enumerable.Empty<ProjectDto>();
+            
+            var assignedProjectIds = await _context.ProjectSpecialists
+                .Where(ps => ps.SpecialistId == specialist.Id)
+                .Select(ps => ps.ProjectId)
+                .ToListAsync(cancellationToken);
+            
+            query = query.Where(p => assignedProjectIds.Contains(p.Id));
+        }
         else
         {
             _logger.LogWarning("User {UserId} has no recognized role, returning empty list", userId);

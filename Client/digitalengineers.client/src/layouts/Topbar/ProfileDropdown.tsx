@@ -2,9 +2,8 @@ import { Dropdown } from 'react-bootstrap';
 import classNames from 'classnames';
 import type { ProfileOption } from './types';
 import { useToggle } from '@/hooks';
-import {Link} from "react-router";
-
-
+import { Link } from "react-router";
+import { useLogout } from '@/hooks/useLogout';
 
 type ProfileDropdownProps = {
 	menuItems: Array<ProfileOption>;
@@ -15,6 +14,17 @@ type ProfileDropdownProps = {
 
 const ProfileDropdown = ({ userTitle, username, menuItems, userImage }: ProfileDropdownProps) => {
 	const [isOpen, toggleDropdown] = useToggle();
+	const { logout } = useLogout();
+
+	const handleMenuItemClick = (item: ProfileOption, e: React.MouseEvent) => {
+		if (item.label === 'Logout') {
+			e.preventDefault();
+			logout();
+			toggleDropdown();
+		} else {
+			toggleDropdown();
+		}
+	};
 
 	return (
 		<Dropdown show={isOpen} onToggle={toggleDropdown}>
@@ -34,13 +44,18 @@ const ProfileDropdown = ({ userTitle, username, menuItems, userImage }: ProfileD
 				</span>
 			</Dropdown.Toggle>
 			<Dropdown.Menu align={'end'} className="dropdown-menu-animated profile-dropdown">
-				<div onClick={toggleDropdown}>
+				<div>
 					<div className="dropdown-header noti-title">
 						<h6 className="text-overflow m-0">Welcome !</h6>
 					</div>
 					{menuItems.map((item, i) => {
 						return (
-							<Link to={item.redirectTo} className="dropdown-item notify-item" key={i + '-profile-menu'}>
+							<Link 
+								to={item.redirectTo} 
+								className="dropdown-item notify-item" 
+								key={i + '-profile-menu'}
+								onClick={(e) => handleMenuItemClick(item, e)}
+							>
 								<i className={classNames(item.icon, 'me-1')}></i>
 								<span>{item.label}</span>
 							</Link>
