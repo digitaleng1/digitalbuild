@@ -728,18 +728,18 @@ public class BidService : IBidService
         if (project == null)
             throw new ProjectNotFoundException(projectId);
 
-        var bidResponses = await _context.Set<BidResponse>()
-            .Include(br => br.BidRequest)
+        // Get ALL BidRequests for this project, regardless of whether they have responses
+        var bidRequests = await _context.Set<BidRequest>()
             .Include(br => br.Specialist)
                 .ThenInclude(s => s.User)
             .Include(br => br.Specialist)
                 .ThenInclude(s => s.LicenseTypes)
                     .ThenInclude(slt => slt.LicenseType)
-            .Where(br => br.BidRequest.ProjectId == projectId)
+            .Include(br => br.Response)
+            .Where(br => br.ProjectId == projectId)
             .OrderByDescending(br => br.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        // Admin всегда видит реальные данные клиента
         string clientName = "Unknown";
         string? clientProfilePictureUrl = null;
         
@@ -759,33 +759,34 @@ public class BidService : IBidService
             projectThumbnailUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
         }
 
-        return bidResponses.Select(br =>
+        return bidRequests.Select(br =>
         {
             var specialist = br.Specialist;
             var licenseType = specialist.LicenseTypes.FirstOrDefault()?.LicenseType;
+            var response = br.Response;
 
             return new BidResponseByProjectDto
             {
-                Id = br.Id,
-                BidRequestId = br.BidRequestId,
+                Id = response?.Id ?? 0, // 0 if no response yet
+                BidRequestId = br.Id,
                 SpecialistId = specialist.Id,
                 SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
                 SpecialistEmail = specialist.User.Email ?? string.Empty,
                 SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
                 LicenseTypeId = licenseType?.Id ?? 0,
                 LicenseTypeName = licenseType?.Name ?? "N/A",
-                Status = br.BidRequest.Status.ToString(),
-                ProposedPrice = br.ProposedPrice,
-                EstimatedDays = br.EstimatedDays,
+                Status = br.Status.ToString(),
+                ProposedPrice = response?.ProposedPrice ?? 0,
+                EstimatedDays = response?.EstimatedDays ?? 0,
                 IsAvailable = specialist.IsAvailable,
-                CoverLetter = br.CoverLetter,
-                SubmittedAt = br.CreatedAt,
+                CoverLetter = response?.CoverLetter ?? string.Empty,
+                SubmittedAt = response?.CreatedAt ?? br.CreatedAt,
                 
                 ProjectId = project.Id,
                 ProjectName = project.Name,
                 ProjectThumbnailUrl = projectThumbnailUrl,
                 ProjectBudget = project.Budget,
-                ProjectDeadline = br.BidRequest.Deadline,
+                ProjectDeadline = br.Deadline,
                 
                 ClientName = clientName,
                 ClientProfilePictureUrl = clientProfilePictureUrl

@@ -13,10 +13,11 @@ const BidsTable = ({ data }: BidsTableProps) => {
             data={data}
             pageSize={10}
             rowsPerPageList={sizePerPageList}
-            theadClass="bg-light bg-opacity-50 thead-sm"
+            theadClass="bg-light bg-opacity-50"
             showPagination
             isSearchable
-            searchBoxClass="mb-2"
+            searchBoxClass="mb-3"
+            searchPlaceholder="Search projects..."
         />
     );
 };

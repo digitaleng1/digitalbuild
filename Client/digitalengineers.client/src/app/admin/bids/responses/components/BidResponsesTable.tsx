@@ -52,7 +52,7 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 				</thead>
 				<tbody>
 					{responses.map((response) => (
-						<tr key={response.id}>
+						<tr key={response.bidRequestId}>
 							<td>
 								<div className="d-flex align-items-center">
 									<img
@@ -68,10 +68,14 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 								</div>
 							</td>
 							<td>
-								<div>
-									<div className="fw-semibold">${response.proposedPrice.toLocaleString()}</div>
-									<div className="text-muted small">{response.estimatedDays} days</div>
-								</div>
+								{response.status.toLowerCase() === 'pending' ? (
+									<span className="text-muted small">Awaiting response</span>
+								) : (
+									<div>
+										<div className="fw-semibold">${response.proposedPrice.toLocaleString()}</div>
+										<div className="text-muted small">{response.estimatedDays} days</div>
+									</div>
+								)}
 							</td>
 							<td>
 								<Badge bg={response.isAvailable ? 'success' : 'secondary'}>
@@ -108,17 +112,19 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 										>
 											<i className="mdi mdi-close-circle"></i>
 										</Link>
-										<Link
-											to="#"
-											className="action-icon"
-											onClick={(e) => {
-												e.preventDefault();
-												onMessage(response.id);
-											}}
-											title="Send Message"
-										>
-											<i className="mdi mdi-message-text"></i>
-										</Link>
+										{response.id > 0 && (
+											<Link
+												to="#"
+												className="action-icon"
+												onClick={(e) => {
+													e.preventDefault();
+													onMessage(response.id);
+												}}
+												title="Send Message"
+											>
+												<i className="mdi mdi-message-text"></i>
+											</Link>
+										)}
 									</>
 								)}
 								{/* Accepted = already approved, can only reject (cancel) */}
@@ -135,21 +141,23 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 										>
 											<i className="mdi mdi-close-circle"></i>
 										</Link>
-										<Link
-											to="#"
-											className="action-icon"
-											onClick={(e) => {
-												e.preventDefault();
-												onMessage(response.id);
-											}}
-											title="Send Message"
-										>
-											<i className="mdi mdi-message-text"></i>
-										</Link>
+										{response.id > 0 && (
+											<Link
+												to="#"
+												className="action-icon"
+												onClick={(e) => {
+													e.preventDefault();
+													onMessage(response.id);
+												}}
+												title="Send Message"
+											>
+												<i className="mdi mdi-message-text"></i>
+											</Link>
+										)}
 									</>
 								)}
 								{/* Rejected/Withdrawn = can only message */}
-								{(response.status.toLowerCase() === 'rejected' || response.status.toLowerCase() === 'withdrawn') && (
+								{(response.status.toLowerCase() === 'rejected' || response.status.toLowerCase() === 'withdrawn') && response.id > 0 && (
 									<Link
 										to="#"
 										className="action-icon"

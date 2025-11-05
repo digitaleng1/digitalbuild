@@ -92,7 +92,10 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 	};
 
 	const handleApprove = async (data: AcceptBidResponseDto) => {
-		if (!selectedResponse) return;
+		if (!selectedResponse || selectedResponse.id === 0) {
+			showError('Error', 'Cannot approve bid without response');
+			return;
+		}
 
 		try {
 			setApproving(true);
@@ -121,7 +124,10 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 	};
 
 	const handleReject = async (reason: string) => {
-		if (!selectedResponse) return;
+		if (!selectedResponse || selectedResponse.id === 0) {
+			showError('Error', 'Cannot reject bid without response');
+			return;
+		}
 
 		try {
 			setRejecting(true);
