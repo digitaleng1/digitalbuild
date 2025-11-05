@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import projectService from '@/services/projectService';
 import type { ProjectDetailsDto } from '@/types/project';
 import { useToast } from '@/contexts';
@@ -9,6 +9,7 @@ interface UseProjectDetailsReturn {
 	loading: boolean;
 	error: string | null;
 	refetch: () => Promise<void>;
+	updateProjectStatus: (newStatus: string) => void;
 }
 
 /**
@@ -49,6 +50,21 @@ export default function useProjectDetails(projectId: number | undefined): UsePro
 		}
 	};
 
+	/**
+	 * Optimistically update project status in UI without refetch
+	 */
+	const updateProjectStatus = useCallback((newStatus: string) => {
+		setProject(prevProject => 
+			prevProject 
+				? { 
+					...prevProject, 
+					status: newStatus,
+					updatedAt: new Date().toISOString()
+				}
+				: null
+		);
+	}, []);
+
 	useEffect(() => {
 		fetchProjectDetails();
 	}, [projectId]);
@@ -58,5 +74,6 @@ export default function useProjectDetails(projectId: number | undefined): UsePro
 		loading,
 		error,
 		refetch: fetchProjectDetails,
+		updateProjectStatus,
 	};
 }

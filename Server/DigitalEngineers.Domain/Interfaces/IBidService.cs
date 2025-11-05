@@ -20,7 +20,7 @@ public interface IBidService
     Task RejectBidResponseAsync(int id, string? reason = null, CancellationToken cancellationToken = default);
 
     Task<BidMessageDto> CreateMessageAsync(CreateBidMessageDto dto, CancellationToken cancellationToken = default);
-    Task<IEnumerable<BidMessageDto>> GetMessagesByBidResponseIdAsync(int responseId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BidMessageDto>> GetMessagesByBidRequestIdAsync(int requestId, CancellationToken cancellationToken = default);
     Task DeleteMessageAsync(int id, CancellationToken cancellationToken = default);
     
     Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default);

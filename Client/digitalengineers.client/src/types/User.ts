@@ -3,6 +3,7 @@ export type User = {
 	email: string;
 	firstName?: string;
 	lastName?: string;
+	profilePictureUrl?: string;
 	roles: string[];
 	specialistId?: number;
 	accessToken?: string;

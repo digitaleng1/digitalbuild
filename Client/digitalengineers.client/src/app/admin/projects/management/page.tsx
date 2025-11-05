@@ -18,7 +18,7 @@ const AdminProjectsManagement = () => {
 	});
 	
 	const [filters, setFilters] = useState<ProjectFiltersData>({ status: 'All', search: '' });
-	const { projects, loading, error, refetch } = useProjects();
+	const { projects, loading, error, updateProjectStatus } = useProjects();
 
 	useEffect(() => {
 		localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
@@ -96,7 +96,7 @@ const AdminProjectsManagement = () => {
 					<Col>
 						<ProjectKanbanBoard
 							projects={filteredProjects}
-							onProjectStatusChange={refetch}
+							onProjectStatusChange={updateProjectStatus}
 							basePath="/admin/projects"
 						/>
 					</Col>

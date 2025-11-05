@@ -1,0 +1,127 @@
+/* Toast slide animations - override Bootstrap defaults */
+
+/* Container positioning */
+.toast-container {
+  position: fixed !important;
+  bottom: 1rem !important;
+  right: 1rem !important;
+  z-index: 9999 !important;
+}
+
+/* Force light neutral background for ALL toasts - no colored backgrounds */
+.toast,
+.toast.bg-light,
+.toast.bg-success,
+.toast.bg-danger,
+.toast.bg-warning,
+.toast.bg-info {
+  background-color: #ffffff !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+.toast .toast-header,
+.toast.bg-light .toast-header,
+.toast.bg-success .toast-header,
+.toast.bg-danger .toast-header,
+.toast.bg-warning .toast-header,
+.toast.bg-info .toast-header {
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  color: #212529 !important;
+}
+
+.toast .toast-body,
+.toast.bg-light .toast-body,
+.toast.bg-success .toast-body,
+.toast.bg-danger .toast-body,
+.toast.bg-warning .toast-body,
+.toast.bg-info .toast-body {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+}
+
+/* Dark theme support */
+[data-bs-theme="dark"] .toast,
+[data-bs-theme="dark"] .toast.bg-light,
+[data-bs-theme="dark"] .toast.bg-success,
+[data-bs-theme="dark"] .toast.bg-danger,
+[data-bs-theme="dark"] .toast.bg-warning,
+[data-bs-theme="dark"] .toast.bg-info {
+  background-color: #2c3034 !important;
+  border: 1px solid #3e444a !important;
+}
+
+[data-bs-theme="dark"] .toast .toast-header,
+[data-bs-theme="dark"] .toast.bg-light .toast-header,
+[data-bs-theme="dark"] .toast.bg-success .toast-header,
+[data-bs-theme="dark"] .toast.bg-danger .toast-header,
+[data-bs-theme="dark"] .toast.bg-warning .toast-header,
+[data-bs-theme="dark"] .toast.bg-info .toast-header {
+  background-color: #2c3034 !important;
+  border-bottom: 1px solid #3e444a !important;
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .toast .toast-body,
+[data-bs-theme="dark"] .toast.bg-light .toast-body,
+[data-bs-theme="dark"] .toast.bg-success .toast-body,
+[data-bs-theme="dark"] .toast.bg-danger .toast-body,
+[data-bs-theme="dark"] .toast.bg-warning .toast-body,
+[data-bs-theme="dark"] .toast.bg-info .toast-body {
+  background-color: #2c3034 !important;
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+/* Close button */
+.toast .btn-close {
+  opacity: 0.5;
+}
+
+.toast .btn-close:hover {
+  opacity: 1;
+}
+
+[data-bs-theme="dark"] .toast .btn-close {
+  filter: invert(1);
+}
+
+/* Toast slide in animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Toast slide out animation */
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(calc(100% + 2rem));
+    opacity: 0;
+  }
+}
+
+/* Apply animations to toast */
+.toast {
+  animation: slideInRight 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Hiding animation */
+.toast.hide,
+.toast.hiding {
+  animation: slideOutRight 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards !important;
+}
+
+/* Additional smooth transitions */
+.toast {
+  transition: margin-bottom 0.9s ease-in-out !important;
+}

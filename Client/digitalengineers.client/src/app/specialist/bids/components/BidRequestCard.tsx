@@ -43,12 +43,12 @@ const BidRequestCard = ({ bidRequest }: BidRequestCardProps) => {
 				<p className="text-muted mb-2">{bidRequest.description}</p>
 				
 				<div className="d-flex justify-content-between align-items-center text-muted small">
-					{bidRequest.proposedBudget !== undefined && bidRequest.proposedBudget !== null && (
-						<span>
-							<i className="mdi mdi-currency-usd me-1"></i>
-							Budget: ${bidRequest.proposedBudget.toFixed(2)}
-						</span>
-					)}
+					{/*{bidRequest.proposedBudget !== undefined && bidRequest.proposedBudget !== null && (*/}
+					{/*	<span>*/}
+					{/*		<i className="mdi mdi-currency-usd me-1"></i>*/}
+					{/*		Budget: ${bidRequest.proposedBudget.toFixed(2)}*/}
+					{/*	</span>*/}
+					{/*)}*/}
 					{bidRequest.deadline && (
 						<span>
 							<i className="mdi mdi-calendar-clock me-1"></i>

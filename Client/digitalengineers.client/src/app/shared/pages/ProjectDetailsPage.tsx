@@ -16,7 +16,7 @@ const ProjectDetailsPage = () => {
 	const projectId = id ? parseInt(id, 10) : undefined;
 	const { hasAnyRole } = useAuthContext();
 	
-	const { project, loading, error, refetch } = useProjectDetails(projectId);
+	const { project, loading, error, updateProjectStatus } = useProjectDetails(projectId);
 
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
 
@@ -235,7 +235,7 @@ const ProjectDetailsPage = () => {
 						<ProjectStatusManager
 							projectId={project.id}
 							currentStatus={project.status}
-							onStatusUpdated={refetch}
+							onStatusUpdated={updateProjectStatus}
 						/>
 					)}
 

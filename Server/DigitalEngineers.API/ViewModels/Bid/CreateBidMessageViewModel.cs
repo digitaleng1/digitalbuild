@@ -5,7 +5,7 @@ namespace DigitalEngineers.API.ViewModels.Bid;
 public class CreateBidMessageViewModel
 {
     [Required]
-    public int BidResponseId { get; set; }
+    public int BidRequestId { get; set; }
     
     [Required]
     [MaxLength(2000)]

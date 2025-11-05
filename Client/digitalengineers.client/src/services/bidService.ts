@@ -1,5 +1,14 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { SendBidDto, BidRequestDto, BidRequestDetailsDto, CreateBidResponseDto, BidResponseDto, AcceptBidResponseDto } from '@/types/bid';
+import type { 
+	SendBidDto, 
+	BidRequestDto, 
+	BidRequestDetailsDto, 
+	CreateBidResponseDto, 
+	BidResponseDto, 
+	AcceptBidResponseDto,
+	BidMessageDto,
+	CreateBidMessageDto 
+} from '@/types/bid';
 import type { AdminBidListItem } from '@/types/admin-bid';
 
 class BidService {
@@ -64,6 +73,25 @@ class BidService {
 	 */
 	async rejectBidResponse(id: number, reason: string): Promise<void> {
 		await httpClient.post(`/api/bids/responses/${id}/reject`, { reason });
+	}
+
+	/**
+	 * Send a message to specialist regarding a bid
+	 */
+	async sendMessage(bidRequestId: number, messageText: string): Promise<BidMessageDto> {
+		const data = await httpClient.post<BidMessageDto>('/api/bids/messages', {
+			bidRequestId,
+			messageText
+		});
+		return data as BidMessageDto;
+	}
+
+	/**
+	 * Get all messages for a bid request
+	 */
+	async getMessages(bidRequestId: number): Promise<BidMessageDto[]> {
+		const data = await httpClient.get<BidMessageDto[]>(`/api/bids/requests/${bidRequestId}/messages`);
+		return data as BidMessageDto[];
 	}
 }
 

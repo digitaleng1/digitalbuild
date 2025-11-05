@@ -264,6 +264,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey<BidResponse>(r => r.BidRequestId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(e => e.Messages)
+                .WithOne(m => m.BidRequest)
+                .HasForeignKey(m => m.BidRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasIndex(e => e.ProjectId);
             entity.HasIndex(e => e.SpecialistId);
             entity.HasIndex(e => e.Status);
@@ -288,11 +293,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.SpecialistId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasMany(e => e.Messages)
-                .WithOne(m => m.BidResponse)
-                .HasForeignKey(m => m.BidResponseId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             entity.HasIndex(e => e.BidRequestId).IsUnique();
             entity.HasIndex(e => e.SpecialistId);
         });
@@ -302,17 +302,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("BidMessages");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.BidResponseId).IsRequired();
+            entity.Property(e => e.BidRequestId).IsRequired();
             entity.Property(e => e.SenderId).HasMaxLength(450).IsRequired();
             entity.Property(e => e.MessageText).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
 
-            entity.HasOne(e => e.BidResponse)
+            entity.HasOne(e => e.BidRequest)
                 .WithMany(r => r.Messages)
-                .HasForeignKey(e => e.BidResponseId)
+                .HasForeignKey(e => e.BidRequestId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(e => e.BidResponseId);
+            entity.HasIndex(e => e.BidRequestId);
             entity.HasIndex(e => e.CreatedAt);
         });
 

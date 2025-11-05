@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import projectService from '@/services/projectService';
 import type { ProjectDto } from '@/types/project';
 
@@ -7,6 +7,7 @@ interface UseProjectsReturn {
 	loading: boolean;
 	error: string | null;
 	refetch: () => Promise<void>;
+	updateProjectStatus: (projectId: number, newStatus: string) => void;
 }
 
 /**
@@ -47,6 +48,19 @@ export default function useProjects(): UseProjectsReturn {
 		}
 	};
 
+	/**
+	 * Optimistically update project status in UI without refetch
+	 */
+	const updateProjectStatus = useCallback((projectId: number, newStatus: string) => {
+		setProjects(prevProjects => 
+			prevProjects.map(project => 
+				project.id === projectId 
+					? { ...project, status: newStatus }
+					: project
+			)
+		);
+	}, []);
+
 	useEffect(() => {
 		fetchProjects();
 	}, []);
@@ -56,5 +70,6 @@ export default function useProjects(): UseProjectsReturn {
 		loading,
 		error,
 		refetch: fetchProjects,
+		updateProjectStatus,
 	};
 }

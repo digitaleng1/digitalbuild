@@ -5,6 +5,7 @@ import { useBidResponses } from '../hooks/useBidResponses';
 import ResponsesGroup from './components/ResponsesGroup';
 import AcceptBidModal from '@/components/modals/AcceptBidModal';
 import RejectBidModal from '@/components/modals/RejectBidModal';
+import BidChat from '@/components/modals/BidChatModal';
 
 const BidResponsesByProjectPage = () => {
 	const { id } = useParams<{ id: string }>();
@@ -25,13 +26,11 @@ const BidResponsesByProjectPage = () => {
 		handleOpenRejectModal,
 		handleCloseRejectModal,
 		handleReject,
-		rejecting
+		rejecting,
+		showMessageModal,
+		handleOpenMessageModal,
+		handleCloseMessageModal
 	} = useBidResponses(projectId);
-
-	const handleMessage = (responseId: number) => {
-		console.log('Message response:', responseId);
-		// TODO: Implement message logic
-	};
 
 	const formatDate = (dateString: string | null) => {
 		if (!dateString) return 'Not set';
@@ -185,7 +184,7 @@ const BidResponsesByProjectPage = () => {
 								group={group}
 								onApprove={handleOpenApproveModal}
 								onReject={handleOpenRejectModal}
-								onMessage={handleMessage}
+								onMessage={handleOpenMessageModal}
 							/>
 						))}
 					</Col>
@@ -207,6 +206,14 @@ const BidResponsesByProjectPage = () => {
 						onConfirm={handleReject}
 						specialistName={selectedResponse.specialistName}
 						loading={rejecting}
+					/>
+					<BidChat
+						mode="modal"
+						show={showMessageModal}
+						onHide={handleCloseMessageModal}
+						bidRequestId={selectedResponse.bidRequestId}
+						recipientName={selectedResponse.specialistName}
+						recipientAvatar={selectedResponse.specialistProfilePicture}
 					/>
 				</>
 			)}

@@ -109,3 +109,20 @@ export interface AcceptBidResponseDto {
 	adminMarkupPercentage: number;
 	adminComment?: string;
 }
+
+// Synchronized with server BidMessageDto
+export interface BidMessageDto {
+	id: number;
+	bidRequestId: number;
+	senderId: string;
+	senderName: string;
+	senderProfilePictureUrl?: string;
+	messageText: string;
+	createdAt: string;
+}
+
+// Synchronized with server CreateBidMessageViewModel
+export interface CreateBidMessageDto {
+	bidRequestId: number;
+	messageText: string;
+}

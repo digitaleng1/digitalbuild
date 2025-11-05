@@ -328,7 +328,6 @@ public class BidService : IBidService
             .Include(r => r.BidRequest)
             .Include(r => r.Specialist)
                 .ThenInclude(s => s.User)
-            .Include(r => r.Messages)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
@@ -351,15 +350,7 @@ public class BidService : IBidService
             RejectionReason = bidResponse.RejectionReason,
             CreatedAt = bidResponse.CreatedAt,
             UpdatedAt = bidResponse.UpdatedAt,
-            Messages = bidResponse.Messages.Select(m => new BidMessageDto
-            {
-                Id = m.Id,
-                BidResponseId = m.BidResponseId,
-                SenderId = m.SenderId,
-                SenderName = string.Empty,
-                MessageText = m.MessageText,
-                CreatedAt = m.CreatedAt
-            }).ToArray()
+            Messages = []
         };
     }
 
@@ -512,13 +503,13 @@ public class BidService : IBidService
 
     public async Task<BidMessageDto> CreateMessageAsync(CreateBidMessageDto dto, CancellationToken cancellationToken = default)
     {
-        var bidResponseExists = await _context.Set<BidResponse>().AnyAsync(r => r.Id == dto.BidResponseId, cancellationToken);
-        if (!bidResponseExists)
-            throw new BidResponseNotFoundException(dto.BidResponseId);
+        var bidRequestExists = await _context.Set<BidRequest>().AnyAsync(r => r.Id == dto.BidRequestId, cancellationToken);
+        if (!bidRequestExists)
+            throw new BidRequestNotFoundException(dto.BidRequestId);
 
         var message = new BidMessage
         {
-            BidResponseId = dto.BidResponseId,
+            BidRequestId = dto.BidRequestId,
             SenderId = dto.SenderId,
             MessageText = dto.MessageText,
             CreatedAt = DateTime.UtcNow
@@ -532,34 +523,41 @@ public class BidService : IBidService
         return new BidMessageDto
         {
             Id = message.Id,
-            BidResponseId = message.BidResponseId,
+            BidRequestId = message.BidRequestId,
             SenderId = message.SenderId,
             SenderName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown",
+            SenderProfilePictureUrl = user?.ProfilePictureUrl,
             MessageText = message.MessageText,
             CreatedAt = message.CreatedAt
         };
     }
 
-    public async Task<IEnumerable<BidMessageDto>> GetMessagesByBidResponseIdAsync(int responseId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<BidMessageDto>> GetMessagesByBidRequestIdAsync(int requestId, CancellationToken cancellationToken = default)
     {
         var messages = await _context.Set<BidMessage>()
-            .Where(m => m.BidResponseId == responseId)
+            .Where(m => m.BidRequestId == requestId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
 
         var senderIds = messages.Select(m => m.SenderId).Distinct().ToList();
         var users = await _context.Users
             .Where(u => senderIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => $"{u.FirstName} {u.LastName}", cancellationToken);
+            .Select(u => new { u.Id, Name = $"{u.FirstName} {u.LastName}", u.ProfilePictureUrl })
+            .ToDictionaryAsync(u => u.Id, cancellationToken);
 
-        return messages.Select(m => new BidMessageDto
+        return messages.Select(m =>
         {
-            Id = m.Id,
-            BidResponseId = m.BidResponseId,
-            SenderId = m.SenderId,
-            SenderName = users.GetValueOrDefault(m.SenderId, "Unknown"),
-            MessageText = m.MessageText,
-            CreatedAt = m.CreatedAt
+            var user = users.GetValueOrDefault(m.SenderId);
+            return new BidMessageDto
+            {
+                Id = m.Id,
+                BidRequestId = m.BidRequestId,
+                SenderId = m.SenderId,
+                SenderName = user?.Name ?? "Unknown",
+                SenderProfilePictureUrl = user?.ProfilePictureUrl,
+                MessageText = m.MessageText,
+                CreatedAt = m.CreatedAt
+            };
         });
     }
 
@@ -703,6 +701,7 @@ public class BidService : IBidService
     {
         var statistics = await _context.Projects
             .Include(p => p.BidRequests)
+            .Where(p => p.BidRequests.Any()) // ✅ Only projects with bid requests
             .Select(p => new ProjectBidStatisticsDto
             {
                 ProjectId = p.Id,

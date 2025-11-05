@@ -225,7 +225,7 @@ public class BidsController : ControllerBase
 
         var dto = new CreateBidMessageDto
         {
-            BidResponseId = model.BidResponseId,
+            BidRequestId = model.BidRequestId,
             SenderId = userId,
             MessageText = model.MessageText
         };
@@ -233,16 +233,16 @@ public class BidsController : ControllerBase
         var result = await _bidService.CreateMessageAsync(dto, cancellationToken);
         var viewModel = _mapper.Map<BidMessageViewModel>(result);
 
-        return CreatedAtAction(nameof(GetMessagesByBidResponse), new { responseId = model.BidResponseId }, viewModel);
+        return CreatedAtAction(nameof(GetMessagesByBidRequest), new { requestId = model.BidRequestId }, viewModel);
     }
 
-    [HttpGet("responses/{responseId}/messages")]
+    [HttpGet("requests/{requestId}/messages")]
     [ProducesResponseType(typeof(IEnumerable<BidMessageViewModel>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<BidMessageViewModel>>> GetMessagesByBidResponse(
-        int responseId,
+    public async Task<ActionResult<IEnumerable<BidMessageViewModel>>> GetMessagesByBidRequest(
+        int requestId,
         CancellationToken cancellationToken)
     {
-        var messages = await _bidService.GetMessagesByBidResponseIdAsync(responseId, cancellationToken);
+        var messages = await _bidService.GetMessagesByBidRequestIdAsync(requestId, cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<BidMessageViewModel>>(messages);
         return Ok(viewModels);
     }

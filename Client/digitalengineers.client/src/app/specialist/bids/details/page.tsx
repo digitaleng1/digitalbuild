@@ -6,6 +6,7 @@ import bidService from '@/services/bidService';
 import type { BidRequestDetailsDto, CreateBidResponseDto } from '@/types/bid';
 import BidStatusBadge from '../components/BidStatusBadge';
 import BidResponseForm from '../components/BidResponseForm';
+import BidChat from '@/components/modals/BidChatModal';
 import { useToast } from '@/contexts';
 
 const BidDetails = () => {
@@ -147,11 +148,11 @@ const BidDetails = () => {
                                     </div>
                                     <div className="d-flex justify-content-between align-items-center mb-3 mt-3">
                                         <div className="d-flex align-items-center gap-3">
-                                            {bid.proposedBudget !== undefined && bid.proposedBudget !== null && (
-                                                <span className="text-muted">
-                                                    Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>
-                                                </span>
-                                            )}
+                                            {/*{bid.proposedBudget !== undefined && bid.proposedBudget !== null && (*/}
+                                            {/*    <span className="text-muted">*/}
+                                            {/*        Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>*/}
+                                            {/*    </span>*/}
+                                            {/*)}*/}
                                             {bid.deadline && (
                                                 <span className="text-muted">
                                                     Deadline: <strong className="text-dark">{formatDate(bid.deadline)}</strong>
@@ -185,6 +186,14 @@ const BidDetails = () => {
 
                         </Card.Body>
                     </Card>
+
+                    {/* Chat Card - Below Bid Info */}
+                    <BidChat 
+                        mode="card"
+                        bidRequestId={bid.id}
+                        recipientName={bid.clientName}
+                        recipientAvatar={undefined}
+                    />
 
                     {bid.status === 'Rejected' && (
                         <Alert variant="danger">

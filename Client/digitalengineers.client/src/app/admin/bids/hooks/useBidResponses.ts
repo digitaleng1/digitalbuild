@@ -21,6 +21,9 @@ interface UseBidResponsesResult {
 	handleCloseRejectModal: () => void;
 	handleReject: (reason: string) => Promise<void>;
 	rejecting: boolean;
+	showMessageModal: boolean;
+	handleOpenMessageModal: (response: BidResponseDto) => void;
+	handleCloseMessageModal: () => void;
 }
 
 export const useBidResponses = (projectId: number): UseBidResponsesResult => {
@@ -30,6 +33,7 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 	const [error, setError] = useState<string | null>(null);
 	const [showApproveModal, setShowApproveModal] = useState(false);
 	const [showRejectModal, setShowRejectModal] = useState(false);
+	const [showMessageModal, setShowMessageModal] = useState(false);
 	const [selectedResponse, setSelectedResponse] = useState<BidResponseDto | null>(null);
 	const [approving, setApproving] = useState(false);
 	const [rejecting, setRejecting] = useState(false);
@@ -145,6 +149,16 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 		}
 	};
 
+	const handleOpenMessageModal = (response: BidResponseDto) => {
+		setSelectedResponse(response);
+		setShowMessageModal(true);
+	};
+
+	const handleCloseMessageModal = () => {
+		setShowMessageModal(false);
+		setSelectedResponse(null);
+	};
+
 	return {
 		groupedResponses,
 		loading,
@@ -161,5 +175,8 @@ export const useBidResponses = (projectId: number): UseBidResponsesResult => {
 		handleCloseRejectModal,
 		handleReject,
 		rejecting,
+		showMessageModal,
+		handleOpenMessageModal,
+		handleCloseMessageModal,
 	};
 };

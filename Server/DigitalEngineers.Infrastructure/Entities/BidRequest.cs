@@ -23,4 +23,5 @@ public class BidRequest
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     public BidResponse? Response { get; set; }
+    public ICollection<BidMessage> Messages { get; set; } = [];
 }

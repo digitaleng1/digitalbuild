@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
+import logo from '@/assets/images/logo-sm.png';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -38,7 +39,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 	const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
 	const showToast = useCallback(
-		(type: ToastType, title: string, message: string, autoHide = true, delay = 30000) => {
+		(type: ToastType, title: string, message: string, autoHide = true, delay = 1000) => {
 			const id = `${Date.now()}-${Math.random()}`;
 			const newToast: ToastMessage = {
 				id,
@@ -85,21 +86,6 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 		[showToast]
 	);
 
-	const getToastBgClass = (type: ToastType): string => {
-		switch (type) {
-			case 'success':
-				return 'bg-success';
-			case 'error':
-				return 'bg-danger';
-			case 'warning':
-				return 'bg-warning';
-			case 'info':
-				return 'bg-info';
-			default:
-				return 'bg-primary';
-		}
-	};
-
 	const value = {
 		showToast,
 		showSuccess,
@@ -108,10 +94,15 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 		showInfo,
 	};
 
+	const getTimeAgo = () => {
+		const now = new Date();
+		return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+	};
+
 	return (
 		<ToastContext.Provider value={value}>
 			{children}
-			<ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+			<ToastContainer position="bottom-end" className="p-3" style={{ zIndex: 9999, position: 'fixed' }}>
 				{toasts.map((toast) => (
 					<Toast
 						key={toast.id}
@@ -119,12 +110,16 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 						show={true}
 						autohide={toast.autoHide}
 						delay={toast.delay}
-						className={`${getToastBgClass(toast.type)} text-white`}
+						bg="light"
+						className="shadow"
+						animation={true}
 					>
-						<Toast.Header closeButton closeVariant="white">
+						<Toast.Header closeButton>
+							<img src={logo} alt="logo" height="12" className="me-2" />
 							<strong className="me-auto">{toast.title}</strong>
+							<small className="text-muted">{getTimeAgo()}</small>
 						</Toast.Header>
-						<Toast.Body>{toast.message}</Toast.Body>
+						<Toast.Body className="text-dark">{toast.message}</Toast.Body>
 					</Toast>
 				))}
 			</ToastContainer>

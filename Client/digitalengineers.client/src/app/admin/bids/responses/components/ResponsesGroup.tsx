@@ -6,7 +6,7 @@ interface ResponsesGroupProps {
 	group: GroupedBidResponses;
 	onApprove: (response: BidResponseDto) => void;
 	onReject: (response: BidResponseDto) => void;
-	onMessage: (responseId: number) => void;
+	onMessage: (response: BidResponseDto) => void;
 }
 
 const ResponsesGroup = ({ group, onApprove, onReject, onMessage }: ResponsesGroupProps) => {

@@ -24,12 +24,14 @@ public static class DataSeeder
             await context.Database.MigrateAsync();
 
             await SeedRolesAsync(roleManager);
-            await SeedAdminsAsync(userManager);
+            await SeedAdminsAsync(userManager);      
+            await SeedlookupsDataAsync(context, logger);
+#if DEBUG
             await SeedProvidersAsync(userManager);
             await SeedClientsAsync(userManager);
-            await SeedlookupsDataAsync(context, logger);
             await SeedSpecialistsAsync(context, logger);
             await SeedProjectsAsync(context, logger);
+#endif
         }
         catch (Exception ex)
         {
@@ -685,15 +687,15 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project2.Id, specialists[3].Id, project2.CreatedAt.AddDays(10), "Lead HVAC Engineer");
         AddProjectSpecialist(projectSpecialists, project2.Id, specialists[4].Id, project2.CreatedAt.AddDays(10), "Electrical Integration Specialist");
 
-        AddBidMessage(bidMessages, response2_1, clientIds[1], "When can you start the installation phase?", response2_1.CreatedAt.AddDays(1));
-        AddBidMessage(bidMessages, response2_1, specialists[3].UserId, "We can begin installation in 2 weeks after final approval.", response2_1.CreatedAt.AddDays(1).AddHours(3));
-        AddBidMessage(bidMessages, response2_1, clientIds[1], "Perfect. Please provide the equipment list.", response2_1.CreatedAt.AddDays(2));
-        AddBidMessage(bidMessages, response2_1, specialists[3].UserId, "Equipment list sent via email. All units are energy star rated.", response2_1.CreatedAt.AddDays(2).AddHours(4));
+        AddBidMessage(bidMessages, bid2_1, clientIds[1], "When can you start the installation phase?", response2_1.CreatedAt.AddDays(1));
+        AddBidMessage(bidMessages, bid2_1, specialists[3].UserId, "We can begin installation in 2 weeks after final approval.", response2_1.CreatedAt.AddDays(1).AddHours(3));
+        AddBidMessage(bidMessages, bid2_1, clientIds[1], "Perfect. Please provide the equipment list.", response2_1.CreatedAt.AddDays(2));
+        AddBidMessage(bidMessages, bid2_1, specialists[3].UserId, "Equipment list sent via email. All units are energy star rated.", response2_1.CreatedAt.AddDays(2).AddHours(4));
 
-        AddBidMessage(bidMessages, response2_2, clientIds[1], "Will this include emergency backup power?", response2_2.CreatedAt.AddHours(5));
-        AddBidMessage(bidMessages, response2_2, specialists[4].UserId, "Yes, backup generator integration is included in the scope.", response2_2.CreatedAt.AddHours(6));
-        AddBidMessage(bidMessages, response2_2, clientIds[1], "Excellent. Please coordinate with the HVAC team.", response2_2.CreatedAt.AddDays(1));
-        AddBidMessage(bidMessages, response2_2, specialists[4].UserId, "Already in contact. We have a joint timeline.", response2_2.CreatedAt.AddDays(1).AddHours(2));
+        AddBidMessage(bidMessages, bid2_2, clientIds[1], "Will this include emergency backup power?", response2_2.CreatedAt.AddHours(5));
+        AddBidMessage(bidMessages, bid2_2, specialists[4].UserId, "Yes, backup generator integration is included in the scope.", response2_2.CreatedAt.AddHours(6));
+        AddBidMessage(bidMessages, bid2_2, clientIds[1], "Excellent. Please coordinate with the HVAC team.", response2_2.CreatedAt.AddDays(1));
+        AddBidMessage(bidMessages, bid2_2, specialists[4].UserId, "Already in contact. We have a joint timeline.", response2_2.CreatedAt.AddDays(1).AddHours(2));
 
         // Project 3: InProgress (4 bids, 4 responses, 3 specialists assigned)
         var bid3_1 = AddBidRequest(bidRequests, project3.Id, specialists[0].Id, "High Voltage Systems", "Industrial electrical infrastructure upgrade", 320000m, project3.CreatedAt.AddDays(5), BidRequestStatus.Accepted);
@@ -717,12 +719,12 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project3.Id, specialists[1].Id, project3.CreatedAt.AddDays(12), "Power Systems Engineer");
         AddProjectSpecialist(projectSpecialists, project3.Id, specialists[2].Id, project3.CreatedAt.AddDays(15), "Backup Power Specialist");
 
-        AddBidMessage(bidMessages, response3_1, clientIds[2], "Project timeline looks good. Safety certifications in order?", response3_1.CreatedAt.AddDays(1));
-        AddBidMessage(bidMessages, response3_1, specialists[0].UserId, "All certifications current. OSHA compliant procedures in place.", response3_1.CreatedAt.AddDays(1).AddHours(4));
-        AddBidMessage(bidMessages, response3_2, clientIds[2], "Can you coordinate with the main electrical contractor?", response3_2.CreatedAt.AddHours(8));
-        AddBidMessage(bidMessages, response3_2, specialists[1].UserId, "Yes, I'll schedule a coordination meeting next week.", response3_2.CreatedAt.AddHours(10));
-        AddBidMessage(bidMessages, response3_3, clientIds[2], "Backup power capacity sufficient for full factory operation?", response3_3.CreatedAt.AddDays(1));
-        AddBidMessage(bidMessages, response3_3, specialists[2].UserId, "Yes, designed for 100% load capacity with redundancy.", response3_3.CreatedAt.AddDays(1).AddHours(5));
+        AddBidMessage(bidMessages, bid3_1, clientIds[2], "Project timeline looks good. Safety certifications in order?", response3_1.CreatedAt.AddDays(1));
+        AddBidMessage(bidMessages, bid3_1, specialists[0].UserId, "All certifications current. OSHA compliant procedures in place.", response3_1.CreatedAt.AddDays(1).AddHours(4));
+        AddBidMessage(bidMessages, bid3_2, clientIds[2], "Can you coordinate with the main electrical contractor?", response3_2.CreatedAt.AddHours(8));
+        AddBidMessage(bidMessages, bid3_2, specialists[1].UserId, "Yes, I'll schedule a coordination meeting next week.", response3_2.CreatedAt.AddHours(10));
+        AddBidMessage(bidMessages, bid3_3, clientIds[2], "Backup power capacity sufficient for full factory operation?", response3_3.CreatedAt.AddDays(1));
+        AddBidMessage(bidMessages, bid3_3, specialists[2].UserId, "Yes, designed for 100% load capacity with redundancy.", response3_3.CreatedAt.AddDays(1).AddHours(5));
 
         // Project 4: Completed (6 bids, 5 responses, 2 specialists assigned)
         var bid4_1 = AddBidRequest(bidRequests, project4.Id, specialists[3].Id, "Plumbing System Design", "Complete plumbing renovation engineering", 125000m, project4.CreatedAt.AddDays(2), BidRequestStatus.Accepted);
@@ -746,16 +748,16 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project4.Id, specialists[3].Id, project4.CreatedAt.AddDays(8), "Lead Plumbing Engineer");
         AddProjectSpecialist(projectSpecialists, project4.Id, specialists[4].Id, project4.CreatedAt.AddDays(8), "Water Efficiency Consultant");
 
-        AddBidMessage(bidMessages, response4_1, clientIds[0], "Project completed on time. Excellent work!", response4_1.CreatedAt.AddDays(70));
-        AddBidMessage(bidMessages, response4_1, specialists[3].UserId, "Thank you! All systems tested and certified.", response4_1.CreatedAt.AddDays(70).AddHours(2));
-        AddBidMessage(bidMessages, response4_2, clientIds[0], "Water bill reduced by 30%. Very satisfied.", response4_2.CreatedAt.AddDays(71));
-        AddBidMessage(bidMessages, response4_2, specialists[4].UserId, "Great to hear! The new fixtures are performing excellently.", response4_2.CreatedAt.AddDays(71).AddHours(3));
-        AddBidMessage(bidMessages, response4_3, clientIds[0], "Fixtures working perfectly. Thank you!", response4_3.CreatedAt.AddDays(72));
-        AddBidMessage(bidMessages, response4_3, specialists[5].UserId, "You're welcome! Glad everything is working well.", response4_3.CreatedAt.AddDays(72).AddHours(2));
-        AddBidMessage(bidMessages, response4_4, clientIds[0], "PEX piping quality is excellent.", response4_4.CreatedAt.AddDays(73));
-        AddBidMessage(bidMessages, response4_4, specialists[6].UserId, "25-year warranty on all piping. Built to last.", response4_4.CreatedAt.AddDays(73).AddHours(4));
-        AddBidMessage(bidMessages, response4_5, clientIds[0], "Inspection report very detailed. Appreciated.", response4_5.CreatedAt.AddDays(74));
-        AddBidMessage(bidMessages, response4_5, specialists[7].UserId, "Thorough documentation is our standard. Happy to help.", response4_5.CreatedAt.AddDays(74).AddHours(3));
+        AddBidMessage(bidMessages, bid4_1, clientIds[0], "Project completed on time. Excellent work!", response4_1.CreatedAt.AddDays(70));
+        AddBidMessage(bidMessages, bid4_1, specialists[3].UserId, "Thank you! All systems tested and certified.", response4_1.CreatedAt.AddDays(70).AddHours(2));
+        AddBidMessage(bidMessages, bid4_2, clientIds[0], "Water bill reduced by 30%. Very satisfied.", response4_2.CreatedAt.AddDays(71));
+        AddBidMessage(bidMessages, bid4_2, specialists[4].UserId, "Great to hear! The new fixtures are performing excellently.", response4_2.CreatedAt.AddDays(71).AddHours(3));
+        AddBidMessage(bidMessages, bid4_3, clientIds[0], "Fixtures working perfectly. Thank you!", response4_3.CreatedAt.AddDays(72));
+        AddBidMessage(bidMessages, bid4_3, specialists[5].UserId, "You're welcome! Glad everything is working well.", response4_3.CreatedAt.AddDays(72).AddHours(2));
+        AddBidMessage(bidMessages, bid4_4, clientIds[0], "PEX piping quality is excellent.", response4_4.CreatedAt.AddDays(73));
+        AddBidMessage(bidMessages, bid4_4, specialists[6].UserId, "25-year warranty on all piping. Built to last.", response4_4.CreatedAt.AddDays(73).AddHours(4));
+        AddBidMessage(bidMessages, bid4_5, clientIds[0], "Inspection report very detailed. Appreciated.", response4_5.CreatedAt.AddDays(74));
+        AddBidMessage(bidMessages, bid4_5, specialists[7].UserId, "Thorough documentation is our standard. Happy to help.", response4_5.CreatedAt.AddDays(74).AddHours(3));
 
         // Project 5: InProgress (3 bids, 3 responses, 4 specialists assigned - this is incorrect, max 3 specialists)
         var bid5_1 = AddBidRequest(bidRequests, project5.Id, specialists[0].Id, "Fire Sprinkler System", "Complete sprinkler system design and installation", 210000m, project5.CreatedAt.AddDays(3), BidRequestStatus.Accepted);
@@ -777,11 +779,11 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project5.Id, specialists[1].Id, project5.CreatedAt.AddDays(10), "Fire Alarm Specialist");
         AddProjectSpecialist(projectSpecialists, project5.Id, specialists[2].Id, project5.CreatedAt.AddDays(12), "Emergency Systems Engineer");
 
-        AddBidMessage(bidMessages, response5_1, clientIds[1], "Fire marshal inspection scheduled for next month.", response5_1.CreatedAt.AddDays(5));
-        AddBidMessage(bidMessages, response5_1, specialists[0].UserId, "Perfect timing. System will be fully commissioned by then.", response5_1.CreatedAt.AddDays(5).AddHours(3));
-        AddBidMessage(bidMessages, response5_2, clientIds[1], "Alarm panel location approved by building management?", response5_2.CreatedAt.AddDays(3));
-        AddBidMessage(bidMessages, response5_2, specialists[1].UserId, "Yes, main panel in security office as discussed.", response5_2.CreatedAt.AddDays(3).AddHours(5));
-        AddBidMessage(bidMessages, response5_3, clientIds[1], "Emergency lighting test completed successfully.", response5_3.CreatedAt.AddDays(20));
+        AddBidMessage(bidMessages, bid5_1, clientIds[1], "Fire marshal inspection scheduled for next month.", response5_1.CreatedAt.AddDays(5));
+        AddBidMessage(bidMessages, bid5_1, specialists[0].UserId, "Perfect timing. System will be fully commissioned by then.", response5_1.CreatedAt.AddDays(5).AddHours(3));
+        AddBidMessage(bidMessages, bid5_2, clientIds[1], "Alarm panel location approved by building management?", response5_2.CreatedAt.AddDays(3));
+        AddBidMessage(bidMessages, bid5_2, specialists[1].UserId, "Yes, main panel in security office as discussed.", response5_2.CreatedAt.AddDays(3).AddHours(5));
+        AddBidMessage(bidMessages, bid5_3, clientIds[1], "Emergency lighting test completed successfully.", response5_3.CreatedAt.AddDays(20));
 
         // Project 6: QuotePending (2 bids, no responses)
         AddBidRequest(bidRequests, project6.Id, specialists[3].Id, "Structural Assessment", "Comprehensive structural integrity evaluation", 45000m, project6.CreatedAt.AddDays(2));
@@ -800,12 +802,12 @@ public static class DataSeeder
 
         AddProjectSpecialist(projectSpecialists, project7.Id, specialists[5].Id, project7.CreatedAt.AddDays(12), "Renovation Architect");
 
-        AddBidMessage(bidMessages, response7_1, clientIds[0], "Budget exceeded. Need to pause project.", response7_1.CreatedAt.AddDays(20));
-        AddBidMessage(bidMessages, response7_1, specialists[5].UserId, "Understood. Let me know if you want to revisit with reduced scope.", response7_1.CreatedAt.AddDays(20).AddHours(4));
-        AddBidMessage(bidMessages, response7_1, clientIds[0], "Will contact you next quarter after refinancing.", response7_1.CreatedAt.AddDays(21));
-        AddBidMessage(bidMessages, response7_1, specialists[5].UserId, "Sounds good. I'll keep the designs on file.", response7_1.CreatedAt.AddDays(21).AddHours(2));
+        AddBidMessage(bidMessages, bid7_1, clientIds[0], "Budget exceeded. Need to pause project.", response7_1.CreatedAt.AddDays(20));
+        AddBidMessage(bidMessages, bid7_1, specialists[5].UserId, "Understood. Let me know if you want to revisit with reduced scope.", response7_1.CreatedAt.AddDays(20).AddHours(4));
+        AddBidMessage(bidMessages, bid7_1, clientIds[0], "Will contact you next quarter after refinancing.", response7_1.CreatedAt.AddDays(21));
+        AddBidMessage(bidMessages, bid7_1, specialists[5].UserId, "Sounds good. I'll keep the designs on file.", response7_1.CreatedAt.AddDays(21).AddHours(2));
 
-        // Project 8: InProgress (5 bids, 4 responses, 3 specialists assigned)
+        // Project 8: InProgress - Hospital HVAC Modernization
         var bid8_1 = AddBidRequest(bidRequests, project8.Id, specialists[0].Id, "Medical HVAC Systems", "Hospital-grade HVAC with isolation capabilities", 425000m, project8.CreatedAt.AddDays(5), BidRequestStatus.Accepted);
         var bid8_2 = AddBidRequest(bidRequests, project8.Id, specialists[1].Id, "Medical Electrical", "Medical facility electrical infrastructure", 185000m, project8.CreatedAt.AddDays(6), BidRequestStatus.Accepted);
         var bid8_3 = AddBidRequest(bidRequests, project8.Id, specialists[2].Id, "Building Automation", "Advanced BMS for medical facility", 95000m, project8.CreatedAt.AddDays(7), BidRequestStatus.Accepted);
@@ -828,13 +830,13 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project8.Id, specialists[1].Id, project8.CreatedAt.AddDays(15), "Hospital Electrical Engineer");
         AddProjectSpecialist(projectSpecialists, project8.Id, specialists[2].Id, project8.CreatedAt.AddDays(18), "Building Automation Specialist");
 
-        AddBidMessage(bidMessages, response8_1, clientIds[1], "Isolation rooms meet CDC guidelines?", response8_1.CreatedAt.AddDays(3));
-        AddBidMessage(bidMessages, response8_1, specialists[0].UserId, "Yes, full compliance with CDC and state health department standards.", response8_1.CreatedAt.AddDays(3).AddHours(2));
-        AddBidMessage(bidMessages, response8_2, clientIds[1], "Emergency power transfer time acceptable?", response8_2.CreatedAt.AddDays(4));
-        AddBidMessage(bidMessages, response8_2, specialists[1].UserId, "Less than 10 seconds. Critical circuits have UPS backup.", response8_2.CreatedAt.AddDays(4).AddHours(3));
-        AddBidMessage(bidMessages, response8_3, clientIds[1], "BMS integration with existing hospital systems?", response8_3.CreatedAt.AddDays(5));
-        AddBidMessage(bidMessages, response8_3, specialists[2].UserId, "Full integration planned. Compatible with your current system.", response8_3.CreatedAt.AddDays(5).AddHours(4));
-        AddBidMessage(bidMessages, response8_3, clientIds[1], "Perfect. Keep IT team in the loop.", response8_3.CreatedAt.AddDays(6));
+        AddBidMessage(bidMessages, bid8_1, clientIds[1], "Isolation rooms meet CDC guidelines?", response8_1.CreatedAt.AddDays(3));
+        AddBidMessage(bidMessages, bid8_1, specialists[0].UserId, "Yes, full compliance with CDC and state health department standards.", response8_1.CreatedAt.AddDays(3).AddHours(2));
+        AddBidMessage(bidMessages, bid8_2, clientIds[1], "Emergency power transfer time acceptable?", response8_2.CreatedAt.AddDays(4));
+        AddBidMessage(bidMessages, bid8_2, specialists[1].UserId, "Less than 10 seconds. Critical circuits have UPS backup.", response8_2.CreatedAt.AddDays(4).AddHours(3));
+        AddBidMessage(bidMessages, bid8_3, clientIds[1], "BMS integration with existing hospital systems?", response8_3.CreatedAt.AddDays(5));
+        AddBidMessage(bidMessages, bid8_3, specialists[2].UserId, "Full integration planned. Compatible with your current system.", response8_3.CreatedAt.AddDays(5).AddHours(4));
+        AddBidMessage(bidMessages, bid8_3, clientIds[1], "Perfect. Keep IT team in the loop.", response8_3.CreatedAt.AddDays(6));
 
         // Project 9: Completed (3 bids, 3 responses, 2 specialists assigned)
         var bid9_1 = AddBidRequest(bidRequests, project9.Id, specialists[5].Id, "Electrical Safety Audit", "Comprehensive electrical safety inspection", 65000m, project9.CreatedAt.AddDays(3), BidRequestStatus.Accepted);
@@ -853,12 +855,12 @@ public static class DataSeeder
         AddProjectSpecialist(projectSpecialists, project9.Id, specialists[5].Id, project9.CreatedAt.AddDays(10), "Electrical Safety Inspector");
         AddProjectSpecialist(projectSpecialists, project9.Id, specialists[6].Id, project9.CreatedAt.AddDays(10), "Environmental Compliance Engineer");
 
-        AddBidMessage(bidMessages, response9_1, clientIds[2], "All electrical systems passed inspection. Great work!", response9_1.CreatedAt.AddDays(40));
-        AddBidMessage(bidMessages, response9_1, specialists[5].UserId, "Thank you! Comprehensive report submitted to regulatory authorities.", response9_1.CreatedAt.AddDays(40).AddHours(3));
-        AddBidMessage(bidMessages, response9_2, clientIds[2], "Environmental certification received. Excellent job.", response9_2.CreatedAt.AddDays(38));
-        AddBidMessage(bidMessages, response9_2, specialists[6].UserId, "Glad to help. Plant is fully compliant for next 5 years.", response9_2.CreatedAt.AddDays(38).AddHours(4));
-        AddBidMessage(bidMessages, response9_2, clientIds[2], "Will recommend your services to other facilities.", response9_2.CreatedAt.AddDays(39));
-        AddBidMessage(bidMessages, response9_2, specialists[6].UserId, "Much appreciated! Always happy to help with compliance needs.", response9_2.CreatedAt.AddDays(39).AddHours(2));
+        AddBidMessage(bidMessages, bid9_1, clientIds[2], "All electrical systems passed inspection. Great work!", response9_1.CreatedAt.AddDays(40));
+        AddBidMessage(bidMessages, bid9_1, specialists[5].UserId, "Thank you! Comprehensive report submitted to regulatory authorities.", response9_1.CreatedAt.AddDays(40).AddHours(3));
+        AddBidMessage(bidMessages, bid9_2, clientIds[2], "Environmental certification received. Excellent job.", response9_2.CreatedAt.AddDays(38));
+        AddBidMessage(bidMessages, bid9_2, specialists[6].UserId, "Glad to help. Plant is fully compliant for next 5 years.", response9_2.CreatedAt.AddDays(38).AddHours(4));
+        AddBidMessage(bidMessages, bid9_2, clientIds[2], "Will recommend your services to other facilities.", response9_2.CreatedAt.AddDays(39));
+        AddBidMessage(bidMessages, bid9_2, specialists[6].UserId, "Much appreciated! Always happy to help with compliance needs.", response9_2.CreatedAt.AddDays(39).AddHours(2));
 
         // Project 10: Draft (no bids)
 
@@ -1015,14 +1017,14 @@ public static class DataSeeder
 
     private static void AddBidMessage(
         List<BidMessage> list,
-        BidResponse bidResponse,
+        BidRequest bidRequest,
         string senderId,
         string messageText,
         DateTime createdAt)
     {
         list.Add(new BidMessage
         {
-            BidResponse = bidResponse,  // ✅ Navigation property instead of Id
+            BidRequest = bidRequest,
             SenderId = senderId,
             MessageText = messageText,
             CreatedAt = createdAt

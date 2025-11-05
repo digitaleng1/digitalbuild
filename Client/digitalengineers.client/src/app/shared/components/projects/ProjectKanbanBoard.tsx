@@ -9,7 +9,7 @@ import ProjectCard from './ProjectCard';
 
 interface ProjectKanbanBoardProps {
 	projects: ProjectDto[];
-	onProjectStatusChange?: () => void;
+	onProjectStatusChange?: (projectId: number, newStatus: string) => void;
 	basePath?: string;
 }
 
@@ -88,12 +88,17 @@ const ProjectKanbanBoard = ({ projects, onProjectStatusChange, basePath = '/admi
 				projects: destProjects,
 			};
 
+			// Optimistically update UI
 			setColumns(newColumns);
 
 			try {
+				// Update on server
 				await updateStatus(movedProject.id, destination.droppableId);
-				onProjectStatusChange?.();
+				
+				// Notify parent about status change (optimistic update in parent state)
+				onProjectStatusChange?.(movedProject.id, destination.droppableId);
 			} catch (error) {
+				// Rollback on error
 				setColumns(columns);
 			}
 		}

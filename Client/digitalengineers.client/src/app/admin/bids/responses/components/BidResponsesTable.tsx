@@ -1,12 +1,13 @@
 import { Table, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { Icon } from '@iconify/react';
 import type { BidResponseDto } from '@/types/admin-bid';
 
 interface BidResponsesTableProps {
 	responses: BidResponseDto[];
 	onApprove: (response: BidResponseDto) => void;
 	onReject: (response: BidResponseDto) => void;
-	onMessage: (responseId: number) => void;
+	onMessage: (response: BidResponseDto) => void;
 }
 
 const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidResponsesTableProps) => {
@@ -99,7 +100,7 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 											}}
 											title="Approve"
 										>
-											<i className="mdi mdi-check-circle"></i>
+											<Icon icon="mdi:check-circle" width={18} />
 										</Link>
 										<Link
 											to="#"
@@ -110,21 +111,19 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 											}}
 											title="Reject"
 										>
-											<i className="mdi mdi-close-circle"></i>
+											<Icon icon="mdi:close-circle" width={18} />
 										</Link>
-										{response.id > 0 && (
-											<Link
-												to="#"
-												className="action-icon"
-												onClick={(e) => {
-													e.preventDefault();
-													onMessage(response.id);
-												}}
-												title="Send Message"
-											>
-												<i className="mdi mdi-message-text"></i>
-											</Link>
-										)}
+										<Link
+											to="#"
+											className="action-icon"
+											onClick={(e) => {
+												e.preventDefault();
+												onMessage(response);
+											}}
+											title="Send Message"
+										>
+											<Icon icon="mdi:message-text" width={18} />
+										</Link>
 									</>
 								)}
 								{/* Accepted = already approved, can only reject (cancel) */}
@@ -139,40 +138,48 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 											}}
 											title="Cancel Approval"
 										>
-											<i className="mdi mdi-close-circle"></i>
+											<Icon icon="mdi:close-circle" width={18} />
 										</Link>
-										{response.id > 0 && (
-											<Link
-												to="#"
-												className="action-icon"
-												onClick={(e) => {
-													e.preventDefault();
-													onMessage(response.id);
-												}}
-												title="Send Message"
-											>
-												<i className="mdi mdi-message-text"></i>
-											</Link>
-										)}
+										<Link
+											to="#"
+											className="action-icon"
+											onClick={(e) => {
+												e.preventDefault();
+												onMessage(response);
+											}}
+											title="Send Message"
+										>
+											<Icon icon="mdi:message-text" width={18} />
+										</Link>
 									</>
 								)}
 								{/* Rejected/Withdrawn = can only message */}
-								{(response.status.toLowerCase() === 'rejected' || response.status.toLowerCase() === 'withdrawn') && response.id > 0 && (
+								{(response.status.toLowerCase() === 'rejected' || response.status.toLowerCase() === 'withdrawn') && (
 									<Link
 										to="#"
 										className="action-icon"
 										onClick={(e) => {
 											e.preventDefault();
-											onMessage(response.id);
+											onMessage(response);
 										}}
 										title="Send Message"
 									>
-										<i className="mdi mdi-message-text"></i>
+										<Icon icon="mdi:message-text" width={18} />
 									</Link>
 								)}
-								{/* Pending = specialist hasn't responded yet, no actions available */}
+								{/* Pending = specialist hasn't responded yet, can send message */}
 								{response.status.toLowerCase() === 'pending' && (
-									<span className="text-muted small">No response yet</span>
+									<Link
+										to="#"
+										className="action-icon"
+										onClick={(e) => {
+											e.preventDefault();
+											onMessage(response);
+										}}
+										title="Send Message"
+									>
+										<Icon icon="mdi:message-text" width={18} />
+									</Link>
 								)}
 							</td>
 						</tr>

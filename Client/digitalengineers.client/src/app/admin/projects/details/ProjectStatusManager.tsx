@@ -6,7 +6,7 @@ import { getStatusBadgeVariant } from '@/utils/projectUtils';
 interface ProjectStatusManagerProps {
 	projectId: number;
 	currentStatus: string;
-	onStatusUpdated: () => void;
+	onStatusUpdated: (newStatus: string) => void;
 }
 
 const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: ProjectStatusManagerProps) => {
@@ -40,9 +40,10 @@ const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: Pro
 		try {
 			await updateStatus(projectId, selectedStatus);
 			setShowConfirmModal(false);
-			onStatusUpdated();
+			onStatusUpdated(selectedStatus);
 		} catch (error) {
-			// Error handled by hook
+			// Error handled by hook, rollback
+			setSelectedStatus(currentStatus);
 			setShowConfirmModal(false);
 		}
 	};
