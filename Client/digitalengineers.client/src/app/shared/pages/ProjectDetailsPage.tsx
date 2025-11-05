@@ -79,7 +79,7 @@ const ProjectDetailsPage = () => {
 			<PageBreadcrumb title="Project Details" subName="Projects" />
 
 			<Row>
-				<Col xxl={8} lg={6}>
+				<Col xl={8} lg={6}>
 					<Card className="d-block">
 						<CardBody>
 							<CardTitle

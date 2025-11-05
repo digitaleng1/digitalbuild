@@ -4,6 +4,8 @@
     <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="src\app\admin\projects\kanban\" />
+    <Folder Include="src\app\admin\projects\list\" />
     <Folder Include="src\app\client\projects\hooks\" />
   </ItemGroup>
 </Project>

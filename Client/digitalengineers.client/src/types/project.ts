@@ -1,8 +1,11 @@
 // Project Status Enum
 export enum ProjectStatus {
-	New = 'New',
+	QuotePending = 'QuotePending',
 	Draft = 'Draft',
-	Published = 'Published',
+	QuoteSubmitted = 'QuoteSubmitted',
+	QuoteAccepted = 'QuoteAccepted',
+	InitialPaymentPending = 'InitialPaymentPending',
+	InitialPaymentComplete = 'InitialPaymentComplete',
 	InProgress = 'InProgress',
 	Completed = 'Completed',
 	Cancelled = 'Cancelled'

@@ -172,15 +172,19 @@ public class FileStorageService : IFileStorageService
     {
         try
         {
-            var key = fileUrlOrKey.StartsWith("http", StringComparison.OrdinalIgnoreCase) 
-                ? ExtractKeyFromUrl(fileUrlOrKey) 
-                : fileUrlOrKey;
+            // If it's already a full external URL (http/https), return as-is
+            if (fileUrlOrKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+                fileUrlOrKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return fileUrlOrKey;
+            }
+            
+            // Otherwise, generate S3 presigned URL
+            var key = fileUrlOrKey;
             
             var expiration = expirationMinutes > 0 
                 ? expirationMinutes 
                 : _settings.PresignedUrlExpirationMinutes;
-            
-            _logger.LogInformation("Generating presigned URL for: {Key}, expiration: {Minutes} minutes", key, expiration);
 
             var request = new GetPreSignedUrlRequest
             {
@@ -191,8 +195,6 @@ public class FileStorageService : IFileStorageService
             };
 
             var url = _s3Client.GetPreSignedURL(request);
-            
-            _logger.LogInformation("Presigned URL generated successfully for: {Key}", key);
             
             return url;
         }

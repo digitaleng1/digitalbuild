@@ -61,8 +61,8 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		expanded: true,
 		children: [
 			{
-				key: 'project-list',
-				label: 'Projects',
+				key: 'projects',
+				label: 'Client Projects',
 				url: '/projects',
 				parentKey: 'projects-management',
 			},

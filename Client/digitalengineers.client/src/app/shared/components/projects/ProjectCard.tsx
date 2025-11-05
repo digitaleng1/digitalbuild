@@ -1,8 +1,8 @@
 import { Link } from "react-router";
-import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Badge, Button } from 'react-bootstrap';
+import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Badge } from 'react-bootstrap';
 import classNames from 'classnames';
 import type { ProjectDto } from '@/types/project';
-import { getProjectScopeLabel } from '@/utils/projectUtils';
+import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
 
 interface ProjectCardProps {
 	project: ProjectDto;
@@ -20,26 +20,14 @@ export default function ProjectCard({
 	onDelete 
 }: ProjectCardProps) {
 	const hasImage = !!project.thumbnailUrl;
+	const statusVariant = getStatusBadgeVariant(project.status);
 
-	const getStatusVariant = (status: string) => {
-		switch (status.toLowerCase()) {
-			case 'completed':
-				return 'success';
-			case 'inprogress':
-			case 'active':
-				return 'primary';
-			case 'draft':
-			case 'new':
-				return 'secondary';
-			case 'cancelled':
-				return 'danger';
-			default:
-				return 'info';
-		}
+	const handleHistoryClick = () => {
+		alert('History feature will be implemented in the future');
 	};
 
 	return (
-		<Card className="d-block h-100">
+		<Card className="d-block h-100 mb-0">
 			{hasImage && (
 				<>
 					<img 
@@ -50,7 +38,7 @@ export default function ProjectCard({
 					/>
 					<div className="card-img-overlay">
 						<Badge 
-							bg={getStatusVariant(project.status)}
+							bg={statusVariant}
 							className="p-1"
 						>
 							{project.status}
@@ -88,27 +76,27 @@ export default function ProjectCard({
 				</h4>
 
 				{!hasImage && (
-					<Badge bg={getStatusVariant(project.status)} className="mb-2 align-self-start">
+					<Badge bg={statusVariant} className="mb-2 align-self-start">
 						{project.status}
 					</Badge>
 				)}
 
 				{project.description && variant !== 'compact' && (
-					<p className="text-muted font-13 mb-3">
+					<p className="text-muted font-13 mb-2">
 						{project.description.length > 100 
 							? `${project.description.substring(0, 100)}...` 
 							: project.description}
 					</p>
 				)}
 
-				<div className="mb-2">
+				<div className="mb-1">
 					<span className="text-muted">
 						<i className="mdi mdi-map-marker me-1"></i>
 						{project.city}, {project.state}
 					</span>
 				</div>
 
-				<div className="mb-2">
+				<div className="mb-1">
 					<span className="text-muted">
 						<i className="mdi mdi-clock-outline me-1"></i>
 						Scope: <strong>{getProjectScopeLabel(project.projectScope)}</strong>
@@ -116,7 +104,7 @@ export default function ProjectCard({
 				</div>
 
 				{project.licenseTypeIds.length > 0 && (
-					<div className="mb-2">
+					<div className="mb-1">
 						<span className="text-muted">
 							<i className="mdi mdi-account-hard-hat me-1"></i>
 							{project.licenseTypeIds.length} License Type{project.licenseTypeIds.length > 1 ? 's' : ''}
@@ -124,19 +112,26 @@ export default function ProjectCard({
 					</div>
 				)}
 
-				<div className="text-muted font-13 mb-3">
-					<i className="mdi mdi-calendar me-1"></i>
-					{new Date(project.createdAt).toLocaleDateString()}
-				</div>
-
-				<div className="mt-auto">
-					<Link 
-						to={`${basePath}/details/${project.id}`} 
-						className="btn btn-primary btn-sm w-100"
-					>
-						<i className="mdi mdi-eye me-1"></i>
-						View Details
-					</Link>
+				<div className="mt-auto d-flex justify-content-between align-items-center">
+					<div className="d-flex gap-2">
+						<Link 
+							to={`${basePath}/details/${project.id}`} 
+							className="text-muted"
+							title="View Details"
+						>
+							<i className="mdi mdi-eye font-18"></i>
+						</Link>
+						<button 
+							onClick={handleHistoryClick}
+							className="btn btn-link text-muted p-0"
+							title="History"
+						>
+							<i className="mdi mdi-history font-18"></i>
+						</button>
+					</div>
+					<span className="text-muted font-13">
+						Updated {new Date(project.createdAt).toLocaleDateString()}
+					</span>
 				</div>
 			</CardBody>
 		</Card>

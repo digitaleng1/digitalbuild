@@ -1,7 +1,30 @@
+import { ProjectStatus } from '@/types/project';
+
+/**
+ * Project Status Display Names
+ */
+export const ProjectStatusLabels: Record<ProjectStatus, string> = {
+	[ProjectStatus.QuotePending]: 'Quote Pending',
+	[ProjectStatus.Draft]: 'Draft',
+	[ProjectStatus.QuoteSubmitted]: 'Quote Submitted',
+	[ProjectStatus.QuoteAccepted]: 'Quote Accepted',
+	[ProjectStatus.InitialPaymentPending]: 'Initial Payment Pending',
+	[ProjectStatus.InitialPaymentComplete]: 'Initial Payment Complete',
+	[ProjectStatus.InProgress]: 'In Progress',
+	[ProjectStatus.Completed]: 'Completed',
+	[ProjectStatus.Cancelled]: 'Cancelled',
+};
+
+/**
+ * Get human-readable label for project status
+ */
+export function getProjectStatusLabel(status: string | ProjectStatus): string {
+	return ProjectStatusLabels[status as ProjectStatus] || status;
+}
+
 /**
  * Project Scope mapping utilities
  */
-
 export const ProjectScopeLabels = {
 	1: '1-3 months',
 	2: 'Less than 6 months',
@@ -9,10 +32,42 @@ export const ProjectScopeLabels = {
 } as const;
 
 /**
+ * Project Scope Short Labels
+ */
+export const ProjectScopeShortLabels = {
+	1: 'Small',
+	2: 'Medium',
+	3: 'Large',
+} as const;
+
+/**
  * Get human-readable label for project scope
  */
 export function getProjectScopeLabel(scope: number): string {
 	return ProjectScopeLabels[scope as keyof typeof ProjectScopeLabels] || 'Unknown';
+}
+
+/**
+ * Get short label for project scope (Small/Medium/Large)
+ */
+export function getProjectScopeShortLabel(scope: number): string {
+	return ProjectScopeShortLabels[scope as keyof typeof ProjectScopeShortLabels] || 'Unknown';
+}
+
+/**
+ * Get Bootstrap badge variant for project scope
+ */
+export function getProjectScopeBadgeVariant(scope: number): 'success' | 'warning' | 'danger' {
+	switch (scope) {
+		case 1:
+			return 'success';
+		case 2:
+			return 'warning';
+		case 3:
+			return 'danger';
+		default:
+			return 'warning';
+	}
 }
 
 /**
@@ -47,12 +102,18 @@ export function getFileExtension(filename: string): string {
  */
 export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'primary' | 'secondary' | 'warning' | 'danger' {
 	switch (status.toLowerCase()) {
-		case 'new':
+		case 'quotepending':
 			return 'info';
 		case 'draft':
 			return 'secondary';
-		case 'published':
+		case 'quotesubmitted':
 			return 'primary';
+		case 'quoteaccepted':
+			return 'success';
+		case 'initialpaymentpending':
+			return 'warning';
+		case 'initialpaymentcomplete':
+			return 'success';
 		case 'inprogress':
 			return 'warning';
 		case 'completed':

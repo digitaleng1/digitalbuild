@@ -13,12 +13,10 @@ export interface SpecialistForBid {
 export interface SendBidDto {
 	projectId: number;
 	specialistUserIds: string[];
-	price: number;
 	description: string;
 }
 
 export interface BidFormData {
-	price: string;
 	description: string;
 }
 

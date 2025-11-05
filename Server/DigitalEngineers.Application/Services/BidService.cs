@@ -409,9 +409,6 @@ public class BidService : IBidService
         if (dto.CoverLetter != null)
             bidResponse.CoverLetter = dto.CoverLetter;
 
-        if (dto.ProposedPrice.HasValue)
-            bidResponse.ProposedPrice = dto.ProposedPrice.Value;
-
         if (dto.EstimatedDays.HasValue)
             bidResponse.EstimatedDays = dto.EstimatedDays.Value;
 
@@ -614,7 +611,7 @@ public class BidService : IBidService
                 Title = $"Bid Request for {project.Name}",
                 Description = dto.Description,
                 Status = BidRequestStatus.Pending,
-                ProposedBudget = dto.Price,
+                ProposedBudget = 0, // Admin doesn't set price, specialist will propose in bid response
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -626,7 +623,7 @@ public class BidService : IBidService
                 $"{specialist.User.FirstName} {specialist.User.LastName}",
                 project.Name,
                 dto.Description,
-                dto.Price,
+                0, // No price in email notification
                 cancellationToken);
         }
 

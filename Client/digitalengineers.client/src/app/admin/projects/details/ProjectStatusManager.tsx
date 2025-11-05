@@ -15,9 +15,12 @@ const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: Pro
 	const { isUpdating, updateStatus } = useUpdateProjectStatus();
 
 	const statusOptions = [
-		{ value: 'New', label: 'New' },
+		{ value: 'QuotePending', label: 'Quote Pending' },
 		{ value: 'Draft', label: 'Draft' },
-		{ value: 'Published', label: 'Published' },
+		{ value: 'QuoteSubmitted', label: 'Quote Submitted' },
+		{ value: 'QuoteAccepted', label: 'Quote Accepted' },
+		{ value: 'InitialPaymentPending', label: 'Initial Payment Pending' },
+		{ value: 'InitialPaymentComplete', label: 'Initial Payment Complete' },
 		{ value: 'InProgress', label: 'In Progress' },
 		{ value: 'Completed', label: 'Completed' },
 		{ value: 'Cancelled', label: 'Cancelled' },

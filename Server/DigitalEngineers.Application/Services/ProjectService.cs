@@ -66,7 +66,7 @@ public class ProjectService : IProjectService
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                Status = ProjectStatus.New,
+                Status = ProjectStatus.QuotePending,
                 ClientId = clientId,
                 StreetAddress = dto.StreetAddress,
                 City = dto.City,
