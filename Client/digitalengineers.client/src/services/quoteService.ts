@@ -18,6 +18,13 @@ class QuoteService {
 	}
 
 	/**
+	 * Update existing quote (Admin/SuperAdmin only)
+	 */
+	async updateQuote(projectId: number, data: CreateQuoteRequest): Promise<void> {
+		await httpClient.put(`/api/projects/${projectId}/quote`, data);
+	}
+
+	/**
 	 * Accept quote (Client only)
 	 */
 	async acceptQuote(projectId: number): Promise<void> {

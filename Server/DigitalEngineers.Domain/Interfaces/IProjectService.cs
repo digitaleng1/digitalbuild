@@ -61,6 +61,15 @@ public interface IProjectService
     Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Updates existing quote (Admin can edit submitted quote)
+    /// </summary>
+    /// <param name="dto">Updated quote data</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuoteSubmitted</exception>
+    Task UpdateQuoteAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Client accepts quote
     /// </summary>
     /// <param name="projectId">Project ID</param>

@@ -41,6 +41,23 @@ export function useProjectQuote() {
 		}
 	}, [showSuccess, showError, fetchQuote]);
 
+	const updateQuote = useCallback(async (projectId: number, data: CreateQuoteRequest) => {
+		setLoading(true);
+		setError(null);
+		try {
+			await quoteService.updateQuote(projectId, data);
+			showSuccess('Success', 'Quote updated successfully');
+			await fetchQuote(projectId);
+		} catch (err: any) {
+			const errorMessage = err.response?.data?.message || err.message || 'Failed to update quote';
+			setError(errorMessage);
+			showError('Error', errorMessage);
+			throw err;
+		} finally {
+			setLoading(false);
+		}
+	}, [showSuccess, showError, fetchQuote]);
+
 	const acceptQuote = useCallback(async (projectId: number) => {
 		setLoading(true);
 		setError(null);
@@ -79,6 +96,7 @@ export function useProjectQuote() {
 		error,
 		fetchQuote,
 		submitQuote,
+		updateQuote,
 		acceptQuote,
 		rejectQuote,
 	};

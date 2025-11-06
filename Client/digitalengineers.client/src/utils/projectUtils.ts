@@ -8,6 +8,7 @@ export const ProjectStatusLabels: Record<ProjectStatus, string> = {
 	[ProjectStatus.Draft]: 'Draft',
 	[ProjectStatus.QuoteSubmitted]: 'Quote Submitted',
 	[ProjectStatus.QuoteAccepted]: 'Quote Accepted',
+	[ProjectStatus.QuoteRejected]: 'Quote Rejected',
 	[ProjectStatus.InitialPaymentPending]: 'Initial Payment Pending',
 	[ProjectStatus.InitialPaymentComplete]: 'Initial Payment Complete',
 	[ProjectStatus.InProgress]: 'In Progress',
@@ -110,6 +111,8 @@ export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'pri
 			return 'primary';
 		case 'quoteaccepted':
 			return 'success';
+		case 'quoterejected':
+			return 'danger';
 		case 'initialpaymentpending':
 			return 'warning';
 		case 'initialpaymentcomplete':

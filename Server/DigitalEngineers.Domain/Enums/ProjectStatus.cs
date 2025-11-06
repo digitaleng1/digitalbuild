@@ -6,9 +6,10 @@ public enum ProjectStatus
     Draft = 1,
     QuoteSubmitted = 2,
     QuoteAccepted = 3,
-    InitialPaymentPending = 4,
-    InitialPaymentComplete = 5,
-    InProgress = 6,
-    Completed = 7,
-    Cancelled = 8
+    QuoteRejected = 4,
+    InitialPaymentPending = 5,
+    InitialPaymentComplete = 6,
+    InProgress = 7,
+    Completed = 8,
+    Cancelled = 9
 }

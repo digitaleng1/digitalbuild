@@ -91,6 +91,28 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 	}
 
 	const renderTooltipContent = (member: ProjectSpecialistDto) => {
+		if (member.isAnonymized) {
+			// Show only profession/role for anonymized specialists
+			const professions = member.licenseTypes.map(lt => lt.professionName);
+			const uniqueProfessions = [...new Set(professions)];
+			
+			return (
+				<div style={{ textAlign: 'left', maxWidth: '250px' }}>
+					<div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Digital Engineers Specialist</div>
+					{member.role && (
+						<div style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#6c757d' }}>
+							Role in Project: {member.role}
+						</div>
+					)}
+					{uniqueProfessions.length > 0 && (
+						<div style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+							Professions: {uniqueProfessions.join(', ')}
+						</div>
+					)}
+				</div>
+			);
+		}
+
 		const professions = member.licenseTypes.map(lt => lt.professionName);
 		const uniqueProfessions = [...new Set(professions)];
 		const licenses = member.licenseTypes.map(lt => lt.licenseTypeName).join(', ');
@@ -110,14 +132,19 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 						{statusLabel}
 					</Badge>
 				</div>
+				{member.role && (
+					<div style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#6c757d', fontStyle: 'italic' }}>
+						Role in Project: {member.role}
+					</div>
+				)}
 				{uniqueProfessions.length > 0 && (
 					<div style={{ fontSize: '0.85rem', marginBottom: '2px', color: '#6c757d' }}>
-						{uniqueProfessions.join(', ')}
+						Professions: {uniqueProfessions.join(', ')}
 					</div>
 				)}
 				{licenses && (
 					<div style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#6c757d' }}>
-						{licenses}
+						Licenses: {licenses}
 					</div>
 				)}
 				<div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#6c757d' }}>
@@ -128,6 +155,23 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 	};
 
 	const renderMemberAvatar = (member: ProjectSpecialistDto) => {
+		if (member.isAnonymized) {
+			// Show "DE" avatar for anonymized specialists
+			return (
+				<div 
+					className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white"
+					style={{ 
+						width: '32px', 
+						height: '32px', 
+						fontSize: '12px', 
+						fontWeight: 'bold'
+					}}
+				>
+					DE
+				</div>
+			);
+		}
+
 		const avatarClass = member.isAssigned 
 			? 'rounded-circle img-thumbnail avatar-sm' 
 			: 'rounded-circle img-thumbnail avatar-sm border-warning';

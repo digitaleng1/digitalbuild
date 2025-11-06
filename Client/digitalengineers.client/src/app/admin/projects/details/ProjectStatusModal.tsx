@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Card, Form, Button, Badge, Modal } from 'react-bootstrap';
+import { Modal, Card, Form, Button, Badge } from 'react-bootstrap';
 import { useUpdateProjectStatus } from '@/app/shared/hooks';
 import { getStatusBadgeVariant } from '@/utils/projectUtils';
 
-interface ProjectStatusManagerProps {
+interface ProjectStatusModalProps {
+	show: boolean;
+	onHide: () => void;
 	projectId: number;
 	currentStatus: string;
 	onStatusUpdated: (newStatus: string) => void;
 }
 
-const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: ProjectStatusManagerProps) => {
+const ProjectStatusModal = ({ show, onHide, projectId, currentStatus, onStatusUpdated }: ProjectStatusModalProps) => {
 	const [selectedStatus, setSelectedStatus] = useState<string>(currentStatus);
 	const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 	const { isUpdating, updateStatus } = useUpdateProjectStatus();
@@ -42,8 +44,8 @@ const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: Pro
 			await updateStatus(projectId, selectedStatus);
 			setShowConfirmModal(false);
 			onStatusUpdated(selectedStatus);
+			onHide();
 		} catch (error) {
-			// Error handled by hook, rollback
 			setSelectedStatus(currentStatus);
 			setShowConfirmModal(false);
 		}
@@ -54,56 +56,66 @@ const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: Pro
 		setShowConfirmModal(false);
 	};
 
+	const handleModalHide = () => {
+		setSelectedStatus(currentStatus);
+		onHide();
+	};
+
 	const statusVariant = getStatusBadgeVariant(currentStatus);
 	const hasChanged = selectedStatus !== currentStatus;
 
 	return (
 		<>
-			<Card className="mb-3">
-				<Card.Body>
-					<h4 className="header-title mb-3">Project Status</h4>
+			<Modal show={show} onHide={handleModalHide} centered>
+				<Modal.Header closeButton>
+					<Modal.Title>Project Status Manager</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<Card>
+						<Card.Body>
+							<div className="mb-3">
+								<label className="form-label">Current Status</label>
+								<div>
+									<Badge bg={statusVariant} className="p-2" style={{ fontSize: '0.875rem' }}>
+										{currentStatus}
+									</Badge>
+								</div>
+							</div>
 
-					<div className="mb-3">
-						<label className="form-label">Current Status</label>
-						<div>
-							<Badge bg={statusVariant} className="p-2" style={{ fontSize: '0.875rem' }}>
-								{currentStatus}
-							</Badge>
-						</div>
-					</div>
+							<Form.Group className="mb-3">
+								<Form.Label>Change Status</Form.Label>
+								<Form.Select 
+									value={selectedStatus} 
+									onChange={handleStatusChange}
+									disabled={isUpdating}
+								>
+									{statusOptions.map((option) => (
+										<option key={option.value} value={option.value}>
+											{option.label}
+										</option>
+									))}
+								</Form.Select>
+							</Form.Group>
 
-					<Form.Group className="mb-3">
-						<Form.Label>Change Status</Form.Label>
-						<Form.Select 
-							value={selectedStatus} 
-							onChange={handleStatusChange}
-							disabled={isUpdating}
-						>
-							{statusOptions.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</Form.Select>
-					</Form.Group>
-
-					<Button 
-						variant="primary" 
-						className="w-100"
-						onClick={handleUpdateClick}
-						disabled={!hasChanged || isUpdating}
-					>
-						{isUpdating ? (
-							<>
-								<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-								Updating...
-							</>
-						) : (
-							'Update Status'
-						)}
-					</Button>
-				</Card.Body>
-			</Card>
+							<Button 
+								variant="primary" 
+								className="w-100"
+								onClick={handleUpdateClick}
+								disabled={!hasChanged || isUpdating}
+							>
+								{isUpdating ? (
+									<>
+										<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+										Updating...
+									</>
+								) : (
+									'Update Status'
+								)}
+							</Button>
+						</Card.Body>
+					</Card>
+				</Modal.Body>
+			</Modal>
 
 			<Modal show={showConfirmModal} onHide={handleCancelUpdate} centered>
 				<Modal.Header closeButton>
@@ -127,4 +139,4 @@ const ProjectStatusManager = ({ projectId, currentStatus, onStatusUpdated }: Pro
 	);
 };
 
-export default ProjectStatusManager;
+export default ProjectStatusModal;

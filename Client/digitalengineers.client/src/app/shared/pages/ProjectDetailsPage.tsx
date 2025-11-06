@@ -1,6 +1,7 @@
 import { Row, Col, Card, CardBody, Badge, Spinner, Alert } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/common/context/useAuthContext';
+import { useState } from 'react';
 import Comments from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
 import Files from '@/app/client/projects/details/Files';
@@ -9,20 +10,25 @@ import CardTitle from '@/components/CardTitle';
 import { useProjectDetails } from '@/app/shared/hooks';
 import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
 import { TeamMembers } from '@/app/shared/components/common';
-import ProjectStatusManager from '@/app/admin/projects/details/ProjectStatusManager';
+import ProjectStatusModal from '@/app/admin/projects/details/ProjectStatusModal';
 import QuoteCreationCard from '@/app/admin/projects/details/QuoteCreationCard';
 import QuoteReviewCard from '@/app/client/projects/details/QuoteReviewCard';
 import QuoteAcceptedAlert from '@/app/client/projects/details/QuoteAcceptedAlert';
+import QuoteSubmittedAlert from '@/app/client/projects/details/QuoteSubmittedAlert';
+import PendingAlert from '@/app/client/projects/details/PendingAlert';
+import classNames from 'classnames';
 
 const ProjectDetailsPage = () => {
 	const { id } = useParams<{ id: string }>();
 	const projectId = id ? parseInt(id, 10) : undefined;
 	const { hasAnyRole } = useAuthContext();
+	const [showStatusModal, setShowStatusModal] = useState(false);
 	
 	const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
 	const isClient = hasAnyRole(['Client']);
+	const isProvider = hasAnyRole(['Provider']);
 
 	if (loading) {
 		return (
@@ -70,25 +76,59 @@ const ProjectDetailsPage = () => {
 				{ label: 'View as Client', icon: 'mdi mdi-eye' },
 				{ label: 'Assign Provider', icon: 'mdi mdi-account-plus' },
 				{ label: 'Project History', icon: 'mdi mdi-history' },
-		  ]
+			]
 		: [
 				{ label: 'Edit', icon: 'mdi mdi-pencil' },
 				{ label: 'Delete', icon: 'mdi mdi-delete' },
 				{ label: 'Invite', icon: 'mdi mdi-email-outline' },
 				{ label: 'Leave', icon: 'mdi mdi-exit-to-app' },
-		  ];
+			];
+
+	const handleRibbonClick = () => {
+		if (isAdmin) {
+			setShowStatusModal(true);
+		}
+	};
+
+	const handleStatusUpdated = (newStatus: string) => {
+		updateProjectStatus(newStatus);
+		setShowStatusModal(false);
+	};
 
 	return (
 		<>
 			<PageBreadcrumb title="Project Details" subName="Projects" />
 
-			{/* Quote Accepted Alert for Client */}
-			{isClient && <QuoteAcceptedAlert project={project} />}
+			{/* Status Alerts for Client */}
+			{isClient && (
+				<>
+					<PendingAlert project={project} />
+					<QuoteSubmittedAlert project={project} />
+					<QuoteAcceptedAlert project={project} />
+				</>
+			)}
 
 			<Row>
 				<Col xl={8} lg={6}>
-					<Card className="d-block">
+					<Card className="d-block ribbon-box">
 						<CardBody>
+							{/* Status Ribbon */}
+							<div
+								className={classNames(
+									'ribbon',
+									`ribbon-${statusVariant}`,
+									{ 'bg-dark text-light': statusVariant === 'dark' },
+									{ 'bg-secondary text-light': statusVariant === 'secondary' },
+									'float-start',
+									{ 'cursor-pointer': isAdmin }
+								)}
+								onClick={handleRibbonClick}
+								style={isAdmin ? { cursor: 'pointer' } : undefined}
+								title={isAdmin ? 'Click to change status' : undefined}
+							>
+								<i className={`mdi ${isAdmin ? 'mdi-pencil' : 'mdi-circle-slice-8'} me-1`}></i> {project.status}
+							</div>
+
 							<CardTitle
 								containerClass="d-flex justify-content-between align-items-center mb-2"
 								icon="ri-more-fill"
@@ -96,11 +136,8 @@ const ProjectDetailsPage = () => {
 								menuItems={menuItems}
 							/>
 							
-							{/* Status Badge and Project Info in one line */}
-							<div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-								<Badge bg={statusVariant} className="text-light">
-									{project.status}
-								</Badge>
+							{/* Project Info */}
+							<div className="d-flex flex-wrap align-items-center gap-3 mb-3 ribbon-content">
 								<div className="d-flex align-items-center text-muted">
 									<i className="mdi mdi-calendar me-1"></i>
 									<small>Created: {createdDate}</small>
@@ -191,6 +228,34 @@ const ProjectDetailsPage = () => {
 											</div>
 										</div>
 
+										{/* Quote Information */}
+										{!isProvider && (
+											<div className="mb-4">
+												<h5 className="mb-3">Quote Information:</h5>
+												{!project.quotedAmount ? (
+													<p className="mb-0">
+														<i className="mdi mdi-information-outline text-muted me-1"></i>
+														<span className="text-muted">Price not available</span>
+													</p>
+												) : project.status === 'QuoteSubmitted' ? (
+													<p className="mb-0">
+														<i className="mdi mdi-clock-outline text-warning me-1"></i>
+														<span className="text-muted">Pending approval</span>
+													</p>
+												) : (
+													<p className="mb-0">
+														<i className="mdi mdi-check-circle text-success me-1"></i>
+														<strong className="text-success">
+															{new Intl.NumberFormat('en-US', {
+																style: 'currency',
+																currency: 'USD',
+															}).format(project.quotedAmount)}
+														</strong>
+													</p>
+												)}
+											</div>
+										)}
+
 										{/* Location */}
 										<div>
 											<h5 className="mb-3">Project Location:</h5>
@@ -238,19 +303,11 @@ const ProjectDetailsPage = () => {
 				</Col>
 
 				<Col xl={4} lg={6}>
-					{/* Admin: Project Status Manager */}
+					{/* Admin: Quote Card - ALWAYS VISIBLE */}
 					{isAdmin && (
-						<ProjectStatusManager
-							projectId={project.id}
-							currentStatus={project.status}
-							onStatusUpdated={updateProjectStatus}
-						/>
-					)}
-
-					{/* Admin: Quote Creation (when status = QuotePending) */}
-					{isAdmin && project.status === 'QuotePending' && (
 						<QuoteCreationCard
 							projectId={project.id}
+							project={project}
 							onQuoteSubmitted={refetch}
 						/>
 					)}
@@ -268,6 +325,17 @@ const ProjectDetailsPage = () => {
 					<Files files={project.files} />
 				</Col>
 			</Row>
+
+			{/* Status Modal for Admin */}
+			{isAdmin && (
+				<ProjectStatusModal
+					show={showStatusModal}
+					onHide={() => setShowStatusModal(false)}
+					projectId={project.id}
+					currentStatus={project.status}
+					onStatusUpdated={handleStatusUpdated}
+				/>
+			)}
 		</>
 	);
 };

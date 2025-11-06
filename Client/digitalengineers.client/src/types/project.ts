@@ -4,6 +4,7 @@ export enum ProjectStatus {
 	Draft = 'Draft',
 	QuoteSubmitted = 'QuoteSubmitted',
 	QuoteAccepted = 'QuoteAccepted',
+	QuoteRejected = 'QuoteRejected',
 	InitialPaymentPending = 'InitialPaymentPending',
 	InitialPaymentComplete = 'InitialPaymentComplete',
 	InProgress = 'InProgress',
@@ -78,6 +79,7 @@ export interface ProjectDto {
 	projectScope: number;
 	managementType: string;
 	licenseTypeIds: number[];
+	quotedAmount?: number;
 }
 
 // Synchronized with ProjectDetailsViewModel from server
@@ -133,7 +135,9 @@ export interface ProjectSpecialistDto {
 	userId: string;
 	name: string;
 	profilePictureUrl?: string;
+	role?: string; // Role/Title from ProjectSpecialist
 	isAssigned: boolean; // true = assigned, false = pending bid
+	isAnonymized: boolean; // true = hide real data (DE managed), false = show real data
 	assignedOrBidSentAt: string;
 	licenseTypes: SpecialistLicenseInfo[];
 }

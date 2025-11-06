@@ -175,7 +175,8 @@ public class ProjectService : IProjectService
                 ZipCode = project.ZipCode,
                 ProjectScope = (int)project.ProjectScope,
                 ManagementType = project.ManagementType.ToString(),
-                LicenseTypeIds = dto.LicenseTypeIds
+                LicenseTypeIds = dto.LicenseTypeIds,
+                QuotedAmount = project.QuotedAmount
             };
         }
         catch (Exception ex)
@@ -374,7 +375,8 @@ public class ProjectService : IProjectService
                 ZipCode = p.Project.ZipCode,
                 ProjectScope = (int)p.Project.ProjectScope,
                 ManagementType = p.Project.ManagementType.ToString(),
-                LicenseTypeIds = p.LicenseTypeIds
+                LicenseTypeIds = p.LicenseTypeIds,
+                QuotedAmount = p.Project.QuotedAmount
             };
         });
     }
@@ -423,9 +425,43 @@ public class ProjectService : IProjectService
         var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
         var isClient = userRoles.Contains("Client");
 
+        // For DigitalEngineersManaged projects, hide specialists from clients
         if (isClient && project.ManagementType == ProjectManagementType.DigitalEngineersManaged)
         {
-            return [];
+            // Show anonymized specialists (DE avatars)
+            var assignedCount = await _context.ProjectSpecialists
+                .AsNoTracking()
+                .Where(ps => ps.ProjectId == projectId)
+                .Include(ps => ps.Specialist)
+                    .ThenInclude(s => s.LicenseTypes)
+                        .ThenInclude(slt => slt.LicenseType)
+                            .ThenInclude(lt => lt.Profession)
+                .Select(ps => new
+                {
+                    ps.Role,
+                    AssignedAt = ps.AssignedAt,
+                    LicenseTypes = ps.Specialist.LicenseTypes.Select(slt => new SpecialistLicenseInfoDto
+                    {
+                        LicenseTypeId = slt.LicenseTypeId,
+                        LicenseTypeName = slt.LicenseType.Name,
+                        ProfessionId = slt.LicenseType.ProfessionId,
+                        ProfessionName = slt.LicenseType.Profession.Name
+                    }).ToArray()
+                })
+                .ToListAsync(cancellationToken);
+
+            return assignedCount.Select((spec, index) => new ProjectSpecialistDto
+            {
+                SpecialistId = index + 1, // Anonymous ID
+                UserId = string.Empty,
+                Name = "Digital Engineers Specialist",
+                ProfilePictureUrl = null,
+                Role = spec.Role,
+                IsAssigned = true,
+                IsAnonymized = true,
+                AssignedOrBidSentAt = spec.AssignedAt,
+                LicenseTypes = spec.LicenseTypes
+            });
         }
 
         var specialists = new List<ProjectSpecialistDto>();
@@ -445,7 +481,9 @@ public class ProjectService : IProjectService
                 UserId = ps.Specialist.UserId,
                 Name = $"{ps.Specialist.User.FirstName ?? ""} {ps.Specialist.User.LastName ?? ""}".Trim(),
                 ProfilePictureUrl = ps.Specialist.User.ProfilePictureUrl,
+                Role = ps.Role,
                 IsAssigned = true,
+                IsAnonymized = false,
                 AssignedOrBidSentAt = ps.AssignedAt,
                 LicenseTypes = ps.Specialist.LicenseTypes.Select(slt => new SpecialistLicenseInfoDto
                 {
@@ -498,6 +536,7 @@ public class ProjectService : IProjectService
                 Name = $"{pbs.FirstName ?? ""} {pbs.LastName ?? ""}".Trim(),
                 ProfilePictureUrl = pbs.ProfilePictureUrl,
                 IsAssigned = false,
+                IsAnonymized = false,
                 AssignedOrBidSentAt = pbs.SentAt,
                 LicenseTypes = pbs.LicenseTypes
             });
@@ -575,7 +614,7 @@ public class ProjectService : IProjectService
             throw new ProjectNotFoundException(dto.ProjectId);
         }
         
-        if (project.Status != ProjectStatus.QuotePending)
+        if (project.Status != ProjectStatus.QuotePending && project.Status != ProjectStatus.QuoteRejected)
         {
             throw new InvalidProjectStatusForQuoteException(
                 dto.ProjectId, 
@@ -589,6 +628,32 @@ public class ProjectService : IProjectService
         project.QuoteNotes = dto.QuoteNotes;
         project.QuoteSubmittedAt = DateTime.UtcNow;
         project.Status = ProjectStatus.QuoteSubmitted;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task UpdateQuoteAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == dto.ProjectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(dto.ProjectId);
+        }
+        
+        if (project.Status != ProjectStatus.QuoteSubmitted)
+        {
+            throw new InvalidProjectStatusForQuoteException(
+                dto.ProjectId, 
+                project.Status.ToString(), 
+                "update quote");
+        }
+        
+        project.QuotedAmount = dto.QuotedAmount;
+        project.QuoteNotes = dto.QuoteNotes;
+        project.QuoteSubmittedAt = DateTime.UtcNow; // Update submission time
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
@@ -648,9 +713,7 @@ public class ProjectService : IProjectService
         }
         
         project.QuoteRejectedAt = DateTime.UtcNow;
-        project.QuotedAmount = null;
-        project.QuoteSubmittedAt = null;
-        project.Status = ProjectStatus.QuotePending;
+        project.Status = ProjectStatus.QuoteRejected;
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);

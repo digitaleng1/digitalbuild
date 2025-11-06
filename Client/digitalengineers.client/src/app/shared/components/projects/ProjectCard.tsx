@@ -3,6 +3,7 @@ import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, B
 import classNames from 'classnames';
 import type { ProjectDto } from '@/types/project';
 import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
+import { useAuthContext } from '@/common/context/useAuthContext';
 
 interface ProjectCardProps {
 	project: ProjectDto;
@@ -19,8 +20,17 @@ export default function ProjectCard({
 	onEdit, 
 	onDelete 
 }: ProjectCardProps) {
+	const { hasAnyRole } = useAuthContext();
+	const isProvider = hasAnyRole(['Provider']);
 	const hasImage = !!project.thumbnailUrl;
 	const statusVariant = getStatusBadgeVariant(project.status);
+
+	const formatCurrency = (amount: number) => {
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+		}).format(amount);
+	};
 
 	const handleHistoryClick = () => {
 		alert('History feature will be implemented in the future');
@@ -87,6 +97,20 @@ export default function ProjectCard({
 							? `${project.description.substring(0, 100)}...` 
 							: project.description}
 					</p>
+				)}
+
+				{/* Quote Information - hidden for Provider */}
+				{!isProvider && project.quotedAmount && (
+					<div className="mb-1">
+						<span className="text-muted">
+							<i className="mdi mdi-currency-usd me-1"></i>
+							{project.status === 'QuoteSubmitted' ? (
+								<span className="text-warning">Pending approval</span>
+							) : (
+								<strong className="text-success">{formatCurrency(project.quotedAmount)}</strong>
+							)}
+						</span>
+					</div>
 				)}
 
 				<div className="mb-1">

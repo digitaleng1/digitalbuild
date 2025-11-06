@@ -230,6 +230,27 @@ public class ProjectsController : ControllerBase
     }
     
     /// <summary>
+    /// Update existing quote (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpPut("{id}/quote")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateQuote(
+        int id,
+        [FromBody] CreateQuoteViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var dto = _mapper.Map<CreateQuoteDto>(model);
+        dto.ProjectId = id;
+        
+        await _projectService.UpdateQuoteAsync(dto, cancellationToken);
+        return NoContent();
+    }
+    
+    /// <summary>
     /// Accept quote (Client only)
     /// </summary>
     [HttpPost("{id}/quote/accept")]

@@ -15,6 +15,9 @@ public class ProjectViewModel
     public int ProjectScope { get; set; }
     public string ManagementType { get; set; } = string.Empty;
     public int[] LicenseTypeIds { get; set; } = [];
+    
+    // Quote field
+    public decimal? QuotedAmount { get; set; }
 }
 
 public class ProjectDetailsViewModel
@@ -64,7 +67,9 @@ public class ProjectSpecialistViewModel
     public string UserId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
+    public string? Role { get; set; } // Role/Title from ProjectSpecialist
     public bool IsAssigned { get; set; } // true = assigned, false = pending bid
+    public bool IsAnonymized { get; set; } // true = hide real data (DE managed), false = show real data
     public DateTime AssignedOrBidSentAt { get; set; }
     public SpecialistLicenseInfoViewModel[] LicenseTypes { get; set; } = [];
 }

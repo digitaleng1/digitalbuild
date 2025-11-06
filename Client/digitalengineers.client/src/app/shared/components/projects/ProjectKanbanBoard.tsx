@@ -25,6 +25,7 @@ const ProjectKanbanBoard = ({ projects, onProjectStatusChange, basePath = '/admi
 	const visibleStatuses: ProjectStatus[] = useMemo(() => [
 		ProjectStatus.QuotePending,
 		ProjectStatus.QuoteSubmitted,
+		ProjectStatus.QuoteRejected,
 		ProjectStatus.QuoteAccepted,
 		ProjectStatus.InitialPaymentPending,
 		ProjectStatus.InitialPaymentComplete,
