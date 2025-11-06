@@ -298,7 +298,12 @@ public class ProjectService : IProjectService
             CreatedAt = project.CreatedAt,
             UpdatedAt = project.UpdatedAt,
             ThumbnailUrl = thumbnailPresignedUrl,
-            Files = filesWithPresignedUrls
+            Files = filesWithPresignedUrls,
+            QuotedAmount = project.QuotedAmount,
+            QuoteSubmittedAt = project.QuoteSubmittedAt,
+            QuoteAcceptedAt = project.QuoteAcceptedAt,
+            QuoteRejectedAt = project.QuoteRejectedAt,
+            QuoteNotes = project.QuoteNotes
         };
     }
 
@@ -502,5 +507,152 @@ public class ProjectService : IProjectService
 
         return specialists.OrderByDescending(s => s.IsAssigned)
                          .ThenByDescending(s => s.AssignedOrBidSentAt);
+    }
+
+    public async Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        var acceptedBids = await _context.BidResponses
+            .AsNoTracking()
+            .Include(br => br.Specialist)
+                .ThenInclude(s => s.User)
+            .Include(br => br.BidRequest)
+            .Where(br => br.BidRequest.ProjectId == projectId && br.AdminMarkupPercentage != null)
+            .Select(br => new
+            {
+                BidResponse = br,
+                SpecialistName = $"{br.Specialist.User.FirstName ?? ""} {br.Specialist.User.LastName ?? ""}".Trim(),
+                Role = br.BidRequest.Title
+            })
+            .ToListAsync(cancellationToken);
+        
+        // Allow empty accepted bids - admin can create quote using own resources
+        var acceptedBidSummaries = acceptedBids.Select(ab =>
+        {
+            var markup = ab.BidResponse.AdminMarkupPercentage!.Value;
+            var finalPrice = ab.BidResponse.ProposedPrice * (1 + markup / 100);
+            
+            return new AcceptedBidSummaryDto
+            {
+                BidResponseId = ab.BidResponse.Id,
+                SpecialistName = ab.SpecialistName,
+                Role = ab.Role,
+                ProposedPrice = ab.BidResponse.ProposedPrice,
+                AdminMarkupPercentage = markup,
+                FinalPrice = finalPrice
+            };
+        }).ToArray();
+        
+        var suggestedAmount = acceptedBidSummaries.Sum(ab => ab.FinalPrice);
+        
+        return new ProjectQuoteDto
+        {
+            ProjectId = project.Id,
+            ProjectName = project.Name,
+            AcceptedBids = acceptedBidSummaries,
+            SuggestedAmount = suggestedAmount,
+            QuotedAmount = project.QuotedAmount,
+            QuoteNotes = project.QuoteNotes,
+            QuoteSubmittedAt = project.QuoteSubmittedAt
+        };
+    }
+    
+    public async Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == dto.ProjectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(dto.ProjectId);
+        }
+        
+        if (project.Status != ProjectStatus.QuotePending)
+        {
+            throw new InvalidProjectStatusForQuoteException(
+                dto.ProjectId, 
+                project.Status.ToString(), 
+                "submit quote");
+        }
+        
+        // Allow quote submission even without accepted bids - admin may use own resources
+        
+        project.QuotedAmount = dto.QuotedAmount;
+        project.QuoteNotes = dto.QuoteNotes;
+        project.QuoteSubmittedAt = DateTime.UtcNow;
+        project.Status = ProjectStatus.QuoteSubmitted;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task AcceptQuoteAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        if (project.Status != ProjectStatus.QuoteSubmitted)
+        {
+            throw new InvalidProjectStatusForQuoteException(
+                projectId, 
+                project.Status.ToString(), 
+                "accept quote");
+        }
+        
+        if (project.QuotedAmount == null)
+        {
+            _logger.LogWarning("Attempt to accept quote for project {ProjectId} with no quoted amount", projectId);
+            throw new InvalidProjectStatusForQuoteException(
+                projectId, 
+                project.Status.ToString(), 
+                "accept quote - no quoted amount");
+        }
+        
+        project.QuoteAcceptedAt = DateTime.UtcNow;
+        project.Status = ProjectStatus.QuoteAccepted;
+        project.Budget = project.QuotedAmount.Value;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task RejectQuoteAsync(int projectId, string? rejectionReason, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        if (project.Status != ProjectStatus.QuoteSubmitted)
+        {
+            throw new InvalidProjectStatusForQuoteException(
+                projectId, 
+                project.Status.ToString(), 
+                "reject quote");
+        }
+        
+        project.QuoteRejectedAt = DateTime.UtcNow;
+        project.QuotedAmount = null;
+        project.QuoteSubmittedAt = null;
+        project.Status = ProjectStatus.QuotePending;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

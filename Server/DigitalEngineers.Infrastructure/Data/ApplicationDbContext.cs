@@ -82,6 +82,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
             
+            // Quote fields
+            entity.Property(e => e.QuotedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.QuoteNotes).HasMaxLength(1000);
+            
             entity.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(e => e.ClientId)

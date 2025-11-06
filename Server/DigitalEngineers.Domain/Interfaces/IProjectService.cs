@@ -41,4 +41,41 @@ public interface IProjectService
         string userId,
         string[] userRoles,
         CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets project quote data with accepted bids and suggested amount
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Project quote data</returns>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Submits quote to client
+    /// </summary>
+    /// <param name="dto">Quote data</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuotePending</exception>
+    Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Client accepts quote
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuoteSubmitted</exception>
+    Task AcceptQuoteAsync(int projectId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Client rejects quote
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="rejectionReason">Optional rejection reason</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuoteSubmitted</exception>
+    Task RejectQuoteAsync(int projectId, string? rejectionReason, CancellationToken cancellationToken = default);
 }

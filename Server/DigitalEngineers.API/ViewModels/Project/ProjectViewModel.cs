@@ -39,6 +39,13 @@ public class ProjectDetailsViewModel
     public DateTime UpdatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }
     public ProjectFileViewModel[] Files { get; set; } = [];
+
+    // Quote fields
+    public decimal? QuotedAmount { get; set; }
+    public DateTime? QuoteSubmittedAt { get; set; }
+    public DateTime? QuoteAcceptedAt { get; set; }
+    public DateTime? QuoteRejectedAt { get; set; }
+    public string? QuoteNotes { get; set; }
 }
 
 public class ProjectFileViewModel

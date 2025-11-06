@@ -44,6 +44,7 @@ namespace DigitalEngineers.API.Middleware
                 // 400 - Bad Request
                 InvalidProjectStatusException => StatusCodes.Status400BadRequest,
                 InvalidBidStatusException => StatusCodes.Status400BadRequest,
+                InvalidProjectStatusForQuoteException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status400BadRequest,
 
                 // 401 - Unauthorized
@@ -52,6 +53,7 @@ namespace DigitalEngineers.API.Middleware
 
                 // 409 - Conflict
                 SpecialistAlreadyAssignedException => StatusCodes.Status409Conflict,
+                QuoteAlreadySubmittedException => StatusCodes.Status409Conflict,
 
                 // 500 - Internal Server Error
                 _ => StatusCodes.Status500InternalServerError

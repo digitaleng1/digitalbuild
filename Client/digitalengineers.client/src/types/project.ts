@@ -102,6 +102,12 @@ export interface ProjectDetailsDto {
 	updatedAt: string;
 	thumbnailUrl?: string;
 	files: ProjectFile[];
+	// Quote fields
+	quotedAmount?: number;
+	quoteSubmittedAt?: string;
+	quoteAcceptedAt?: string;
+	quoteRejectedAt?: string;
+	quoteNotes?: string;
 }
 
 export interface ProjectFile {

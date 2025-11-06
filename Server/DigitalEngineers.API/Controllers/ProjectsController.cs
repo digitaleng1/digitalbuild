@@ -189,4 +189,78 @@ public class ProjectsController : ControllerBase
         // Redirect to GetProjectSpecialists
         return await GetProjectSpecialists(id, cancellationToken);
     }
+    
+    /// <summary>
+    /// Get project quote data (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpGet("{id}/quote-data")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(ProjectQuoteViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ProjectQuoteViewModel>> GetProjectQuoteData(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var quoteData = await _projectService.GetProjectQuoteDataAsync(id, cancellationToken);
+        var viewModel = _mapper.Map<ProjectQuoteViewModel>(quoteData);
+        return Ok(viewModel);
+    }
+    
+    /// <summary>
+    /// Submit quote to client (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpPost("{id}/quote/submit")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SubmitQuote(
+        int id,
+        [FromBody] CreateQuoteViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var dto = _mapper.Map<CreateQuoteDto>(model);
+        dto.ProjectId = id;
+        
+        await _projectService.SubmitQuoteToClientAsync(dto, cancellationToken);
+        return NoContent();
+    }
+    
+    /// <summary>
+    /// Accept quote (Client only)
+    /// </summary>
+    [HttpPost("{id}/quote/accept")]
+    [Authorize(Roles = "Client")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> AcceptQuote(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        await _projectService.AcceptQuoteAsync(id, cancellationToken);
+        return NoContent();
+    }
+    
+    /// <summary>
+    /// Reject quote (Client only)
+    /// </summary>
+    [HttpPost("{id}/quote/reject")]
+    [Authorize(Roles = "Client")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RejectQuote(
+        int id,
+        [FromBody] RejectQuoteViewModel? model,
+        CancellationToken cancellationToken)
+    {
+        await _projectService.RejectQuoteAsync(id, model?.RejectionReason, cancellationToken);
+        return NoContent();
+    }
 }

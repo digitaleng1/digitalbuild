@@ -10,15 +10,19 @@ import { useProjectDetails } from '@/app/shared/hooks';
 import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
 import { TeamMembers } from '@/app/shared/components/common';
 import ProjectStatusManager from '@/app/admin/projects/details/ProjectStatusManager';
+import QuoteCreationCard from '@/app/admin/projects/details/QuoteCreationCard';
+import QuoteReviewCard from '@/app/client/projects/details/QuoteReviewCard';
+import QuoteAcceptedAlert from '@/app/client/projects/details/QuoteAcceptedAlert';
 
 const ProjectDetailsPage = () => {
 	const { id } = useParams<{ id: string }>();
 	const projectId = id ? parseInt(id, 10) : undefined;
 	const { hasAnyRole } = useAuthContext();
 	
-	const { project, loading, error, updateProjectStatus } = useProjectDetails(projectId);
+	const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
+	const isClient = hasAnyRole(['Client']);
 
 	if (loading) {
 		return (
@@ -77,6 +81,9 @@ const ProjectDetailsPage = () => {
 	return (
 		<>
 			<PageBreadcrumb title="Project Details" subName="Projects" />
+
+			{/* Quote Accepted Alert for Client */}
+			{isClient && <QuoteAcceptedAlert project={project} />}
 
 			<Row>
 				<Col xl={8} lg={6}>
@@ -231,11 +238,29 @@ const ProjectDetailsPage = () => {
 				</Col>
 
 				<Col xl={4} lg={6}>
+					{/* Admin: Project Status Manager */}
 					{isAdmin && (
 						<ProjectStatusManager
 							projectId={project.id}
 							currentStatus={project.status}
 							onStatusUpdated={updateProjectStatus}
+						/>
+					)}
+
+					{/* Admin: Quote Creation (when status = QuotePending) */}
+					{isAdmin && project.status === 'QuotePending' && (
+						<QuoteCreationCard
+							projectId={project.id}
+							onQuoteSubmitted={refetch}
+						/>
+					)}
+
+					{/* Client: Quote Review (when status = QuoteSubmitted) */}
+					{isClient && project.status === 'QuoteSubmitted' && (
+						<QuoteReviewCard
+							project={project}
+							onQuoteAccepted={refetch}
+							onQuoteRejected={refetch}
 						/>
 					)}
 

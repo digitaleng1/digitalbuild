@@ -25,6 +25,13 @@ public class Project
     public decimal Budget { get; set; }
     public DateTime? StartDate { get; set; }
     
+    // Quote fields
+    public decimal? QuotedAmount { get; set; }
+    public DateTime? QuoteSubmittedAt { get; set; }
+    public DateTime? QuoteAcceptedAt { get; set; }
+    public DateTime? QuoteRejectedAt { get; set; }
+    public string? QuoteNotes { get; set; }
+    
     // Timestamps
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

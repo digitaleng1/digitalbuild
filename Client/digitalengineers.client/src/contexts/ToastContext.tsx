@@ -110,7 +110,15 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 						show={true}
 						autohide={toast.autoHide}
 						delay={toast.delay}
-						bg="light"
+						bg={
+							toast.type === 'error'
+								? 'danger'
+								: toast.type === 'warning'
+								? 'warning'
+								: toast.type === 'success'
+								? 'success'
+								: 'info'
+						}
 						className="shadow"
 						animation={true}
 					>
@@ -119,7 +127,15 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 							<strong className="me-auto">{toast.title}</strong>
 							<small className="text-muted">{getTimeAgo()}</small>
 						</Toast.Header>
-						<Toast.Body className="text-dark">{toast.message}</Toast.Body>
+						<Toast.Body
+							className={
+								toast.type === 'error' || toast.type === 'danger'
+									? 'text-white'
+									: 'text-dark'
+							}
+						>
+							{toast.message}
+						</Toast.Body>
 					</Toast>
 				))}
 			</ToastContainer>

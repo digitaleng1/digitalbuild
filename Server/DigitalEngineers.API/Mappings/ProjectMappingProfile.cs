@@ -11,6 +11,7 @@ public class ProjectMappingProfile : Profile
     {
         // ViewModel -> DTO
         CreateMap<CreateProjectViewModel, CreateProjectDto>();
+        CreateMap<CreateQuoteViewModel, CreateQuoteDto>();
 
         // DTO -> ViewModel
         CreateMap<ProjectDto, ProjectViewModel>();
@@ -24,5 +25,9 @@ public class ProjectMappingProfile : Profile
         CreateMap<ProjectSpecialistDto, ProjectSpecialistViewModel>();
 
         CreateMap<SpecialistLicenseInfoDto, SpecialistLicenseInfoViewModel>();
+        
+        CreateMap<ProjectQuoteDto, ProjectQuoteViewModel>();
+        
+        CreateMap<AcceptedBidSummaryDto, AcceptedBidSummaryViewModel>();
     }
 }
