@@ -1,8 +1,8 @@
 import { lazy } from 'react';
 import { Outlet, Route, Routes } from 'react-router';
-import Error404Alt from '../pages/404-alt/page';
+const Error404Alt = lazy(() => import('../error/404-alt/page'));
 
-const Dashboards = lazy(() => import('../dashboards'));
+const Dashboards = lazy(() => import('./dashboards'));
 const Projects = lazy(() => import('./projects'));
 const Bids = lazy(() => import('./bids'));
 

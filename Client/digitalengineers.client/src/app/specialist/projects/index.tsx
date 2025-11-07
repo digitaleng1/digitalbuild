@@ -3,7 +3,7 @@ import { Outlet, Route, Routes } from 'react-router';
 
 const ListProject = lazy(() => import('./list/page'));
 const ProjectDetails = lazy(() => import('./details/page'));
-const Error404Alt = lazy(() => import('../../pages/404-alt/page'));
+const Error404Alt = lazy(() => import('../../error/404-alt/page'));
 
 export default function Projects() {
 	return (

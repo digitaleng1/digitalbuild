@@ -3,7 +3,7 @@ import { Outlet, Route, Routes } from 'react-router';
 
 const Dashboards = lazy(() => import('./dashboards'));
 const Projects = lazy(() => import('./projects'));
-const Error404Alt = lazy(() => import('../pages/404-alt/page'));
+const Error404Alt = lazy(() => import('../error/404-alt/page'));
 
 
 export default function Client() {
