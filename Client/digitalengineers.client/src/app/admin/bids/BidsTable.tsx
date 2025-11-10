@@ -12,6 +12,7 @@ const BidsTable = ({ data }: BidsTableProps) => {
             columns={columns}
             data={data}
             pageSize={10}
+            tableClass="table-sm"
             rowsPerPageList={sizePerPageList}
             theadClass="bg-light bg-opacity-50"
             showPagination

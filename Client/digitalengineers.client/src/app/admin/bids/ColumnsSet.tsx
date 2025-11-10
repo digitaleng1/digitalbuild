@@ -40,13 +40,13 @@ const columns: ColumnDef<AdminBidListItem>[] = [
             
             return (
                 <div className="small">
-                    <div className="mb-1">
+                    <div className="">
                         <span className="text-muted">Total:</span> <span className="fw-semibold">{total}</span>
                     </div>
-                    <div className="mb-1">
+                    <div className="">
                         <span className="text-muted">Submitted:</span> {row.original.respondedBidsCount}
                     </div>
-                    <div className="mb-1">
+                    <div className="">
                         <span className="text-muted">Pending:</span> {row.original.pendingBidsCount}
                     </div>
                     <div>
