@@ -26,6 +26,8 @@ public class SpecialistDetailsDto
     public LicenseTypeDto[] LicenseTypes { get; set; } = [];
     public PortfolioItemDto[] Portfolio { get; set; } = [];
     public AssignedProjectDto[] AssignedProjects { get; set; } = [];
+    public ReviewDto[] Reviews { get; set; } = [];
+    public SpecialistStatsDto? Stats { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

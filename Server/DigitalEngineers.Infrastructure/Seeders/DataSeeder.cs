@@ -73,7 +73,6 @@ public static class DataSeeder
                 Biography = "System super administrator for Digital Engineers platform.",
                 Location = "Remote",
                 Website = "https://digitalengineers.com",
-                IsAvailableForHire = false,
                 CreatedAt = DateTime.UtcNow.AddYears(-1),
                 UpdatedAt = DateTime.UtcNow.AddDays(-1),
                 LastActive = DateTime.UtcNow,
@@ -105,7 +104,6 @@ public static class DataSeeder
                 Biography = "System administrator for Digital Engineers platform.",
                 Location = "Remote",
                 Website = "https://digitalengineers.com",
-                IsAvailableForHire = false,
                 CreatedAt = DateTime.UtcNow.AddYears(-1),
                 UpdatedAt = DateTime.UtcNow.AddDays(-1),
                 LastActive = DateTime.UtcNow,
@@ -189,7 +187,6 @@ public static class DataSeeder
                     Biography = bio,
                     Location = location,
                     Website = website,
-                    IsAvailableForHire = true,
                     CreatedAt = DateTime.UtcNow.AddMonths(-monthsAgo),
                     UpdatedAt = DateTime.UtcNow.AddDays(-updateDaysAgo),
                     LastActive = DateTime.UtcNow.AddHours(-Random.Shared.Next(1, 24)),
@@ -243,7 +240,6 @@ public static class DataSeeder
                     ProfilePictureUrl = profilePic,
                     Biography = bio,
                     Location = location,
-                    IsAvailableForHire = false,
                     CreatedAt = DateTime.UtcNow.AddMonths(-monthsAgo),
                     UpdatedAt = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 10)),
                     LastActive = DateTime.UtcNow.AddHours(-Random.Shared.Next(1, 48)),
@@ -817,7 +813,7 @@ public static class DataSeeder
         var response8_1 = AddBidResponse(bidResponses, bid8_1, specialists[0].Id, "Medical facility HVAC specialist. Isolation room expert with 20+ years.", 425000m, 200, bid8_1.CreatedAt.AddDays(2));
         var response8_2 = AddBidResponse(bidResponses, bid8_2, specialists[1].Id, "Hospital electrical systems engineer. Critical power specialist.", 185000m, 180, bid8_2.CreatedAt.AddDays(2));
         var response8_3 = AddBidResponse(bidResponses, bid8_3, specialists[2].Id, "Medical BMS expert. Patient comfort and safety priority.", 95000m, 90, bid8_3.CreatedAt.AddDays(1));
-        AddBidResponse(bidResponses, bid8_4, specialists[3].Id, "HEPA filtration specialist. Negative pressure room experience.", 125000m, 60, bid8_4.CreatedAt.AddDays(1));
+        AddBidResponse(bidResponses, bid8_4, specialists[3].Id, "HEPA filtration specialist. Negative pressure room experience.", 125000m, 60, response8_3.CreatedAt.AddDays(1));
 
         response8_1.AdminMarkupPercentage = 8m;
         response8_1.AdminComment = "Approved - critical medical infrastructure";

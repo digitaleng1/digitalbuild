@@ -26,6 +26,8 @@ public class SpecialistDetailsViewModel
     public LicenseTypeViewModel[] LicenseTypes { get; set; } = [];
     public PortfolioItemViewModel[] Portfolio { get; set; } = [];
     public AssignedProjectViewModel[] AssignedProjects { get; set; } = [];
+    public Review.ReviewViewModel[] Reviews { get; set; } = [];
+    public SpecialistStatsViewModel? Stats { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

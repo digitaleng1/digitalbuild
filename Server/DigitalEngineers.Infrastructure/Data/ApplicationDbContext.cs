@@ -25,6 +25,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<BidRequest> BidRequests => Set<BidRequest>();
     public DbSet<BidResponse> BidResponses => Set<BidResponse>();
     public DbSet<BidMessage> BidMessages => Set<BidMessage>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -318,6 +319,37 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(e => e.BidRequestId);
             entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // Configure Review
+        builder.Entity<Review>(entity =>
+        {
+            entity.ToTable("Reviews");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ProjectId).IsRequired();
+            entity.Property(e => e.ClientId).HasMaxLength(450).IsRequired();
+            entity.Property(e => e.SpecialistId).IsRequired();
+            entity.Property(e => e.Rating).IsRequired();
+            entity.Property(e => e.Comment).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasOne(e => e.Project)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Client)
+                .WithMany()
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Specialist)
+                .WithMany(s => s.Reviews)
+                .HasForeignKey(e => e.SpecialistId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ProjectId);
+            entity.HasIndex(e => e.SpecialistId);
         });
 
         // Rename Identity tables

@@ -55,11 +55,11 @@ public class PortfolioService : IPortfolioService
         {
             try
             {
-                var thumbnailKey = await _fileStorageService.UploadFileAsync(
+                var thumbnailKey = await _fileStorageService.UploadPortfolioFileAsync(
                     thumbnailStream,
-                    $"portfolio_{portfolioItem.Id}_{fileName}",
+                    fileName,
                     contentType ?? "image/jpeg",
-                    0,
+                    specialistId,
                     cancellationToken);
 
                 portfolioItem.ThumbnailUrl = thumbnailKey;

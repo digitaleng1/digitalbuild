@@ -179,7 +179,7 @@ public class SpecialistsController : ControllerBase
     /// Get projects assigned to a specific specialist
     /// </summary>
     [HttpGet("{specialistId}/projects")]
-    [Authorize(Roles = "Specialist,Admin,SuperAdmin")]
+    [Authorize(Roles = "Provider,Admin,SuperAdmin")]
     [ProducesResponseType(typeof(IEnumerable<ProjectViewModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ProjectViewModel>>> GetMyProjects(
@@ -189,5 +189,58 @@ public class SpecialistsController : ControllerBase
         var projects = await _specialistService.GetSpecialistProjectsAsync(specialistId, cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<ProjectViewModel>>(projects);
         return Ok(viewModels);
+    }
+
+    /// <summary>
+    /// Get specialist statistics
+    /// </summary>
+    [HttpGet("{specialistId}/stats")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SpecialistStatsViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SpecialistStatsViewModel>> GetSpecialistStats(
+        int specialistId,
+        CancellationToken cancellationToken)
+    {
+        var stats = await _specialistService.GetSpecialistStatsAsync(specialistId, cancellationToken);
+        var viewModel = _mapper.Map<SpecialistStatsViewModel>(stats);
+        return Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Get current specialist profile (for Provider role)
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize(Roles = "Provider")]
+    [ProducesResponseType(typeof(SpecialistDetailsViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SpecialistDetailsViewModel>> GetCurrentSpecialistProfile(
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
+        var viewModel = _mapper.Map<SpecialistDetailsViewModel>(specialist);
+        return Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Update current specialist profile (for Provider role)
+    /// </summary>
+    [HttpPut("me")]
+    [Authorize(Roles = "Provider")]
+    [ProducesResponseType(typeof(SpecialistDetailsViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SpecialistDetailsViewModel>> UpdateMyProfile(
+        [FromBody] UpdateSpecialistViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
+        
+        var dto = _mapper.Map<UpdateSpecialistDto>(model);
+        var result = await _specialistService.UpdateSpecialistAsync(specialist.Id, dto, cancellationToken);
+        var viewModel = _mapper.Map<SpecialistDetailsViewModel>(result);
+        return Ok(viewModel);
     }
 }

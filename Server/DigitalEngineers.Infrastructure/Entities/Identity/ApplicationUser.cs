@@ -13,7 +13,6 @@ public class ApplicationUser : IdentityUser
     public string? Biography { get; set; }
     public string? Location { get; set; }
     public string? Website { get; set; }
-    public bool IsAvailableForHire { get; set; } = false;
     
     // Activity Tracking
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

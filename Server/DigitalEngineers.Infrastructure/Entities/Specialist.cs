@@ -28,4 +28,5 @@ public class Specialist
     public ICollection<SpecialistLicenseType> LicenseTypes { get; set; } = [];
     public ICollection<ProjectSpecialist> AssignedProjects { get; set; } = [];
     public ICollection<PortfolioItem> Portfolio { get; set; } = [];
+    public ICollection<Review> Reviews { get; set; } = [];
 }

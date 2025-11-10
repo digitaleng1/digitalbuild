@@ -1,6 +1,7 @@
 import httpClient from '@/common/helpers/httpClient';
 import type { SpecialistForBid } from '@/types/bid';
 import type { ProjectDto } from '@/types/project';
+import type { SpecialistProfile, SpecialistStats, UpdateSpecialistDto } from '@/types/specialist';
 
 class SpecialistService {
 	/**
@@ -17,6 +18,30 @@ class SpecialistService {
 	async getSpecialistProjects(specialistId: number): Promise<ProjectDto[]> {
 		const data = await httpClient.get<ProjectDto[]>(`/api/specialists/${specialistId}/projects`);
 		return data as ProjectDto[];
+	}
+
+	/**
+	 * Get current specialist profile (for Provider role)
+	 */
+	async getCurrentSpecialistProfile(): Promise<SpecialistProfile> {
+		const data = await httpClient.get<SpecialistProfile>('/api/specialists/me');
+		return data as SpecialistProfile;
+	}
+
+	/**
+	 * Get specialist statistics
+	 */
+	async getSpecialistStats(specialistId: number): Promise<SpecialistStats> {
+		const data = await httpClient.get<SpecialistStats>(`/api/specialists/${specialistId}/stats`);
+		return data as SpecialistStats;
+	}
+
+	/**
+	 * Update current specialist profile (for Provider role)
+	 */
+	async updateSpecialist(id: number, data: UpdateSpecialistDto): Promise<SpecialistProfile> {
+		const result = await httpClient.put<SpecialistProfile>('/api/specialists/me', data);
+		return result as SpecialistProfile;
 	}
 }
 

@@ -1,4 +1,5 @@
 using DigitalEngineers.Domain.DTOs;
+using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Data;
@@ -11,11 +12,16 @@ namespace DigitalEngineers.Application.Services;
 public class SpecialistService : ISpecialistService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<SpecialistService> _logger;
 
-    public SpecialistService(ApplicationDbContext context, ILogger<SpecialistService> logger)
+    public SpecialistService(
+        ApplicationDbContext context, 
+        IFileStorageService fileStorageService,
+        ILogger<SpecialistService> logger)
     {
         _context = context;
+        _fileStorageService = fileStorageService;
         _logger = logger;
     }
 
@@ -295,7 +301,7 @@ public class SpecialistService : ISpecialistService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private static SpecialistDetailsDto MapToDetailsDto(Specialist specialist)
+    private SpecialistDetailsDto MapToDetailsDto(Specialist specialist)
     {
         return new SpecialistDetailsDto
         {
@@ -326,7 +332,7 @@ public class SpecialistService : ISpecialistService
                 Id = p.Id,
                 Title = p.Title,
                 Description = p.Description,
-                ThumbnailUrl = p.ThumbnailUrl,
+                ThumbnailUrl = p.ThumbnailUrl != null ? _fileStorageService.GetPresignedUrl(p.ThumbnailUrl) : null,
                 ProjectUrl = p.ProjectUrl,
                 CreatedAt = p.CreatedAt
             }).ToArray(),
@@ -338,6 +344,8 @@ public class SpecialistService : ISpecialistService
                 Role = ps.Role,
                 AssignedAt = ps.AssignedAt
             }).ToArray(),
+            Reviews = [],
+            Stats = null,
             CreatedAt = specialist.CreatedAt,
             UpdatedAt = specialist.UpdatedAt
         };
@@ -351,7 +359,6 @@ public class SpecialistService : ISpecialistService
             .ThenInclude(slt => slt.LicenseType)
             .ThenInclude(lt => lt.Profession)
             .Where(s => s.IsAvailable
-                && s.User.IsAvailableForHire
                 && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
             .ToListAsync(cancellationToken);
 
@@ -362,7 +369,7 @@ public class SpecialistService : ISpecialistService
             Email = s.User.Email!,
             ProfilePictureUrl = s.User.ProfilePictureUrl,
             Location = s.User.Location,
-            IsAvailableForHire = s.User.IsAvailableForHire,
+            IsAvailableForHire = s.IsAvailable,
             LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
             {
                 Id = slt.LicenseType.Id,
@@ -404,5 +411,30 @@ public class SpecialistService : ISpecialistService
             ManagementType = p.ManagementType.ToString(),
             LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray()
         });
+    }
+
+    public async Task<SpecialistStatsDto> GetSpecialistStatsAsync(int specialistId, CancellationToken cancellationToken = default)
+    {
+        var specialist = await _context.Set<Specialist>()
+            .Include(s => s.AssignedProjects)
+            .FirstOrDefaultAsync(s => s.Id == specialistId, cancellationToken);
+
+        if (specialist == null)
+            throw new SpecialistNotFoundException(specialistId);
+
+        var completedProjects = specialist.AssignedProjects
+            .Count(ps => ps.Project.Status == ProjectStatus.Completed);
+
+        var totalReviews = await _context.Set<Review>()
+            .CountAsync(r => r.SpecialistId == specialistId, cancellationToken);
+
+        return new SpecialistStatsDto
+        {
+            CompletedProjects = completedProjects,
+            TotalReviews = totalReviews,
+            AverageRating = specialist.Rating,
+            YearsOfExperience = specialist.YearsOfExperience,
+            HourlyRate = specialist.HourlyRate
+        };
     }
 }

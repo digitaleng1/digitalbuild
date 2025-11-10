@@ -41,4 +41,5 @@ public class Project
     public ICollection<ProjectFile> Files { get; set; } = [];
     public ICollection<ProjectSpecialist> AssignedSpecialists { get; set; } = [];
     public ICollection<BidRequest> BidRequests { get; set; } = [];
+    public ICollection<Review> Reviews { get; set; } = [];
 }

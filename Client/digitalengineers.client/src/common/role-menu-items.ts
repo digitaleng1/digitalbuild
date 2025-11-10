@@ -83,7 +83,7 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 			{
 				key: 'page-profile',
 				label: 'Profile',
-				url: '/pages/profile',
+				url: '/profile',
 				parentKey: 'account',
 			},
 		],
@@ -144,7 +144,7 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		label: 'Profile',
 		isTitle: false,
 		icon: 'uil-user',
-		url: '/pages/profile',
+		url: '/profile',
 	},
 ];
 
@@ -202,13 +202,6 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		],
 	},
 	{
-		key: 'schedule',
-		label: 'Calendar',
-		isTitle: false,
-		icon: 'uil-calender',
-		url: '/apps/calendar',
-	},
-	{
 		key: 'account',
 		label: 'Account',
 		isTitle: true,
@@ -218,7 +211,7 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		label: 'Profile',
 		isTitle: false,
 		icon: 'uil-user',
-		url: '/pages/profile',
+		url: '/profile',
 	},
 ];
 
