@@ -115,23 +115,21 @@ const PortfolioCarousel = ({ portfolio, isOwner, specialistId, onRefresh }: Port
 
 				{portfolio.length > 3 && (
 					<>
-						<Button
-							variant="primary"
+						<div
 							className="position-absolute top-50 start-0 translate-middle-y rounded-circle"
-							style={{ zIndex: 10, marginLeft: '-15px', width: '40px', height: '40px' }}
+							style={{ zIndex: 10, marginLeft: '-45px', width: '40px', height: '40px' }}
 							onClick={handlePrev}
 						>
-							<i className="mdi mdi-chevron-left"></i>
-						</Button>
+							<i className="mdi mdi-chevron-left display-3"></i>
+						</div>
 
-						<Button
-							variant="primary"
+						<div
 							className="position-absolute top-50 end-0 translate-middle-y rounded-circle"
-							style={{ zIndex: 10, marginRight: '-15px', width: '40px', height: '40px' }}
+							style={{ zIndex: 10, marginRight: '-20px', width: '40px', height: '40px' }}
 							onClick={handleNext}
 						>
-							<i className="mdi mdi-chevron-right"></i>
-						</Button>
+							<i className="mdi mdi-chevron-right display-3"></i>
+						</div>
 					</>
 				)}
 

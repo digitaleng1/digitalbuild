@@ -1,4 +1,4 @@
-import { Card, Button } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import type { PortfolioItem } from '@/types/specialist';
 
 interface PortfolioCardProps {
@@ -10,7 +10,38 @@ interface PortfolioCardProps {
 
 const PortfolioCard = ({ item, isOwner, onEdit, onDelete }: PortfolioCardProps) => {
 	return (
-		<Card className="border h-100">
+		<Card className="border h-100 position-relative">
+			{/* Action Icons - top right corner over image */}
+			<div className="position-absolute top-0 end-0 d-flex gap-2 p-2" style={{ zIndex: 10 }}>
+				{item.projectUrl && (
+					<a
+						href={item.projectUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-decoration-none"
+						title="View Project"
+					>
+						<i className="mdi mdi-link-variant text-primary" style={{ fontSize: '1.3rem' }}></i>
+					</a>
+				)}
+				{isOwner && (
+					<>
+						<i 
+							className="mdi mdi-pencil cursor-pointer"
+							style={{ fontSize: '1.3rem' }}
+							onClick={() => onEdit?.(item)}
+							title="Edit"
+						></i>
+						<i 
+							className="mdi mdi-delete cursor-pointer"
+							style={{ fontSize: '1.3rem' }}
+							onClick={() => onDelete?.(item)}
+							title="Delete"
+						></i>
+					</>
+				)}
+			</div>
+
 			{item.thumbnailUrl && (
 				<Card.Img
 					variant="top"
@@ -29,29 +60,6 @@ const PortfolioCard = ({ item, isOwner, onEdit, onDelete }: PortfolioCardProps) 
 							? `${item.description.substring(0, 100)}...`
 							: item.description}
 					</Card.Text>
-				</div>
-				<div className="d-flex gap-2 mt-2">
-					{item.projectUrl && (
-						<a
-							href={item.projectUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="btn btn-sm btn-primary flex-grow-1"
-						>
-							<i className="mdi mdi-link me-1"></i>
-							View Project
-						</a>
-					)}
-					{isOwner && (
-						<>
-							<Button variant="warning" size="sm" onClick={() => onEdit?.(item)}>
-								<i className="mdi mdi-pencil"></i>
-							</Button>
-							<Button variant="danger" size="sm" onClick={() => onDelete?.(item)}>
-								<i className="mdi mdi-delete"></i>
-							</Button>
-						</>
-					)}
 				</div>
 			</Card.Body>
 		</Card>

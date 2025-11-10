@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardBody, Badge, Button, Alert } from 'react-bootstrap';
+import { Card, CardBody, Badge, Alert } from 'react-bootstrap';
 import CardTitle from '@/components/CardTitle';
 import type { LicenseType } from '@/types/project';
 import { useLicenseRequests } from '@/app/shared/hooks/useLicenseRequests';
@@ -8,18 +8,18 @@ import AddLicenseRequestModal from './AddLicenseRequestModal';
 
 interface LicensesCardProps {
 	licenses: LicenseType[];
-	isEditMode: boolean;
+	isOwnProfile: boolean;
 	onRefresh: () => void;
 }
 
-const LicensesCard = ({ licenses, isEditMode, onRefresh }: LicensesCardProps) => {
+const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) => {
 	const { requests, loading: requestsLoading } = useLicenseRequests();
 	const [showAddModal, setShowAddModal] = useState(false);
 
 	const pendingRequests = requests.filter(r => r.status === LicenseRequestStatus.Pending);
 	const rejectedRequests = requests.filter(r => r.status === LicenseRequestStatus.Rejected);
 
-	if (!isEditMode && (!licenses || licenses.length === 0)) {
+	if (!isOwnProfile && (!licenses || licenses.length === 0)) {
 		return null;
 	}
 
@@ -32,11 +32,13 @@ const LicensesCard = ({ licenses, isEditMode, onRefresh }: LicensesCardProps) =>
 						title="Licenses & Certifications"
 						icon="mdi mdi-certificate"
 					>
-						{isEditMode && (
-							<Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-								<i className="mdi mdi-plus me-1"></i>
-								Add License
-							</Button>
+						{isOwnProfile && (
+							<i 
+								className="link-success  mdi mdi-plus-circle cursor-pointer"
+								style={{ fontSize: '1.5rem' }}
+								onClick={() => setShowAddModal(true)}
+								title="Add License"
+							></i>
 						)}
 					</CardTitle>
 
@@ -55,8 +57,8 @@ const LicensesCard = ({ licenses, isEditMode, onRefresh }: LicensesCardProps) =>
 						</div>
 					)}
 
-					{/* Pending Requests (Edit Mode Only) */}
-					{isEditMode && pendingRequests.length > 0 && (
+					{/* Pending Requests (Own Profile Only) */}
+					{isOwnProfile && pendingRequests.length > 0 && (
 						<div className="mb-3">
 							<h6 className="text-muted mb-2">
 								<i className="mdi mdi-clock-outline me-1"></i>
@@ -79,8 +81,8 @@ const LicensesCard = ({ licenses, isEditMode, onRefresh }: LicensesCardProps) =>
 						</div>
 					)}
 
-					{/* Rejected Requests (Edit Mode Only) */}
-					{isEditMode && rejectedRequests.length > 0 && (
+					{/* Rejected Requests (Own Profile Only) */}
+					{isOwnProfile && rejectedRequests.length > 0 && (
 						<div className="mb-3">
 							<h6 className="text-muted mb-2">
 								<i className="mdi mdi-close-circle-outline me-1"></i>
@@ -101,16 +103,18 @@ const LicensesCard = ({ licenses, isEditMode, onRefresh }: LicensesCardProps) =>
 					)}
 
 					{/* Empty State */}
-					{!isEditMode && licenses.length === 0 && (
+					{licenses.length === 0 && (
 						<Alert variant="info" className="mb-0">
 							<i className="mdi mdi-information-outline me-2"></i>
-							No verified licenses yet.
+							{isOwnProfile 
+								? 'No verified licenses yet. Add your first license to get started.'
+								: 'No verified licenses yet.'}
 						</Alert>
 					)}
 				</CardBody>
 			</Card>
 
-			{isEditMode && (
+			{isOwnProfile && (
 				<AddLicenseRequestModal
 					show={showAddModal}
 					onHide={() => setShowAddModal(false)}
