@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBidService, BidService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<ILicensesService, LicensesService>();
 
         return services;
     }

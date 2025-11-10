@@ -142,6 +142,29 @@ public class FileStorageService : IFileStorageService
         return key;
     }
 
+    public async Task<string> UploadLicenseFileAsync(
+        Stream fileStream, 
+        string fileName, 
+        string contentType, 
+        int specialistId, 
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"specialists/{specialistId}/licenses/{Guid.NewGuid()}_{fileName}";
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+
+        return key;
+    }
+
     public async Task<bool> DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default)
     {
         try

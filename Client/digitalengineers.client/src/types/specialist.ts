@@ -51,3 +51,16 @@ export interface SpecialistProfile {
 	createdAt: string;
 	updatedAt: string;
 }
+
+export interface UpdateSpecialistDto {
+	firstName?: string;
+	lastName?: string;
+	biography?: string;
+	location?: string;
+	website?: string;
+	specialization?: string;
+	yearsOfExperience?: number;
+	hourlyRate?: number;
+	isAvailable?: boolean;
+	licenseTypeIds?: number[];
+}

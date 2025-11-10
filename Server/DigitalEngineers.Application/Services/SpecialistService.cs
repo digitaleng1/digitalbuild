@@ -178,12 +178,32 @@ public class SpecialistService : ISpecialistService
             throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
         }
 
+        // Update specialist fields
         specialist.YearsOfExperience = dto.YearsOfExperience;
         specialist.HourlyRate = dto.HourlyRate;
         specialist.IsAvailable = dto.IsAvailable;
         specialist.Specialization = dto.Specialization;
         specialist.UpdatedAt = DateTime.UtcNow;
 
+        // Update user profile fields
+        if (dto.FirstName != null)
+            specialist.User.FirstName = dto.FirstName;
+        
+        if (dto.LastName != null)
+            specialist.User.LastName = dto.LastName;
+        
+        if (dto.Biography != null)
+            specialist.User.Biography = dto.Biography;
+        
+        if (dto.Location != null)
+            specialist.User.Location = dto.Location;
+        
+        if (dto.Website != null)
+            specialist.User.Website = dto.Website;
+
+        specialist.User.UpdatedAt = DateTime.UtcNow;
+
+        // Update licenses
         var currentLicenseTypeIds = specialist.LicenseTypes.Select(slt => slt.LicenseTypeId).ToList();
         var toRemove = specialist.LicenseTypes.Where(slt => !dto.LicenseTypeIds.Contains(slt.LicenseTypeId)).ToList();
         var toAdd = dto.LicenseTypeIds.Where(ltId => !currentLicenseTypeIds.Contains(ltId))

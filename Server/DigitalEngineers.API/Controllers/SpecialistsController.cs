@@ -239,8 +239,11 @@ public class SpecialistsController : ControllerBase
         var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
         
         var dto = _mapper.Map<UpdateSpecialistDto>(model);
-        var result = await _specialistService.UpdateSpecialistAsync(specialist.Id, dto, cancellationToken);
-        var viewModel = _mapper.Map<SpecialistDetailsViewModel>(result);
+        await _specialistService.UpdateSpecialistAsync(specialist.Id, dto, cancellationToken);
+        
+        // Get updated full profile
+        var updatedSpecialist = await _specialistService.GetSpecialistByIdAsync(specialist.Id, cancellationToken);
+        var viewModel = _mapper.Map<SpecialistDetailsViewModel>(updatedSpecialist);
         return Ok(viewModel);
     }
 }

@@ -8,10 +8,11 @@ import { PortfolioCarousel } from '@/app/shared/components/portfolio';
 interface PortfolioSectionProps {
 	portfolio: PortfolioItem[];
 	specialistId: number;
+	isEditMode: boolean;
 	onRefresh: () => void;
 }
 
-const PortfolioSection = ({ portfolio, specialistId, onRefresh }: PortfolioSectionProps) => {
+const PortfolioSection = ({ portfolio, specialistId, isEditMode, onRefresh }: PortfolioSectionProps) => {
 	const [showAddModal, setShowAddModal] = useState(false);
 
 	return (
@@ -23,27 +24,31 @@ const PortfolioSection = ({ portfolio, specialistId, onRefresh }: PortfolioSecti
 						title="Portfolio"
 						icon="mdi mdi-folder-multiple-image"
 					>
-						<Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-							<i className="mdi mdi-plus me-1"></i>
-							Add Item
-						</Button>
+						{isEditMode && (
+							<Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+								<i className="mdi mdi-plus me-1"></i>
+								Add Item
+							</Button>
+						)}
 					</CardTitle>
 
 					<PortfolioCarousel
 						portfolio={portfolio}
-						isOwner={true}
+						isOwner={isEditMode}
 						specialistId={specialistId}
 						onRefresh={onRefresh}
 					/>
 				</CardBody>
 			</Card>
 
-			<AddPortfolioModal
-				show={showAddModal}
-				specialistId={specialistId}
-				onHide={() => setShowAddModal(false)}
-				onSuccess={onRefresh}
-			/>
+			{isEditMode && (
+				<AddPortfolioModal
+					show={showAddModal}
+					specialistId={specialistId}
+					onHide={() => setShowAddModal(false)}
+					onSuccess={onRefresh}
+				/>
+			)}
 		</>
 	);
 };

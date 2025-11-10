@@ -3,6 +3,7 @@ using System;
 using DigitalEngineers.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DigitalEngineers.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251110102832_AddLicenseVerificationSystem")]
+    partial class AddLicenseVerificationSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -616,13 +619,13 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.ToTable("Specialists", (string)null);
                 });
 
-            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", b =>
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseRequest", b =>
                 {
-                    b.Property<int>("SpecialistId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("LicenseTypeId")
-                        .HasColumnType("integer");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AdminComment")
                         .HasMaxLength(1000)
@@ -630,6 +633,70 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpirationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("IssueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IssuingAuthority")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LicenseFileUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("LicenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("LicenseTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LicenseTypeId");
+
+                    b.HasIndex("SpecialistId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("SpecialistLicenseRequests", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", b =>
+                {
+                    b.Property<int>("SpecialistId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LicenseTypeId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("timestamp with time zone");
@@ -652,18 +719,12 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int?>("LicenseRequestId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("State")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("VerifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -674,9 +735,10 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.HasKey("SpecialistId", "LicenseTypeId");
 
-                    b.HasIndex("LicenseTypeId");
+                    b.HasIndex("LicenseRequestId")
+                        .IsUnique();
 
-                    b.HasIndex("Status");
+                    b.HasIndex("LicenseTypeId");
 
                     b.ToTable("SpecialistLicenseTypes", (string)null);
                 });
@@ -980,8 +1042,32 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseRequest", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.LicenseType", "LicenseType")
+                        .WithMany()
+                        .HasForeignKey("LicenseTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Specialist", "Specialist")
+                        .WithMany()
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LicenseType");
+
+                    b.Navigation("Specialist");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", b =>
                 {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseRequest", "LicenseRequest")
+                        .WithOne()
+                        .HasForeignKey("DigitalEngineers.Infrastructure.Entities.SpecialistLicenseType", "LicenseRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.LicenseType", "LicenseType")
                         .WithMany()
                         .HasForeignKey("LicenseTypeId")
@@ -993,6 +1079,8 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .HasForeignKey("SpecialistId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("LicenseRequest");
 
                     b.Navigation("LicenseType");
 

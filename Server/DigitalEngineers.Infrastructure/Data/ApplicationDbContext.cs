@@ -189,6 +189,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.ToTable("SpecialistLicenseTypes");
             entity.HasKey(slt => new { slt.SpecialistId, slt.LicenseTypeId });
             
+            entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.IssuingAuthority).HasMaxLength(200);
+            entity.Property(e => e.LicenseNumber).HasMaxLength(100);
+            entity.Property(e => e.LicenseFileUrl).HasMaxLength(1000);
+            entity.Property(e => e.VerifiedBy).HasMaxLength(450);
+            entity.Property(e => e.AdminComment).HasMaxLength(1000);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            
             entity.HasOne(slt => slt.Specialist)
                 .WithMany(s => s.LicenseTypes)
                 .HasForeignKey(slt => slt.SpecialistId)
@@ -198,8 +208,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(slt => slt.LicenseTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.Status);
         });
-
+        
         // Configure ProjectSpecialist (Many-to-Many with additional properties)
         builder.Entity<ProjectSpecialist>(entity =>
         {
@@ -319,37 +331,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(e => e.BidRequestId);
             entity.HasIndex(e => e.CreatedAt);
-        });
-
-        // Configure Review
-        builder.Entity<Review>(entity =>
-        {
-            entity.ToTable("Reviews");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.ProjectId).IsRequired();
-            entity.Property(e => e.ClientId).HasMaxLength(450).IsRequired();
-            entity.Property(e => e.SpecialistId).IsRequired();
-            entity.Property(e => e.Rating).IsRequired();
-            entity.Property(e => e.Comment).HasMaxLength(2000).IsRequired();
-            entity.Property(e => e.CreatedAt).IsRequired();
-
-            entity.HasOne(e => e.Project)
-                .WithMany(p => p.Reviews)
-                .HasForeignKey(e => e.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(e => e.Client)
-                .WithMany()
-                .HasForeignKey(e => e.ClientId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasOne(e => e.Specialist)
-                .WithMany(s => s.Reviews)
-                .HasForeignKey(e => e.SpecialistId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(e => e.ProjectId);
-            entity.HasIndex(e => e.SpecialistId);
         });
 
         // Rename Identity tables
