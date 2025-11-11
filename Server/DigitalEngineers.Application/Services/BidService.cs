@@ -435,9 +435,6 @@ public class BidService : IBidService
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
 
-        if (bidResponse.BidRequest.Status != BidRequestStatus.Responded)
-            throw new InvalidBidStatusException(bidResponse.BidRequest.Status, BidRequestStatus.Accepted);
-
         bidResponse.AdminMarkupPercentage = adminMarkupPercentage;
         bidResponse.AdminComment = adminComment;
         bidResponse.UpdatedAt = DateTime.UtcNow;
@@ -455,7 +452,6 @@ public class BidService : IBidService
         }
         catch (SpecialistAlreadyAssignedException)
         {
-            // Re-throw with specialist and project names for better UX
             var specialistName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
             var projectName = bidResponse.BidRequest.Project.Name;
             throw new SpecialistAlreadyAssignedException(
@@ -470,17 +466,6 @@ public class BidService : IBidService
             .Where(r => r.BidRequestId == bidResponse.BidRequestId && r.Id != id)
             .ToListAsync(cancellationToken);
 
-        //foreach (var response in otherResponses)
-        //{
-        //    if (response.BidRequest.Status == BidRequestStatus.Responded)
-        //    {
-        //        response.BidRequest.Status = BidRequestStatus.Rejected;
-        //        response.BidRequest.UpdatedAt = DateTime.UtcNow;
-        //        response.RejectionReason = "Another specialist was selected";
-        //        response.UpdatedAt = DateTime.UtcNow;
-        //    }
-        //}
-
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -492,6 +477,23 @@ public class BidService : IBidService
 
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
+
+        // If bid was accepted - remove specialist from project
+        if (bidResponse.BidRequest.Status == BidRequestStatus.Accepted)
+        {
+            try
+            {
+                await _specialistService.RemoveSpecialistFromProjectAsync(
+                    bidResponse.BidRequest.ProjectId,
+                    bidResponse.SpecialistId,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to remove specialist {SpecialistId} from project {ProjectId} during bid rejection", 
+                    bidResponse.SpecialistId, bidResponse.BidRequest.ProjectId);
+            }
+        }
 
         bidResponse.BidRequest.Status = BidRequestStatus.Rejected;
         bidResponse.BidRequest.UpdatedAt = DateTime.UtcNow;
@@ -766,12 +768,14 @@ public class BidService : IBidService
 
             return new BidResponseByProjectDto
             {
-                Id = response?.Id ?? 0, // 0 if no response yet
+                Id = response?.Id ?? 0,
                 BidRequestId = br.Id,
                 SpecialistId = specialist.Id,
                 SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
                 SpecialistEmail = specialist.User.Email ?? string.Empty,
                 SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
+                YearsOfExperience = specialist.YearsOfExperience,
+                SpecialistRating = specialist.Rating,
                 LicenseTypeId = licenseType?.Id ?? 0,
                 LicenseTypeName = licenseType?.Name ?? "N/A",
                 Status = br.Status.ToString(),

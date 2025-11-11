@@ -1,4 +1,4 @@
-import { Table, Badge } from 'react-bootstrap';
+import { Table, Badge, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import type { BidResponseDto } from '@/types/admin-bid';
@@ -8,9 +8,18 @@ interface BidResponsesTableProps {
 	onApprove: (response: BidResponseDto) => void;
 	onReject: (response: BidResponseDto) => void;
 	onMessage: (response: BidResponseDto) => void;
+	selectedBidRequestIds: number[];
+	onToggleSelect: (bidRequestId: number) => void;
 }
 
-const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidResponsesTableProps) => {
+const BidResponsesTable = ({ 
+	responses, 
+	onApprove, 
+	onReject, 
+	onMessage,
+	selectedBidRequestIds,
+	onToggleSelect
+}: BidResponsesTableProps) => {
 	const getStatusVariant = (status: string) => {
 		switch (status.toLowerCase()) {
 			case 'pending':
@@ -43,6 +52,9 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 			<Table hover className="table-centered mb-0">
 				<thead>
 					<tr>
+						<th style={{ width: '40px' }}>
+							<Form.Check type="checkbox" disabled />
+						</th>
 						<th>Specialist</th>
 						<th>Proposal</th>
 						<th>Availability</th>
@@ -54,6 +66,13 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 				<tbody>
 					{responses.map((response) => (
 						<tr key={response.bidRequestId}>
+							<td>
+								<Form.Check
+									type="checkbox"
+									checked={selectedBidRequestIds.includes(response.bidRequestId)}
+									onChange={() => onToggleSelect(response.bidRequestId)}
+								/>
+							</td>
 							<td>
 								<div className="d-flex align-items-center">
 									<img
@@ -126,7 +145,7 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 										</Link>
 									</>
 								)}
-								{/* Accepted = already approved, can only reject (cancel) */}
+								{/* Accepted = already approved, can reject (cancel) */}
 								{response.status.toLowerCase() === 'accepted' && (
 									<>
 										<Link
@@ -153,8 +172,35 @@ const BidResponsesTable = ({ responses, onApprove, onReject, onMessage }: BidRes
 										</Link>
 									</>
 								)}
-								{/* Rejected/Withdrawn = can only message */}
-								{(response.status.toLowerCase() === 'rejected' || response.status.toLowerCase() === 'withdrawn') && (
+								{/* Rejected = can re-approve or message */}
+								{response.status.toLowerCase() === 'rejected' && (
+									<>
+										<Link
+											to="#"
+											className="action-icon text-success"
+											onClick={(e) => {
+												e.preventDefault();
+												onApprove(response);
+											}}
+											title="Re-approve Bid"
+										>
+											<Icon icon="mdi:check-circle" width={18} />
+										</Link>
+										<Link
+											to="#"
+											className="action-icon"
+											onClick={(e) => {
+												e.preventDefault();
+												onMessage(response);
+											}}
+											title="Send Message"
+										>
+											<Icon icon="mdi:message-text" width={18} />
+										</Link>
+									</>
+								)}
+								{/* Withdrawn = can only message */}
+								{response.status.toLowerCase() === 'withdrawn' && (
 									<Link
 										to="#"
 										className="action-icon"

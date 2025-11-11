@@ -9,6 +9,8 @@ public class BidResponseByProjectDto
     public string SpecialistName { get; set; } = string.Empty;
     public string SpecialistEmail { get; set; } = string.Empty;
     public string? SpecialistProfilePicture { get; set; }
+    public int YearsOfExperience { get; set; }
+    public double SpecialistRating { get; set; }
     public int LicenseTypeId { get; set; }
     public string LicenseTypeName { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
