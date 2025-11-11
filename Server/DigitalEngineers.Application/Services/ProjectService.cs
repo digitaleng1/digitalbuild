@@ -161,12 +161,38 @@ public class ProjectService : IProjectService
                 thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
             }
 
+            var client = await _context.Users
+                .Where(u => u.Id == clientId)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FirstName,
+                    u.LastName,
+                    u.Email,
+                    u.ProfilePictureUrl
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            string? clientName = null;
+            string? clientProfilePictureUrl = null;
+            
+            if (client != null)
+            {
+                clientName = string.IsNullOrWhiteSpace(client.FirstName) && string.IsNullOrWhiteSpace(client.LastName)
+                    ? client.Email
+                    : $"{client.FirstName ?? ""} {client.LastName ?? ""}".Trim();
+                clientProfilePictureUrl = client.ProfilePictureUrl;
+            }
+
             return new ProjectDto
             {
                 Id = project.Id,
                 Name = project.Name,
                 Description = project.Description,
                 Status = project.Status.ToString(),
+                ClientId = clientId,
+                ClientName = clientName,
+                ClientProfilePictureUrl = clientProfilePictureUrl,
                 CreatedAt = project.CreatedAt,
                 ThumbnailUrl = thumbnailPresignedUrl,
                 StreetAddress = project.StreetAddress,
@@ -313,7 +339,9 @@ public class ProjectService : IProjectService
         string[] userRoles, 
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Project> query = _context.Projects.Include(p => p.ProjectLicenseTypes);
+        IQueryable<Project> query = _context.Projects
+            .Include(p => p.ProjectLicenseTypes)
+            .Include(p => p.Client);
 
         if (userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin"))
         {
@@ -349,7 +377,13 @@ public class ProjectService : IProjectService
             .Select(p => new
             {
                 Project = p,
-                LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray()
+                LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray(),
+                ClientName = p.Client != null 
+                    ? (string.IsNullOrWhiteSpace(p.Client.FirstName) && string.IsNullOrWhiteSpace(p.Client.LastName)
+                        ? p.Client.Email
+                        : $"{p.Client.FirstName ?? ""} {p.Client.LastName ?? ""}".Trim())
+                    : null,
+                ClientProfilePictureUrl = p.Client != null ? p.Client.ProfilePictureUrl : null
             })
             .ToListAsync(cancellationToken);
 
@@ -367,6 +401,9 @@ public class ProjectService : IProjectService
                 Name = p.Project.Name,
                 Description = p.Project.Description,
                 Status = p.Project.Status.ToString(),
+                ClientId = p.Project.ClientId,
+                ClientName = p.ClientName,
+                ClientProfilePictureUrl = p.ClientProfilePictureUrl,
                 CreatedAt = p.Project.CreatedAt,
                 ThumbnailUrl = thumbnailPresignedUrl,
                 StreetAddress = p.Project.StreetAddress,

@@ -6,6 +6,9 @@ public class ProjectViewModel
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public string? ClientId { get; set; }
+    public string? ClientName { get; set; }
+    public string? ClientProfilePictureUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }
     public string StreetAddress { get; set; } = string.Empty;

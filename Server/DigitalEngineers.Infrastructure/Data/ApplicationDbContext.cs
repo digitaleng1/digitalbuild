@@ -87,7 +87,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.QuotedAmount).HasPrecision(18, 2);
             entity.Property(e => e.QuoteNotes).HasMaxLength(1000);
             
-            entity.HasOne<ApplicationUser>()
+            // Client relationship - explicitly configure foreign key
+            entity.HasOne(e => e.Client)
                 .WithMany()
                 .HasForeignKey(e => e.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);

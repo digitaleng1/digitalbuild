@@ -1,0 +1,86 @@
+/* Project Table Styles */
+
+/* Compact table with reduced padding */
+.project-table {
+    font-size: 0.875rem;
+}
+
+.project-table th,
+.project-table td {
+    padding: 0.5rem !important;
+    vertical-align: middle;
+}
+
+/* Row hover effect */
+.project-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+/* Drag handle cursor */
+.project-table .drag-handle {
+    cursor: grab;
+    width: 40px;
+}
+
+.project-table .drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Column widths */
+.project-table .col-checkbox {
+    width: 40px;
+}
+
+.project-table .col-name {
+    min-width: 200px;
+}
+
+.project-table .col-status {
+    width: 180px;
+}
+
+.project-table .col-client {
+    width: 150px;
+}
+
+.project-table .col-location {
+    width: 200px;
+}
+
+.project-table .col-scope {
+    width: 120px;
+}
+
+.project-table .col-date {
+    width: 140px;
+}
+
+.project-table .col-actions {
+    width: 60px;
+    text-align: center;
+}
+
+/* Dragging state */
+.project-table tr.dragging {
+    opacity: 0.5;
+}
+
+/* Link styles */
+.project-table .project-name-link {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.project-table .project-name-link:hover {
+    text-decoration: underline;
+}
+
+.project-table .action-link {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.project-table .action-link:hover {
+    color: #495057;
+}

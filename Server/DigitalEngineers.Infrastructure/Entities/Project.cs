@@ -1,4 +1,5 @@
 using DigitalEngineers.Domain.Enums;
+using DigitalEngineers.Infrastructure.Entities.Identity;
 
 namespace DigitalEngineers.Infrastructure.Entities;
 
@@ -11,6 +12,7 @@ public class Project
     
     // Client relationship
     public string ClientId { get; set; } = string.Empty;
+    public ApplicationUser Client { get; set; } = null!;
     
     // Location
     public string StreetAddress { get; set; } = string.Empty;
