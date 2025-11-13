@@ -84,24 +84,19 @@ const PortfolioCarousel = ({ portfolio, isOwner, specialistId, onRefresh }: Port
 	};
 
 	const colSize = getColumnSize(portfolio.length);
-	const visibleItems = portfolio.slice(currentIndex, currentIndex + 3);
 	
-	// If less than 3 items visible, add items from the beginning (circular)
-	if (visibleItems.length < 3 && portfolio.length > 1) {
-		const remaining = 3 - visibleItems.length;
-		visibleItems.push(...portfolio.slice(0, remaining));
-	}
+	// Show only available items, no circular duplication
+	const visibleItems = portfolio.length <= 3 
+		? portfolio 
+		: portfolio.slice(currentIndex, currentIndex + 3);
 
 	return (
 		<>
 			<div className="position-relative">
 				<div className="overflow-hidden">
-					<Row 
-						className={`justify-content-center portfolio-carousel-slide portfolio-carousel-slide-${direction}`}
-						key={currentIndex}
-					>
-						{visibleItems.map((item, index) => (
-							<Col md={12} lg={colSize} key={`${item.id}-${index}`} className="mb-3 mb-lg-0">
+					<Row className="justify-content-center">
+						{visibleItems.map((item) => (
+							<Col md={12} lg={colSize} key={item.id} className="mb-3 mb-lg-0">
 								<PortfolioCard
 									item={item}
 									isOwner={isOwner}
@@ -116,80 +111,37 @@ const PortfolioCarousel = ({ portfolio, isOwner, specialistId, onRefresh }: Port
 				{portfolio.length > 3 && (
 					<>
 						<div
-							className="position-absolute top-50 start-0 translate-middle-y rounded-circle"
-							style={{ zIndex: 10, marginLeft: '-45px', width: '40px', height: '40px' }}
+							className="portfolio-carousel-arrow"
+							style={{ left: '-30px' }}
 							onClick={handlePrev}
 						>
 							<i className="mdi mdi-chevron-left display-3"></i>
 						</div>
 
 						<div
-							className="position-absolute top-50 end-0 translate-middle-y rounded-circle"
-							style={{ zIndex: 10, marginRight: '-20px', width: '40px', height: '40px' }}
+							className="portfolio-carousel-arrow"
+							style={{ right: '-30px' }}
 							onClick={handleNext}
 						>
 							<i className="mdi mdi-chevron-right display-3"></i>
 						</div>
+
+						<div className="d-flex justify-content-center mt-3 gap-2">
+							{portfolio.map((_, index) => (
+								<button
+									key={index}
+									className={`btn btn-sm rounded-circle ${
+										index === currentIndex ? 'btn-primary' : 'btn-outline-secondary'
+									}`}
+									style={{ width: '10px', height: '10px', padding: 0 }}
+									onClick={() => setCurrentIndex(index)}
+									aria-label={`Go to slide ${index + 1}`}
+								/>
+							))}
+						</div>
 					</>
 				)}
-
-				{portfolio.length > 1 && (
-					<div className="d-flex justify-content-center mt-3 gap-2">
-						{portfolio.map((_, index) => (
-							<button
-								key={index}
-								className={`btn btn-sm rounded-circle ${
-									index === currentIndex ? 'btn-primary' : 'btn-outline-secondary'
-								}`}
-								style={{ width: '10px', height: '10px', padding: 0 }}
-								onClick={() => {
-									setDirection(index > currentIndex ? 'right' : 'left');
-									setCurrentIndex(index);
-								}}
-								aria-label={`Go to slide ${index + 1}`}
-							/>
-						))}
-					</div>
-				)}
 			</div>
-
-			<style>{`
-				@keyframes slideInFromRight {
-					from {
-						opacity: 0;
-						transform: translateX(50px);
-					}
-					to {
-						opacity: 1;
-						transform: translateX(0);
-					}
-				}
-
-				@keyframes slideInFromLeft {
-					from {
-						opacity: 0;
-						transform: translateX(-50px);
-					}
-					to {
-						opacity: 1;
-						transform: translateX(0);
-					}
-				}
-
-				.portfolio-carousel-slide {
-					animation-duration: 0.4s;
-					animation-timing-function: ease-out;
-					animation-fill-mode: both;
-				}
-
-				.portfolio-carousel-slide-right {
-					animation-name: slideInFromRight;
-				}
-
-				.portfolio-carousel-slide-left {
-					animation-name: slideInFromLeft;
-				}
-			`}</style>
 
 			{selectedItem && (
 				<>
@@ -234,6 +186,32 @@ const PortfolioCarousel = ({ portfolio, isOwner, specialistId, onRefresh }: Port
 					</Modal>
 				</>
 			)}
+
+			<style>{`
+				.portfolio-carousel-arrow {
+					position: absolute;
+					top: 50%;
+					transform: translateY(-50%);
+					width: 40px;
+					height: 40px;
+					cursor: pointer;
+					z-index: 10;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					transition: opacity 0.3s ease;
+				}
+
+				.portfolio-carousel-arrow i {
+					color: #727cf5;
+					opacity: 0.5;
+					transition: opacity 0.3s ease;
+				}
+
+				.portfolio-carousel-arrow:hover i {
+					opacity: 1;
+				}
+			`}</style>
 		</>
 	);
 };
