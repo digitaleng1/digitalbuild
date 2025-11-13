@@ -194,13 +194,6 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		expanded: true,
 		children: [
 			{
-				key: 'analytics',
-				label: 'Analytics',
-				isTitle: false,
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
 				key: 'project',
 				label: 'Projects',
 				isTitle: false,
@@ -208,10 +201,10 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 				parentKey: 'dashboards',
 			},
 			{
-				key: 'crm',
-				label: 'CRM',
+				key: 'wallet',
+				label: 'Wallet',
 				isTitle: false,
-				url: '/dashboard/crm',
+				url: '/dashboard/e-wallet',
 				parentKey: 'dashboards',
 			}
 		]

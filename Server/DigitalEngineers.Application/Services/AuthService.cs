@@ -260,6 +260,7 @@ public class AuthService : IAuthService
                 Email = user.Email ?? string.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                ProfilePictureUrl = user.ProfilePictureUrl,
                 Roles = roles
             }
         };

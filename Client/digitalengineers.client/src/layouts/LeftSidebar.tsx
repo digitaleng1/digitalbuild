@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import AppMenu from './Menu';
 
 // assets
-import profileImg from '@/assets/images/users/avatar-1.jpg';
+import defaultUserImage from '@/assets/images/users/avatar-1.jpg';
 import logo from '@/assets/images/logo.png';
 import logoDark from '@/assets/images/logo-dark.png';
 import logoSm from '@/assets/images/logo-sm.png';
@@ -12,15 +12,24 @@ import { Link } from "react-router";
 import { useRolePrefix } from '@/common/hooks/useRolePrefix';
 import { useUserRole } from '@/common/hooks/useUserRole';
 import { useThemeContext } from '@/common/context';
+import { useAuthContext } from '@/common/context/useAuthContext';
 
 import SimplebarReactClient from "@/components/wrappers/SimplebarReactClient";
 
 const UserBox = () => {
+	const { user } = useAuthContext();
+	
+	const username = user?.firstName && user?.lastName 
+		? `${user.firstName} ${user.lastName}` 
+		: user?.email || 'Guest';
+	
+	const userImage = user?.profilePictureUrl || defaultUserImage;
+	
 	return (
 		<div className="leftbar-user">
 			<Link to="/pages/profile">
-				<img src={profileImg} alt="user-image" height="42" className="rounded-circle shadow-sm" />
-				<span className="leftbar-user-name mt-2">Dominic Keller</span>
+				<img src={userImage} alt="user-image" height="42" className="rounded-circle shadow-sm" />
+				<span className="leftbar-user-name mt-2">{username}</span>
 			</Link>
 		</div>
 	);
