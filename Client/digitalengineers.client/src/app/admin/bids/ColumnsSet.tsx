@@ -10,7 +10,7 @@ const columns: ColumnDef<AdminBidListItem>[] = [
         sortingFn: 'alphanumeric',
         cell: ({ row }) => (
             <div>
-                <Link to={`/admin/projects/${row.original.projectId}`} className="text-body fw-semibold">
+                <Link to={`/admin/projects/details/${row.original.projectId}`} className="text-body fw-semibold">
                     {row.original.projectName}
                 </Link>
                 <p className="mb-0 text-muted font-13">
