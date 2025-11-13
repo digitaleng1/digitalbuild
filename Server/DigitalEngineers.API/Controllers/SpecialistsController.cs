@@ -166,7 +166,8 @@ public class SpecialistsController : ControllerBase
     {
         var project = await _projectService.GetProjectByIdAsync(projectId, cancellationToken);
         
-        var specialists = await _specialistService.GetSpecialistsByLicenseTypesAsync(
+        var specialists = await _specialistService.GetAvailableSpecialistsForProjectAsync(
+            projectId,
             project.LicenseTypeIds.ToArray(), 
             cancellationToken);
         

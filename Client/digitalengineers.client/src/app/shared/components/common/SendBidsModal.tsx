@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useAvailableSpecialists } from '@/app/shared/hooks';
 import type { LicenseType } from '@/types/lookup';
@@ -25,32 +25,30 @@ const SendBidsModal = ({
 	const { specialists, loading, error } = useAvailableSpecialists(show ? projectId : undefined);
 	const { showSuccess, showError } = useToast();
 
-	// Selected specialists
 	const [selectedSpecialists, setSelectedSpecialists] = useState<Set<string>>(new Set());
-
-	// License type filters
-	const [selectedLicenseFilters, setSelectedLicenseFilters] = useState<Set<number>>(new Set());
-
-	// Bid form data
+	const [selectedLicenseFilter, setSelectedLicenseFilter] = useState<number | null>(null);
 	const [formData, setFormData] = useState<BidFormData>({
 		description: '',
 	});
-
-	// Submission state
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Filter specialists by selected license types
+	// Set first license type as default when modal opens
+	useEffect(() => {
+		if (show && requiredLicenseTypes.length > 0) {
+			setSelectedLicenseFilter(requiredLicenseTypes[0].id);
+		}
+	}, [show, requiredLicenseTypes]);
+
 	const filteredSpecialists = useMemo(() => {
-		if (selectedLicenseFilters.size === 0) {
+		if (selectedLicenseFilter === null) {
 			return specialists;
 		}
 
 		return specialists.filter((specialist) =>
-			specialist.licenseTypes.some((lt) => selectedLicenseFilters.has(lt.id))
+			specialist.licenseTypes.some((lt) => lt.id === selectedLicenseFilter)
 		);
-	}, [specialists, selectedLicenseFilters]);
+	}, [specialists, selectedLicenseFilter]);
 
-	// Toggle specialist selection
 	const handleToggleSpecialist = useCallback((userId: string) => {
 		setSelectedSpecialists((prev) => {
 			const newSet = new Set(prev);
@@ -63,36 +61,23 @@ const SendBidsModal = ({
 		});
 	}, []);
 
-	// Toggle license filter
-	const handleToggleLicenseFilter = useCallback((licenseId: number) => {
-		setSelectedLicenseFilters((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(licenseId)) {
-				newSet.delete(licenseId);
-			} else {
-				newSet.add(licenseId);
-			}
-			return newSet;
-		});
+	const handleLicenseFilterChange = useCallback((licenseId: number) => {
+		setSelectedLicenseFilter((prev) => prev === licenseId ? null : licenseId);
 	}, []);
 
-	// Select all filtered specialists
 	const handleSelectAll = useCallback(() => {
 		const allUserIds = filteredSpecialists.map((s) => s.userId);
 		setSelectedSpecialists(new Set(allUserIds));
 	}, [filteredSpecialists]);
 
-	// Deselect all specialists
 	const handleDeselectAll = useCallback(() => {
 		setSelectedSpecialists(new Set());
 	}, []);
 
-	// Handle form input changes
 	const handleInputChange = useCallback((field: keyof BidFormData, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	}, []);
 
-	// Validate form
 	const isFormValid = useMemo(() => {
 		return (
 			selectedSpecialists.size > 0 &&
@@ -100,7 +85,6 @@ const SendBidsModal = ({
 		);
 	}, [selectedSpecialists, formData]);
 
-	// Submit bids
 	const handleSubmit = useCallback(async () => {
 		if (!isFormValid) return;
 
@@ -118,9 +102,8 @@ const SendBidsModal = ({
 				`${selectedSpecialists.size} bid request(s) have been sent to specialists.`
 			);
 
-			// Reset form
 			setSelectedSpecialists(new Set());
-			setSelectedLicenseFilters(new Set());
+			setSelectedLicenseFilter(null);
 			setFormData({ description: '' });
 
 			onSuccess?.();
@@ -143,7 +126,6 @@ const SendBidsModal = ({
 		onHide,
 	]);
 
-	// Render specialist avatar
 	const renderSpecialistAvatar = (specialist: any) => {
 		if (specialist.profilePictureUrl) {
 			return (
@@ -194,7 +176,7 @@ const SendBidsModal = ({
 					<Row className="g-0 h-100">
 						{/* Left Column - Bid Details & Filters */}
 						<Col md={5} className="border-end">
-							<div className="p-4 h-100 d-flex flex-column">
+							<div className="px-4 py-2 h-100 d-flex flex-column">
 								<h5 className="mb-3">Bid Details</h5>
 
 								<Form.Group className="mb-3">
@@ -215,9 +197,9 @@ const SendBidsModal = ({
 								</Form.Group>
 
 								<div className="mb-3">
-									<Form.Label>Selected Specialists</Form.Label>
-									<div className="fw-bold text-primary" style={{ fontSize: '1.5rem' }}>
-										{selectedSpecialists.size}
+									<div className="d-flex align-items-center gap-2">
+										<Form.Label className="mb-0">Selected Specialists:</Form.Label>
+										<span className="fw-bold text-primary">{selectedSpecialists.size}</span>
 									</div>
 								</div>
 
@@ -225,15 +207,17 @@ const SendBidsModal = ({
 
 								<div className="flex-grow-1">
 									<h6 className="mb-3">Filter by License Type:</h6>
-									<div className="d-flex flex-column gap-2">
+									
+									{/* License Type Switches */}
+									<div className="d-flex flex-column gap-1">
 										{requiredLicenseTypes.map((lt) => (
 											<Form.Check
 												key={lt.id}
-												type="checkbox"
-												id={`filter-${lt.id}`}
+												type="switch"
+												id={`filter-switch-${lt.id}`}
 												label={lt.name}
-												checked={selectedLicenseFilters.has(lt.id)}
-												onChange={() => handleToggleLicenseFilter(lt.id)}
+												checked={selectedLicenseFilter === lt.id}
+												onChange={() => handleLicenseFilterChange(lt.id)}
 												className="user-select-none"
 											/>
 										))}
@@ -342,44 +326,44 @@ const SendBidsModal = ({
 															)}
 														</div>
 													</div>
-												</div>
-											))}
-										</div>
-									)}
-								</div>
-							</div>
-						</Col>
-					</Row>
-				)}
-			</Modal.Body>
-			<Modal.Footer>
-				<Button variant="secondary" onClick={onHide} disabled={isSubmitting}>
-					Cancel
-				</Button>
-				<Button
-					variant="primary"
-					onClick={handleSubmit}
-					disabled={!isFormValid || isSubmitting}
-				>
-					{isSubmitting ? (
-						<>
-							<Spinner
-								as="span"
-								animation="border"
-								size="sm"
-								role="status"
-								aria-hidden="true"
-								className="me-2"
-							/>
-							Sending...
-						</>
-					) : (
-						`Send Bids (${selectedSpecialists.size})`
-					)}
-				</Button>
-			</Modal.Footer>
-		</Modal>
-	);
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </Col>
+                    </Row>
+                )}
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onHide} disabled={isSubmitting}>
+                    Cancel
+                </Button>
+                <Button
+                    variant="primary"
+                    onClick={handleSubmit}
+                    disabled={!isFormValid || isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                                className="me-2"
+                            />
+                            Sending...
+                        </>
+                    ) : (
+                        `Send Bids (${selectedSpecialists.size})`
+                    )}
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
 };
 
 export default SendBidsModal;
