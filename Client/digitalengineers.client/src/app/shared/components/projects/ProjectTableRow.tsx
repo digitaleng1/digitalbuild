@@ -83,7 +83,7 @@ const ProjectTableRow = ({
 			{/* Project Name */}
 			<td className="col-name">
 				<Link 
-					to={`${basePath}/${project.id}`}
+					to={`${basePath}/details/${project.id}`}
 					className="project-name-link"
 				>
 					{project.name}
@@ -145,7 +145,7 @@ const ProjectTableRow = ({
 			{/* Actions - View Details */}
 			<td className="col-actions" onClick={(e) => e.stopPropagation()}>
 				<Link 
-					to={`${basePath}/${project.id}`}
+					to={`${basePath}/details/${project.id}`}
 					className="action-link"
 					title="View Details"
 				>
