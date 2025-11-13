@@ -35,20 +35,20 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'users',
-		label: 'Users',
+		label: 'Users Management',
 		isTitle: false,
 		icon: 'uil-users-alt',
 		children: [
 			{
 				key: 'users-providers',
 				label: 'Providers',
-				url: '/pages/providers',
+				url: '/providers',
 				parentKey: 'users',
 			},
 			{
 				key: 'users-clients',
 				label: 'Clients',
-				url: '/pages/clients',
+				url: '/clients',
 				parentKey: 'users',
 			},
 		],
