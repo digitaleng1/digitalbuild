@@ -449,6 +449,42 @@ public class SpecialistService : ISpecialistService
         });
     }
 
+    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] licenseTypeIds, CancellationToken cancellationToken = default)
+    {
+        var existingBidSpecialistIds = await _context.BidRequests
+            .Where(br => br.ProjectId == projectId)
+            .Select(br => br.SpecialistId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var specialists = await _context.Specialists
+            .Include(s => s.User)
+            .Include(s => s.LicenseTypes)
+            .ThenInclude(slt => slt.LicenseType)
+            .ThenInclude(lt => lt.Profession)
+            .Where(s => s.IsAvailable
+                && !existingBidSpecialistIds.Contains(s.Id)
+                && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
+            .ToListAsync(cancellationToken);
+
+        return specialists.Select(s => new AvailableSpecialistDto
+        {
+            UserId = s.UserId,
+            Name = $"{s.User.FirstName} {s.User.LastName}",
+            Email = s.User.Email!,
+            ProfilePictureUrl = s.User.ProfilePictureUrl,
+            Location = s.User.Location,
+            IsAvailableForHire = s.IsAvailable,
+            LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
+            {
+                Id = slt.LicenseType.Id,
+                Name = slt.LicenseType.Name,
+                Description = slt.LicenseType.Description,
+                ProfessionId = slt.LicenseType.ProfessionId
+            }).ToList()
+        });
+    }
+
     public async Task<IEnumerable<ProjectDto>> GetSpecialistProjectsAsync(int specialistId, CancellationToken cancellationToken = default)
     {
         var specialist = await _context.Set<Specialist>()

@@ -60,6 +60,7 @@ namespace DigitalEngineers.API.Middleware
                 // 409 - Conflict
                 SpecialistAlreadyAssignedException => StatusCodes.Status409Conflict,
                 QuoteAlreadySubmittedException => StatusCodes.Status409Conflict,
+                BidRequestAlreadyExistsException => StatusCodes.Status409Conflict,
 
                 // 500 - Internal Server Error
                 _ => StatusCodes.Status500InternalServerError

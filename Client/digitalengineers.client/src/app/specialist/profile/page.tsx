@@ -66,10 +66,6 @@ const SpecialistProfilePage = () => {
 				<Col lg={8}>
 					<ReviewsSection reviews={profile.reviews} />
 					<ProjectsList projects={profile.assignedProjects} />
-				</Col>
-			</Row>
-			<Row>
-				<Col lg={12}>
 					<PortfolioSection
 						portfolio={profile.portfolio}
 						specialistId={profile.id}

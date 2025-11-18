@@ -35,20 +35,20 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'users',
-		label: 'Users',
+		label: 'Users Management',
 		isTitle: false,
 		icon: 'uil-users-alt',
 		children: [
 			{
 				key: 'users-providers',
 				label: 'Providers',
-				url: '/pages/providers',
+				url: '/providers',
 				parentKey: 'users',
 			},
 			{
 				key: 'users-clients',
 				label: 'Clients',
-				url: '/pages/clients',
+				url: '/clients',
 				parentKey: 'users',
 			},
 		],
@@ -102,20 +102,51 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		isTitle: true,
 	},
 	{
-		key: 'dashboard',
-		label: 'Dashboard',
+		key: 'dashboards',
+		label: 'Dashboards',
 		isTitle: false,
 		icon: 'uil-home-alt',
-		url: '/dashboard/analytics',
+		expanded: true,
+		children: [
+			{
+				key: 'analytics',
+				label: 'Analytics',
+				isTitle: false,
+				url: '/dashboard/analytics',
+				parentKey: 'dashboards',
+			},
+			{
+				key: 'ecommerce',
+				label: 'Ecommerce',
+				isTitle: false,
+				url: '/dashboard/ecommerce',
+				parentKey: 'dashboards',
+			},
+			{
+				key: 'project',
+				label: 'Projects',
+				isTitle: false,
+				url: '/dashboard/project',
+				parentKey: 'dashboards',
+			},
+			{
+				key: 'crm',
+				label: 'CRM',
+				isTitle: false,
+				url: '/dashboard/crm',
+				parentKey: 'dashboards',
+			}
+		]
 	},
+	
 	{
 		key: 'projects',
-		label: 'Projects',
+		label: 'Management',
 		isTitle: true,
 	},
 	{
 		key: 'my-projects',
-		label: 'My Projects',
+		label: 'Projects',
 		isTitle: false,
 		icon: 'uil-briefcase',
 		expanded: true,
@@ -156,11 +187,27 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		isTitle: true,
 	},
 	{
-		key: 'dashboard',
-		label: 'Dashboard',
+		key: 'dashboards',
+		label: 'Dashboards',
 		isTitle: false,
 		icon: 'uil-home-alt',
-		url: '/dashboard/project',
+		expanded: true,
+		children: [
+			{
+				key: 'project',
+				label: 'Projects',
+				isTitle: false,
+				url: '/dashboard/project',
+				parentKey: 'dashboards',
+			},
+			{
+				key: 'wallet',
+				label: 'Wallet',
+				isTitle: false,
+				url: '/dashboard/e-wallet',
+				parentKey: 'dashboards',
+			}
+		]
 	},
 	{
 		key: 'work',

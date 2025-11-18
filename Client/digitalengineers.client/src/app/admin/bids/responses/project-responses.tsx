@@ -77,7 +77,6 @@ const BidResponsesByProjectPage = () => {
 								<div className="d-flex justify-content-between align-items-start">
 									<div className="flex-grow-1">
 										<Row className="g-3">
-											{/* Project Column */}
 											<Col md={3}>
 												<div className="mb-2">
 													<small className="text-muted">Project</small>
@@ -102,7 +101,6 @@ const BidResponsesByProjectPage = () => {
 												</div>
 											</Col>
 
-											{/* Client Column */}
 											<Col md={3}>
 												<div className="mb-2">
 													<small className="text-muted">Client</small>
@@ -127,7 +125,6 @@ const BidResponsesByProjectPage = () => {
 												</div>
 											</Col>
 
-											{/* Budget Column */}
 											<Col md={3}>
 												<div className="mb-2">
 													<small className="text-muted">Budget</small>
@@ -139,7 +136,6 @@ const BidResponsesByProjectPage = () => {
 												</div>
 											</Col>
 
-											{/* Deadline Column */}
 											<Col md={3}>
 												<div className="mb-2">
 													<small className="text-muted">Deadline</small>

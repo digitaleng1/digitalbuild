@@ -9,3 +9,4 @@ export { useSpecialistProfile } from './useSpecialistProfile';
 export { useReviews } from './useReviews';
 export { useUpdateSpecialist } from './useUpdateSpecialist';
 export { useLicenseTypes } from './useLicenseTypes';
+export { useUserManagement } from './useUserManagement';

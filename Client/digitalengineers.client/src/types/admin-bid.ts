@@ -25,6 +25,8 @@ export interface BidResponseDto {
     specialistName: string;
     specialistEmail: string;
     specialistProfilePicture: string | null;
+    yearsOfExperience: number;
+    specialistRating: number;
     licenseTypeId: number;
     licenseTypeName: string;
     status: string;

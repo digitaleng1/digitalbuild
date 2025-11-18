@@ -1,3 +1,3 @@
-import { ProjectDetailsPage } from '@/app/shared/pages';
+import { ProjectDetailsPage } from '@/app/pages';
 
 export default ProjectDetailsPage;

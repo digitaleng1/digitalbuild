@@ -70,6 +70,8 @@ export interface ProjectDto {
 	description: string;
 	status: string;
 	clientId?: string;
+	clientName?: string;
+	clientProfilePictureUrl?: string;
 	createdAt: string;
 	thumbnailUrl?: string;
 	streetAddress: string;

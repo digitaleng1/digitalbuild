@@ -22,6 +22,7 @@ export default function ProjectCard({
 }: ProjectCardProps) {
 	const { hasAnyRole } = useAuthContext();
 	const isProvider = hasAnyRole(['Provider']);
+	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
 	const hasImage = !!project.thumbnailUrl;
 	const statusVariant = getStatusBadgeVariant(project.status);
 
@@ -34,6 +35,16 @@ export default function ProjectCard({
 
 	const handleHistoryClick = () => {
 		alert('History feature will be implemented in the future');
+	};
+
+	// Get initials from client name for fallback avatar
+	const getClientInitials = (name?: string) => {
+		if (!name) return '?';
+		const parts = name.split(' ');
+		if (parts.length >= 2) {
+			return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+		}
+		return name.substring(0, 2).toUpperCase();
 	};
 
 	return (
@@ -89,6 +100,30 @@ export default function ProjectCard({
 					<Badge bg={statusVariant} className="mb-2 align-self-start">
 						{project.status}
 					</Badge>
+				)}
+
+				{/* Client Name with Avatar - visible for Admin */}
+				{isAdmin && project.clientName && (
+					<div className="mb-2 d-flex align-items-center">
+						{project.clientProfilePictureUrl ? (
+							<img 
+								src={project.clientProfilePictureUrl}
+								alt={project.clientName}
+								className="rounded-circle me-2"
+								style={{ width: '24px', height: '24px', objectFit: 'cover' }}
+							/>
+						) : (
+							<div 
+								className="rounded-circle me-2 d-flex align-items-center justify-content-center bg-primary text-white"
+								style={{ width: '24px', height: '24px', fontSize: '10px', fontWeight: 'bold' }}
+							>
+								{getClientInitials(project.clientName)}
+							</div>
+						)}
+						<span className="text-muted">
+							<strong>{project.clientName}</strong>
+						</span>
+					</div>
 				)}
 
 				{project.description && variant !== 'compact' && (
