@@ -32,6 +32,10 @@ function AuthService() {
         logout: () => {
             return httpClient.post('/api/auth/revoke-token', {});
         },
+
+        getMyAvatarUrl: () => {
+            return httpClient.get<{ profilePictureUrl: string | null }>('/api/auth/me/avatar');
+        },
     };
 }
 

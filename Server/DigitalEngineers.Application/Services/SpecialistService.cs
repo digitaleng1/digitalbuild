@@ -16,7 +16,7 @@ public class SpecialistService : ISpecialistService
     private readonly ILogger<SpecialistService> _logger;
 
     public SpecialistService(
-        ApplicationDbContext context, 
+        ApplicationDbContext context,
         IFileStorageService fileStorageService,
         ILogger<SpecialistService> logger)
     {
@@ -88,7 +88,9 @@ public class SpecialistService : ISpecialistService
             FirstName = user!.FirstName ?? string.Empty,
             LastName = user.LastName ?? string.Empty,
             Email = user.Email ?? string.Empty,
-            ProfilePictureUrl = user.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(user.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(user.ProfilePictureUrl)
+                : null,
             YearsOfExperience = specialist.YearsOfExperience,
             HourlyRate = specialist.HourlyRate,
             Rating = specialist.Rating,
@@ -127,7 +129,7 @@ public class SpecialistService : ISpecialistService
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
 
         if (specialist == null)
-            throw new ArgumentException($"Specialist with user ID {userId} not found");
+            throw new SpecialistNotFoundException($"Specialist with user ID {userId} not found");
 
         return MapToDetailsDto(specialist);
     }
@@ -146,7 +148,9 @@ public class SpecialistService : ISpecialistService
             FirstName = s.User.FirstName ?? string.Empty,
             LastName = s.User.LastName ?? string.Empty,
             Email = s.User.Email ?? string.Empty,
-            ProfilePictureUrl = s.User.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
+                : null,
             YearsOfExperience = s.YearsOfExperience,
             HourlyRate = s.HourlyRate,
             Rating = s.Rating,
@@ -178,14 +182,12 @@ public class SpecialistService : ISpecialistService
             throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
         }
 
-        // Update specialist fields
         specialist.YearsOfExperience = dto.YearsOfExperience;
         specialist.HourlyRate = dto.HourlyRate;
         specialist.IsAvailable = dto.IsAvailable;
         specialist.Specialization = dto.Specialization;
         specialist.UpdatedAt = DateTime.UtcNow;
 
-        // Update user profile fields
         if (dto.FirstName != null)
             specialist.User.FirstName = dto.FirstName;
         
@@ -203,7 +205,6 @@ public class SpecialistService : ISpecialistService
 
         specialist.User.UpdatedAt = DateTime.UtcNow;
 
-        // Update licenses
         var currentLicenseTypeIds = specialist.LicenseTypes.Select(slt => slt.LicenseTypeId).ToList();
         var toRemove = specialist.LicenseTypes.Where(slt => !dto.LicenseTypeIds.Contains(slt.LicenseTypeId)).ToList();
         var toAdd = dto.LicenseTypeIds.Where(ltId => !currentLicenseTypeIds.Contains(ltId))
@@ -226,7 +227,9 @@ public class SpecialistService : ISpecialistService
             FirstName = specialist.User.FirstName ?? string.Empty,
             LastName = specialist.User.LastName ?? string.Empty,
             Email = specialist.User.Email ?? string.Empty,
-            ProfilePictureUrl = specialist.User.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(specialist.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(specialist.User.ProfilePictureUrl)
+                : null,
             YearsOfExperience = specialist.YearsOfExperience,
             HourlyRate = specialist.HourlyRate,
             Rating = specialist.Rating,
@@ -262,7 +265,9 @@ public class SpecialistService : ISpecialistService
             FirstName = s.User.FirstName ?? string.Empty,
             LastName = s.User.LastName ?? string.Empty,
             Email = s.User.Email ?? string.Empty,
-            ProfilePictureUrl = s.User.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
+                : null,
             YearsOfExperience = s.YearsOfExperience,
             HourlyRate = s.HourlyRate,
             Rating = s.Rating,
@@ -330,7 +335,9 @@ public class SpecialistService : ISpecialistService
             FirstName = specialist.User.FirstName ?? string.Empty,
             LastName = specialist.User.LastName ?? string.Empty,
             Email = specialist.User.Email ?? string.Empty,
-            ProfilePictureUrl = specialist.User.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(specialist.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(specialist.User.ProfilePictureUrl)
+                : null,
             Biography = specialist.User.Biography,
             Location = specialist.User.Location,
             Website = specialist.User.Website,
@@ -352,7 +359,9 @@ public class SpecialistService : ISpecialistService
                 Id = p.Id,
                 Title = p.Title,
                 Description = p.Description,
-                ThumbnailUrl = p.ThumbnailUrl != null ? _fileStorageService.GetPresignedUrl(p.ThumbnailUrl) : null,
+                ThumbnailUrl = !string.IsNullOrWhiteSpace(p.ThumbnailUrl)
+                    ? _fileStorageService.GetPresignedUrl(p.ThumbnailUrl)
+                    : null,
                 ProjectUrl = p.ProjectUrl,
                 CreatedAt = p.CreatedAt
             }).ToArray(),
@@ -387,7 +396,47 @@ public class SpecialistService : ISpecialistService
             UserId = s.UserId,
             Name = $"{s.User.FirstName} {s.User.LastName}",
             Email = s.User.Email!,
-            ProfilePictureUrl = s.User.ProfilePictureUrl,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
+                : null,
+            Location = s.User.Location,
+            IsAvailableForHire = s.IsAvailable,
+            LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
+            {
+                Id = slt.LicenseType.Id,
+                Name = slt.LicenseType.Name,
+                Description = slt.LicenseType.Description,
+                ProfessionId = slt.LicenseType.ProfessionId
+            }).ToList()
+        });
+    }
+
+    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] licenseTypeIds, CancellationToken cancellationToken = default)
+    {
+        var existingBidSpecialistIds = await _context.BidRequests
+            .Where(br => br.ProjectId == projectId)
+            .Select(br => br.SpecialistId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var specialists = await _context.Specialists
+            .Include(s => s.User)
+            .Include(s => s.LicenseTypes)
+            .ThenInclude(slt => slt.LicenseType)
+            .ThenInclude(lt => lt.Profession)
+            .Where(s => s.IsAvailable
+                && !existingBidSpecialistIds.Contains(s.Id)
+                && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
+            .ToListAsync(cancellationToken);
+
+        return specialists.Select(s => new AvailableSpecialistDto
+        {
+            UserId = s.UserId,
+            Name = $"{s.User.FirstName} {s.User.LastName}",
+            Email = s.User.Email!,
+            ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
+                : null,
             Location = s.User.Location,
             IsAvailableForHire = s.IsAvailable,
             LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
@@ -456,5 +505,20 @@ public class SpecialistService : ISpecialistService
             YearsOfExperience = specialist.YearsOfExperience,
             HourlyRate = specialist.HourlyRate
         };
+    }
+
+    public async Task UpdateProfilePictureAsync(int specialistId, string profilePictureUrl, CancellationToken cancellationToken = default)
+    {
+        var specialist = await _context.Set<Specialist>()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == specialistId, cancellationToken);
+
+        if (specialist == null)
+            throw new SpecialistNotFoundException(specialistId);
+
+        specialist.User.ProfilePictureUrl = profilePictureUrl;
+        specialist.User.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

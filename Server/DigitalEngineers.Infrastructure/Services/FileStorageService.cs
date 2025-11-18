@@ -165,6 +165,33 @@ public class FileStorageService : IFileStorageService
         return key;
     }
 
+    public async Task<string> UploadUserAvatarAsync(
+        Stream fileStream, 
+        string fileName, 
+        string contentType, 
+        string userId, 
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"users/{userId}/{fileName}";
+
+        _logger.LogInformation("Uploading user avatar to S3: {Key}, ContentType: {ContentType}", key, contentType);
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+        
+        _logger.LogInformation("User avatar uploaded successfully: {Key}", key);
+
+        return key;
+    }
+
     public async Task<bool> DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default)
     {
         try
@@ -218,6 +245,12 @@ public class FileStorageService : IFileStorageService
     {
         try
         {
+            // If null or empty, return as-is
+            if (string.IsNullOrWhiteSpace(fileUrlOrKey))
+            {
+                return fileUrlOrKey;
+            }
+
             // If it's already a full external URL (http/https), return as-is
             if (fileUrlOrKey.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
                 fileUrlOrKey.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -225,9 +258,7 @@ public class FileStorageService : IFileStorageService
                 return fileUrlOrKey;
             }
             
-            // Otherwise, generate S3 presigned URL
-            var key = fileUrlOrKey;
-            
+            // Otherwise, it's a relative S3 key - generate presigned URL
             var expiration = expirationMinutes > 0 
                 ? expirationMinutes 
                 : _settings.PresignedUrlExpirationMinutes;
@@ -235,7 +266,7 @@ public class FileStorageService : IFileStorageService
             var request = new GetPreSignedUrlRequest
             {
                 BucketName = _settings.BucketName,
-                Key = key,
+                Key = fileUrlOrKey,
                 Expires = DateTime.UtcNow.AddMinutes(expiration),
                 Protocol = Protocol.HTTPS
             };

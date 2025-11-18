@@ -325,7 +325,16 @@ html[data-bs-theme="dark"] {
     transition: none;
 }
 
-
+// Fix for avatar in topbar - prevent stretching
+.account-user-avatar {
+    display: inline-block;
+    
+    img {
+        width: 3rem;
+        height: 3rem;
+        object-fit: cover;
+    }
+}
 
 // fullscreen exit icon
 .fullscreen-enable {

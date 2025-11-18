@@ -1,9 +1,14 @@
-import { useState } from 'react';
-import { Card, CardBody, Form } from 'react-bootstrap';
+import { useState, useRef } from 'react';
+import { Card, CardBody, Form, Spinner } from 'react-bootstrap';
 import type { SpecialistProfile } from '@/types/specialist';
 import { useUpdateSpecialist } from '@/app/shared/hooks/useUpdateSpecialist';
+import { useToast } from '@/contexts/ToastContext';
+import { useAuthContext } from '@/common/context/useAuthContext';
+import { authApi } from '@/common/api';
 import Rating from '@/components/Rating';
 import avatarImg from '@/assets/images/users/avatar-1.jpg';
+import specialistService from '@/services/specialistService';
+import './ProfileHeader.css';
 
 interface ProfileHeaderProps {
     profile: SpecialistProfile;
@@ -11,9 +16,13 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader = ({ profile, onRefresh }: ProfileHeaderProps) => {
+    const { showSuccess, showError } = useToast();
     const { updateSpecialist, loading: updating } = useUpdateSpecialist();
+    const { user, updateUser } = useAuthContext();
     const [isEditMode, setIsEditMode] = useState(false);
     const [editedProfile, setEditedProfile] = useState(profile);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fullName = `${profile.firstName} ${profile.lastName}`;
 
@@ -34,6 +43,16 @@ const ProfileHeader = ({ profile, onRefresh }: ProfileHeaderProps) => {
             isAvailable: editedProfile.isAvailable,
             licenseTypeIds: editedProfile.licenseTypeIds,
         });
+        
+        // Update AuthContext with new name if changed
+        if (user && (editedProfile.firstName !== profile.firstName || editedProfile.lastName !== profile.lastName)) {
+            updateUser({
+                ...user,
+                firstName: editedProfile.firstName,
+                lastName: editedProfile.lastName
+            });
+        }
+        
         setIsEditMode(false);
         onRefresh();
     };
@@ -43,6 +62,55 @@ const ProfileHeader = ({ profile, onRefresh }: ProfileHeaderProps) => {
         setIsEditMode(false);
     };
 
+    const handleAvatarClick = () => {
+        if (!isEditMode && !uploadingAvatar) {
+            fileInputRef.current?.click();
+        }
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showError('Error', 'Please select an image file');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            showError('Error', 'File size must be less than 5MB');
+            return;
+        }
+
+        try {
+            setUploadingAvatar(true);
+            
+            // Upload avatar
+            await specialistService.uploadProfilePicture(file);
+            
+            // Get updated avatar URL from server
+            const avatarResponse = await authApi.getMyAvatarUrl();
+            
+            // Update AuthContext with new presigned URL
+            if (user) {
+                updateUser({
+                    ...user,
+                    profilePictureUrl: avatarResponse.profilePictureUrl
+                });
+            }
+            
+            showSuccess('Success', 'Profile picture updated successfully');
+            onRefresh();
+        } catch (error: any) {
+            showError('Error', error.response?.data?.message || 'Failed to upload profile picture');
+        } finally {
+            setUploadingAvatar(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
     const currentProfile = isEditMode ? editedProfile : profile;
 
     return (
@@ -50,11 +118,41 @@ const ProfileHeader = ({ profile, onRefresh }: ProfileHeaderProps) => {
             <CardBody className="py-1 px-2">
                 <div className="d-flex justify-content-between">
                     <div className="d-flex align-items-center gap-3">
-                        <img
-                            src={currentProfile.profilePictureUrl || avatarImg}
-                            alt={fullName}
-                            className="rounded-circle avatar-lg"
-                        />
+                        <div 
+                            className="position-relative avatar-upload-container cursor-pointer" 
+                            onClick={handleAvatarClick}
+                            style={{ width: '64px', height: '64px' }}
+                        >
+                            <img
+                                src={currentProfile.profilePictureUrl || avatarImg}
+                                alt={fullName}
+                                className="rounded-circle"
+                                style={{ width: '64px', height: '64px', objectFit: 'cover' }}
+                            />
+                            {uploadingAvatar && (
+                                <div
+                                    className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-circle"
+                                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                                >
+                                    <Spinner animation="border" size="sm" variant="light" />
+                                </div>
+                            )}
+                            {!isEditMode && !uploadingAvatar && (
+                                <div
+                                    className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-circle avatar-upload-overlay"
+                                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                                >
+                                    <i className="mdi mdi-camera text-white" style={{ fontSize: '24px' }}></i>
+                                </div>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
                         <div>
                             {isEditMode ? (
                                 <div className="d-flex gap-2 mb-2">

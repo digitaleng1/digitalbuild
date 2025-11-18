@@ -6,6 +6,7 @@ using DigitalEngineers.Infrastructure.Data;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using DigitalEngineers.Infrastructure.Entities;
 
 namespace DigitalEngineers.Infrastructure.Services;
 
@@ -16,19 +17,22 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IFileStorageService _fileStorageService;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ITokenService tokenService,
         ApplicationDbContext context,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IFileStorageService fileStorageService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenService = tokenService;
         _context = context;
         _configuration = configuration;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<TokenData> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -65,6 +69,25 @@ public class AuthService : IAuthService
         }
 
         await _userManager.AddToRoleAsync(user, dto.Role);
+
+        // Create Specialist record if role is Provider
+        if (dto.Role == "Provider")
+        {
+            var specialist = new Specialist
+            {
+                UserId = user.Id,
+                YearsOfExperience = 0,
+                HourlyRate = null,
+                Specialization = null,
+                IsAvailable = true,
+                Rating = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Set<Specialist>().Add(specialist);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
 
         return await GenerateTokenResponse(user, cancellationToken);
     }
@@ -142,6 +165,27 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<UserDto> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException($"User with ID {userId} not found");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            Roles = roles
+        };
+    }
+
     private async Task<TokenData> HandleGoogleLogin(string idToken, CancellationToken cancellationToken)
     {
         try
@@ -154,6 +198,7 @@ public class AuthService : IAuthService
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
             
             var user = await _userManager.FindByEmailAsync(payload.Email);
+            
             if (user == null)
             {
                 user = new ApplicationUser
@@ -200,6 +245,7 @@ public class AuthService : IAuthService
         }
 
         var user = await _userManager.FindByEmailAsync(email);
+        
         if (user == null)
         {
             user = new ApplicationUser
@@ -260,6 +306,9 @@ public class AuthService : IAuthService
                 Email = user.Email ?? string.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                ProfilePictureUrl = !string.IsNullOrWhiteSpace(user.ProfilePictureUrl)
+                    ? _fileStorageService.GetPresignedUrl(user.ProfilePictureUrl)
+                    : null,
                 Roles = roles
             }
         };

@@ -37,3 +37,16 @@
     justify-content: center;
     width: 100%;
 }
+
+// Fix for avatar images to prevent stretching
+.avatar-xs,
+.avatar-sm,
+.avatar-md,
+.avatar-lg,
+.avatar-xl {
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}

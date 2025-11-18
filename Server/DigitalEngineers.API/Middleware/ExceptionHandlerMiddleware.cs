@@ -23,6 +23,12 @@ namespace DigitalEngineers.API.Middleware
             }
             catch (Exception ex)
             {
+                // Skip error handling for Swagger paths
+                if (context.Request.Path.StartsWithSegments("/swagger"))
+                {
+                    throw;
+                }
+
                 _logger.LogError(ex, "An unhandled exception occurred");
                 await HandleExceptionAsync(context, ex);
             }

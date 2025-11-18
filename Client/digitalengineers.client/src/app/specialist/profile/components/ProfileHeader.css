@@ -1,0 +1,12 @@
+.avatar-upload-overlay {
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.avatar-upload-container:hover .avatar-upload-overlay {
+	opacity: 1;
+}
+
+.cursor-pointer {
+	cursor: pointer;
+}

@@ -19,8 +19,13 @@ const UserBox = () => {
 	return (
 		<div className="leftbar-user">
 			<Link to="/pages/profile">
-				<img src={profileImg} alt="user-image" height="42" className="rounded-circle shadow-sm" />
-				<span className="leftbar-user-name mt-2">Dominic Keller</span>
+				<img 
+					src={userImage} 
+					alt="user-image" 
+					className="rounded-circle shadow-sm"
+					style={{ width: '4rem', height: '4rem', objectFit: 'cover' }}
+				/>
+				<span className="leftbar-user-name mt-2">{username}</span>
 			</Link>
 		</div>
 	);

@@ -9,4 +9,5 @@ public interface IAuthService
     Task<TokenData> RefreshTokenAsync(string accessToken, string refreshToken, CancellationToken cancellationToken = default);
     Task<TokenData> ExternalLoginAsync(string provider, string idToken, CancellationToken cancellationToken = default);
     Task<bool> RevokeTokenAsync(string userId, CancellationToken cancellationToken = default);
+    Task<UserDto> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
 }

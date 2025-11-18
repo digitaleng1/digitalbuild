@@ -16,12 +16,18 @@ public class SpecialistsController : ControllerBase
 {
     private readonly ISpecialistService _specialistService;
     private readonly IProjectService _projectService;
+    private readonly IFileStorageService _fileStorageService;
     private readonly IMapper _mapper;
 
-    public SpecialistsController(ISpecialistService specialistService, IProjectService projectService, IMapper mapper)
+    public SpecialistsController(
+        ISpecialistService specialistService, 
+        IProjectService projectService,
+        IFileStorageService fileStorageService,
+        IMapper mapper)
     {
         _specialistService = specialistService;
         _projectService = projectService;
+        _fileStorageService = fileStorageService;
         _mapper = mapper;
     }
 
@@ -242,6 +248,56 @@ public class SpecialistsController : ControllerBase
         await _specialistService.UpdateSpecialistAsync(specialist.Id, dto, cancellationToken);
         
         // Get updated full profile
+        var updatedSpecialist = await _specialistService.GetSpecialistByIdAsync(specialist.Id, cancellationToken);
+        var viewModel = _mapper.Map<SpecialistDetailsViewModel>(updatedSpecialist);
+        return Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Upload profile picture for current specialist (Provider role)
+    /// </summary>
+    [HttpPost("me/avatar")]
+    [Authorize(Roles = "Provider")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(SpecialistDetailsViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+    public async Task<ActionResult<SpecialistDetailsViewModel>> UploadProfilePicture(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "No file provided" });
+        }
+
+        if (!file.ContentType.StartsWith("image/"))
+        {
+            return BadRequest(new { message = "Only image files are allowed" });
+        }
+
+        if (file.Length > 5 * 1024 * 1024)
+        {
+            return BadRequest(new { message = "File size must be less than 5MB" });
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
+        
+        await using var stream = file.OpenReadStream();
+        
+        var fileExtension = Path.GetExtension(file.FileName);
+        var fileName = $"user-avatar{fileExtension}";
+        
+        var profilePictureUrl = await _fileStorageService.UploadUserAvatarAsync(
+            stream,
+            fileName,
+            file.ContentType,
+            userId,
+            cancellationToken);
+        
+        await _specialistService.UpdateProfilePictureAsync(specialist.Id, profilePictureUrl, cancellationToken);
+        
         var updatedSpecialist = await _specialistService.GetSpecialistByIdAsync(specialist.Id, cancellationToken);
         var viewModel = _mapper.Map<SpecialistDetailsViewModel>(updatedSpecialist);
         return Ok(viewModel);

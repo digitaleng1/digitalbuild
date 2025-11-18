@@ -43,6 +43,21 @@ class SpecialistService {
 		const result = await httpClient.put<SpecialistProfile>('/api/specialists/me', data);
 		return result as SpecialistProfile;
 	}
+
+	/**
+	 * Upload profile picture (avatar) for current specialist
+	 */
+	async uploadProfilePicture(file: File): Promise<SpecialistProfile> {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const result = await httpClient.post<SpecialistProfile>('/api/specialists/me/avatar', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
+		return result as SpecialistProfile;
+	}
 }
 
 export default new SpecialistService();
