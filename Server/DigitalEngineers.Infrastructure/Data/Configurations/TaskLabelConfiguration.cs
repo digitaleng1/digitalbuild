@@ -12,26 +12,23 @@ public class TaskLabelConfiguration : IEntityTypeConfiguration<TaskLabel>
 
         builder.HasKey(tl => tl.Id);
 
-        builder.Property(tl => tl.Name)
-            .IsRequired()
-            .HasMaxLength(50);
-
-        builder.Property(tl => tl.Color)
-            .IsRequired()
-            .HasMaxLength(7);
-
         builder.Property(tl => tl.CreatedAt)
             .IsRequired();
 
         // Unique constraint
-        builder.HasIndex(tl => new { tl.Name, tl.ProjectId })
+        builder.HasIndex(tl => new { tl.TaskId, tl.LabelId })
             .IsUnique()
-            .HasDatabaseName("UX_TaskLabels_Name_ProjectId");
+            .HasDatabaseName("UX_TaskLabels_TaskId_LabelId");
 
         // Relationships
-        builder.HasOne(tl => tl.Project)
-            .WithMany()
-            .HasForeignKey(tl => tl.ProjectId)
+        builder.HasOne(tl => tl.Task)
+            .WithMany(t => t.TaskLabels)
+            .HasForeignKey(tl => tl.TaskId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(tl => tl.Label)
+            .WithMany(ptLabel => ptLabel.TaskLabels)
+            .HasForeignKey(tl => tl.LabelId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

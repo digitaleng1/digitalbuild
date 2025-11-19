@@ -32,28 +32,6 @@ public class TaskConfiguration : IEntityTypeConfiguration<ProjectTaskEntity>
         builder.Property(t => t.UpdatedAt)
             .IsRequired();
 
-        // Indexes
-        builder.HasIndex(t => t.AssignedToUserId)
-            .HasDatabaseName("IX_Tasks_AssignedToUserId");
-
-        builder.HasIndex(t => t.ProjectId)
-            .HasDatabaseName("IX_Tasks_ProjectId");
-
-        builder.HasIndex(t => t.CreatedByUserId)
-            .HasDatabaseName("IX_Tasks_CreatedByUserId");
-
-        builder.HasIndex(t => t.ParentTaskId)
-            .HasDatabaseName("IX_Tasks_ParentTaskId");
-
-        builder.HasIndex(t => t.StatusId)
-            .HasDatabaseName("IX_Tasks_StatusId");
-
-        builder.HasIndex(t => t.Deadline)
-            .HasDatabaseName("IX_Tasks_Deadline");
-
-        builder.HasIndex(t => t.IsMilestone)
-            .HasDatabaseName("IX_Tasks_IsMilestone");
-
         // Relationships
         builder.HasOne(t => t.AssignedToUser)
             .WithMany()

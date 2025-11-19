@@ -40,6 +40,6 @@ public class ProjectTask
     public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
     public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
     public ICollection<TaskWatcher> Watchers { get; set; } = new List<TaskWatcher>();
-    public ICollection<TaskLabelAssignment> LabelAssignments { get; set; } = new List<TaskLabelAssignment>();
+    public ICollection<TaskLabel> TaskLabels { get; set; } = new List<TaskLabel>();
     public ICollection<TaskAuditLog> AuditLogs { get; set; } = new List<TaskAuditLog>();
 }

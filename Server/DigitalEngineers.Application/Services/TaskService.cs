@@ -51,12 +51,26 @@ public class TaskService : ITaskService
                 throw new TaskNotFoundException(dto.ParentTaskId.Value);
         }
 
+        if (dto.LabelIds.Length > 0)
+        {
+            var existingLabelIds = await _context.ProjectTaskLabels
+                .Where(l => dto.LabelIds.Contains(l.Id))
+                .Select(l => l.Id)
+                .ToListAsync(cancellationToken);
+
+            if (existingLabelIds.Count != dto.LabelIds.Length)
+            {
+                var invalidIds = dto.LabelIds.Except(existingLabelIds);
+                throw new ValidationException($"Invalid label IDs: {string.Join(", ", invalidIds)}");
+            }
+        }
+
         var task = new ProjectTask
         {
             Title = dto.Title,
             Description = dto.Description,
             Priority = dto.Priority,
-            Deadline = dto.Deadline,
+            Deadline = dto.Deadline?.ToUniversalTime(),
             IsMilestone = dto.IsMilestone,
             AssignedToUserId = dto.AssignedToUserId,
             ProjectId = dto.ProjectId,
@@ -72,14 +86,14 @@ public class TaskService : ITaskService
 
         if (dto.LabelIds.Length > 0)
         {
-            var labelAssignments = dto.LabelIds.Select(labelId => new TaskLabelAssignment
+            var taskLabels = dto.LabelIds.Select(labelId => new TaskLabel
             {
                 TaskId = task.Id,
                 LabelId = labelId,
                 CreatedAt = DateTime.UtcNow
             }).ToList();
 
-            _context.Set<TaskLabelAssignment>().AddRange(labelAssignments);
+            _context.TaskLabels.AddRange(taskLabels);
         }
 
         var watcher = new TaskWatcher
@@ -115,7 +129,7 @@ public class TaskService : ITaskService
             .Include(t => t.Comments).ThenInclude(c => c.User)
             .Include(t => t.Attachments).ThenInclude(a => a.UploadedByUser)
             .Include(t => t.Watchers).ThenInclude(w => w.User)
-            .Include(t => t.LabelAssignments).ThenInclude(la => la.Label)
+            .Include(t => t.TaskLabels).ThenInclude(tl => tl.Label)
             .Include(t => t.ChildTasks).ThenInclude(ct => ct.Status)
             .Include(t => t.AuditLogs).ThenInclude(al => al.User)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
@@ -181,13 +195,13 @@ public class TaskService : ITaskService
                 UserProfilePictureUrl = w.User.ProfilePictureUrl,
                 CreatedAt = w.CreatedAt
             }).ToArray(),
-            Labels = task.LabelAssignments.Select(la => new TaskLabelDto
+            Labels = task.TaskLabels.Select(tl => new TaskLabelDto
             {
-                Id = la.Label.Id,
-                Name = la.Label.Name,
-                Color = la.Label.Color,
-                ProjectId = la.Label.ProjectId,
-                CreatedAt = la.Label.CreatedAt
+                Id = tl.Label.Id,
+                Name = tl.Label.Name,
+                Color = tl.Label.Color,
+                ProjectId = tl.Label.ProjectId,
+                CreatedAt = tl.Label.CreatedAt
             }).ToArray(),
             ChildTasks = task.ChildTasks.Select(ct => new TaskDto
             {
@@ -225,7 +239,7 @@ public class TaskService : ITaskService
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
             .Include(t => t.Watchers)
-            .Include(t => t.LabelAssignments).ThenInclude(la => la.Label)
+            .Include(t => t.TaskLabels).ThenInclude(tl => tl.Label)
             .Where(t => t.ProjectId == projectId)
             .ToListAsync(cancellationToken);
 
@@ -242,7 +256,7 @@ public class TaskService : ITaskService
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
             .Include(t => t.Watchers)
-            .Include(t => t.LabelAssignments).ThenInclude(la => la.Label)
+            .Include(t => t.TaskLabels).ThenInclude(tl => tl.Label)
             .Where(t => t.AssignedToUserId == userId)
             .ToListAsync(cancellationToken);
 
@@ -253,7 +267,7 @@ public class TaskService : ITaskService
     {
         var task = await _context.Set<ProjectTask>()
             .Include(t => t.Status)
-            .Include(t => t.LabelAssignments)
+            .Include(t => t.TaskLabels)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (task == null)
@@ -289,7 +303,7 @@ public class TaskService : ITaskService
         task.Title = dto.Title;
         task.Description = dto.Description;
         task.Priority = dto.Priority;
-        task.Deadline = dto.Deadline;
+        task.Deadline = dto.Deadline?.ToUniversalTime();
         task.IsMilestone = dto.IsMilestone;
         task.AssignedToUserId = dto.AssignedToUserId;
         task.ParentTaskId = dto.ParentTaskId;
@@ -305,18 +319,18 @@ public class TaskService : ITaskService
                 task.CompletedAt = DateTime.UtcNow;
         }
 
-        var currentLabelIds = task.LabelAssignments.Select(la => la.LabelId).ToList();
-        var toRemove = task.LabelAssignments.Where(la => !dto.LabelIds.Contains(la.LabelId)).ToList();
+        var currentLabelIds = task.TaskLabels.Select(tl => tl.LabelId).ToList();
+        var toRemove = task.TaskLabels.Where(tl => !dto.LabelIds.Contains(tl.LabelId)).ToList();
         var toAdd = dto.LabelIds.Where(labelId => !currentLabelIds.Contains(labelId))
-            .Select(labelId => new TaskLabelAssignment
+            .Select(labelId => new TaskLabel
             {
                 TaskId = task.Id,
                 LabelId = labelId,
                 CreatedAt = DateTime.UtcNow
             }).ToList();
 
-        _context.Set<TaskLabelAssignment>().RemoveRange(toRemove);
-        _context.Set<TaskLabelAssignment>().AddRange(toAdd);
+        _context.TaskLabels.RemoveRange(toRemove);
+        _context.TaskLabels.AddRange(toAdd);
 
         foreach (var (field, oldValue, newValue) in changes)
         {
@@ -562,13 +576,13 @@ public class TaskService : ITaskService
 
     public async Task<TaskLabelDto> CreateLabelAsync(CreateTaskLabelDto dto, CancellationToken cancellationToken = default)
     {
-        var exists = await _context.Set<TaskLabel>()
+        var exists = await _context.ProjectTaskLabels
             .AnyAsync(l => l.Name == dto.Name && l.ProjectId == dto.ProjectId, cancellationToken);
 
         if (exists)
             throw new ValidationException($"Label with name '{dto.Name}' already exists for this project");
 
-        var label = new TaskLabel
+        var label = new ProjectTaskLabel
         {
             Name = dto.Name,
             Color = dto.Color,
@@ -576,7 +590,7 @@ public class TaskService : ITaskService
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Set<TaskLabel>().Add(label);
+        _context.ProjectTaskLabels.Add(label);
         await _context.SaveChangesAsync(cancellationToken);
 
         return new TaskLabelDto
@@ -591,7 +605,7 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskLabelDto>> GetLabelsByProjectIdAsync(int? projectId, CancellationToken cancellationToken = default)
     {
-        var labels = await _context.Set<TaskLabel>()
+        var labels = await _context.ProjectTaskLabels
             .Where(l => l.ProjectId == projectId || l.ProjectId == null)
             .ToListAsync(cancellationToken);
 
@@ -607,12 +621,12 @@ public class TaskService : ITaskService
 
     public async Task DeleteLabelAsync(int labelId, CancellationToken cancellationToken = default)
     {
-        var label = await _context.Set<TaskLabel>().FindAsync([labelId], cancellationToken);
+        var label = await _context.ProjectTaskLabels.FindAsync([labelId], cancellationToken);
 
         if (label == null)
             throw new TaskLabelNotFoundException(labelId);
 
-        _context.Set<TaskLabel>().Remove(label);
+        _context.ProjectTaskLabels.Remove(label);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -665,7 +679,7 @@ public class TaskService : ITaskService
             CommentsCount = task.Comments.Count,
             AttachmentsCount = task.Attachments.Count,
             WatchersCount = task.Watchers.Count,
-            Labels = task.LabelAssignments.Select(la => la.Label.Name).ToArray()
+            Labels = task.TaskLabels.Select(tl => tl.Label.Name).ToArray()
         };
     }
 
@@ -679,7 +693,7 @@ public class TaskService : ITaskService
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
             .Include(t => t.Watchers)
-            .Include(t => t.LabelAssignments).ThenInclude(la => la.Label)
+            .Include(t => t.TaskLabels).ThenInclude(tl => tl.Label)
             .FirstAsync(t => t.Id == taskId, cancellationToken);
 
         return MapToTaskDto(task);

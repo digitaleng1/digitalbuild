@@ -36,8 +36,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
     public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();
+    public DbSet<ProjectTaskLabel> ProjectTaskLabels => Set<ProjectTaskLabel>();
     public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
-    public DbSet<TaskLabelAssignment> TaskLabelAssignments => Set<TaskLabelAssignment>();
     public DbSet<TaskAuditLog> TaskAuditLogs => Set<TaskAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)

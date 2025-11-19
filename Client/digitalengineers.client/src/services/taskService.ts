@@ -16,28 +16,28 @@ const BASE_URL = '/api/tasks';
 
 export const taskService = {
   async createTask(data: CreateTaskViewModel): Promise<TaskViewModel> {
-    const response = await httpClient.post<TaskViewModel>(BASE_URL, data);
-    return response.data;
+    return await httpClient.post<TaskViewModel>(BASE_URL, data) as TaskViewModel;
   },
 
   async getTaskById(id: number): Promise<TaskDetailViewModel> {
-    const response = await httpClient.get<TaskDetailViewModel>(`${BASE_URL}/${id}`);
-    return response.data;
+    return await httpClient.get<TaskDetailViewModel>(`${BASE_URL}/${id}`) as TaskDetailViewModel;
   },
 
   async getTasksByProject(projectId: number): Promise<TaskViewModel[]> {
-    const response = await httpClient.get<TaskViewModel[]>(`${BASE_URL}/project/${projectId}`);
-    return response.data;
+    return (await httpClient.get<TaskViewModel[]>(`${BASE_URL}/project/${projectId}`) || []) as TaskViewModel[];
+  },
+
+  async getTasksForSelection(projectId: number): Promise<Array<{ id: number; title: string }>> {
+    const tasks = (await httpClient.get<TaskViewModel[]>(`${BASE_URL}/project/${projectId}`) || []) as TaskViewModel[];
+    return tasks.map(task => ({ id: task.id, title: task.title }));
   },
 
   async getMyAssignedTasks(): Promise<TaskViewModel[]> {
-    const response = await httpClient.get<TaskViewModel[]>(`${BASE_URL}/assigned`);
-    return response.data;
+    return (await httpClient.get<TaskViewModel[]>(`${BASE_URL}/assigned`) || []) as TaskViewModel[];
   },
 
   async updateTask(id: number, data: UpdateTaskViewModel): Promise<TaskViewModel> {
-    const response = await httpClient.put<TaskViewModel>(`${BASE_URL}/${id}`, data);
-    return response.data;
+    return await httpClient.put<TaskViewModel>(`${BASE_URL}/${id}`, data) as TaskViewModel;
   },
 
   async deleteTask(id: number): Promise<void> {
@@ -45,13 +45,11 @@ export const taskService = {
   },
 
   async addComment(data: CreateTaskCommentViewModel): Promise<TaskCommentViewModel> {
-    const response = await httpClient.post<TaskCommentViewModel>(`${BASE_URL}/comments`, data);
-    return response.data;
+    return await httpClient.post<TaskCommentViewModel>(`${BASE_URL}/comments`, data) as TaskCommentViewModel;
   },
 
   async updateComment(commentId: number, data: UpdateTaskCommentViewModel): Promise<TaskCommentViewModel> {
-    const response = await httpClient.put<TaskCommentViewModel>(`${BASE_URL}/comments/${commentId}`, data);
-    return response.data;
+    return await httpClient.put<TaskCommentViewModel>(`${BASE_URL}/comments/${commentId}`, data) as TaskCommentViewModel;
   },
 
   async deleteComment(commentId: number): Promise<void> {
@@ -67,13 +65,14 @@ export const taskService = {
   },
 
   async createLabel(data: CreateTaskLabelViewModel): Promise<TaskLabelViewModel> {
-    const response = await httpClient.post<TaskLabelViewModel>(`${BASE_URL}/labels`, data);
-    return response.data;
+    return await httpClient.post<TaskLabelViewModel>(`${BASE_URL}/labels`, data) as TaskLabelViewModel;
   },
 
   async getLabelsByProject(projectId?: number): Promise<TaskLabelViewModel[]> {
-    const response = await httpClient.get<TaskLabelViewModel[]>(`${BASE_URL}/labels/project/${projectId ?? 'null'}`);
-    return response.data;
+    const url = projectId 
+      ? `${BASE_URL}/labels/project/${projectId}` 
+      : `${BASE_URL}/labels/project/null`;
+    return (await httpClient.get<TaskLabelViewModel[]>(url) || []) as TaskLabelViewModel[];
   },
 
   async deleteLabel(labelId: number): Promise<void> {
@@ -81,7 +80,6 @@ export const taskService = {
   },
 
   async getAuditLogs(taskId: number): Promise<TaskAuditLogViewModel[]> {
-    const response = await httpClient.get<TaskAuditLogViewModel[]>(`${BASE_URL}/${taskId}/audit-logs`);
-    return response.data;
+    return (await httpClient.get<TaskAuditLogViewModel[]>(`${BASE_URL}/${taskId}/audit-logs`) || []) as TaskAuditLogViewModel[];
   },
 };

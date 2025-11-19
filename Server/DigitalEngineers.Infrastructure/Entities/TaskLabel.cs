@@ -1,17 +1,16 @@
 namespace DigitalEngineers.Infrastructure.Entities;
 
 /// <summary>
-/// Task label entity - labels/tags for tasks
+/// Task label entity - many-to-many relationship between tasks and labels
 /// </summary>
 public class TaskLabel
 {
     public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
-    public int? ProjectId { get; set; }
+    public int TaskId { get; set; }
+    public int LabelId { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation properties
-    public Project? Project { get; set; }
-    public ICollection<TaskLabelAssignment> TaskAssignments { get; set; } = new List<TaskLabelAssignment>();
+    public ProjectTask Task { get; set; } = null!;
+    public ProjectTaskLabel Label { get; set; } = null!;
 }
