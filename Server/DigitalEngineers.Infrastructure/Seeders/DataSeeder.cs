@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using TaskStatusEntity = DigitalEngineers.Infrastructure.Entities.TaskStatus;
+
 namespace DigitalEngineers.Infrastructure.Seeders;
 
 public static class DataSeeder
 {
-    public static async Task SeedUsersAsync(IServiceProvider serviceProvider)
+    public static async System.Threading.Tasks.Task SeedUsersAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -40,7 +42,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+    private static async System.Threading.Tasks.Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
     {
         string[] roles = { "SuperAdmin", "Admin", "Client", "Provider" };
 
@@ -53,7 +55,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedAdminsAsync(UserManager<ApplicationUser> userManager)
+    private static async System.Threading.Tasks.Task SeedAdminsAsync(UserManager<ApplicationUser> userManager)
     {
         var superAdminEmail = "super.admin@digitalengineers.com";
         var existingSuperAdmin = await userManager.FindByEmailAsync(superAdminEmail);
@@ -118,7 +120,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedProvidersAsync(UserManager<ApplicationUser> userManager)
+    private static async System.Threading.Tasks.Task SeedProvidersAsync(UserManager<ApplicationUser> userManager)
     {
         var providers = new List<(string Id, string FirstName, string LastName, string Email, string Phone, 
             string ProfilePic, string Bio, string Location, string Website, int MonthsAgo, int UpdateDaysAgo)>
@@ -202,7 +204,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedClientsAsync(UserManager<ApplicationUser> userManager)
+    private static async System.Threading.Tasks.Task SeedClientsAsync(UserManager<ApplicationUser> userManager)
     {
         var clients = new List<(string Id, string FirstName, string LastName, string Email, string Phone,
             string ProfilePic, string Bio, string Location, int MonthsAgo)>
@@ -255,13 +257,14 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedlookupsDataAsync(ApplicationDbContext context, ILogger logger)
+    private static async System.Threading.Tasks.Task SeedlookupsDataAsync(ApplicationDbContext context, ILogger logger)
     {
         await SeedProfessionsAsync(context, logger);
         await SeedLicenseTypesAsync(context, logger);
+        await SeedTaskStatusesAsync(context, logger);
     }
 
-    private static async Task SeedProfessionsAsync(ApplicationDbContext context, ILogger logger)
+    private static async System.Threading.Tasks.Task SeedProfessionsAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.Professions.AnyAsync())
         {
@@ -278,7 +281,7 @@ public static class DataSeeder
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedLicenseTypesAsync(ApplicationDbContext context, ILogger logger)
+    private static async System.Threading.Tasks.Task SeedLicenseTypesAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.LicenseTypes.AnyAsync())
         {
@@ -320,7 +323,54 @@ public static class DataSeeder
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedSpecialistsAsync(ApplicationDbContext context, ILogger logger)
+    private static async System.Threading.Tasks.Task SeedTaskStatusesAsync(ApplicationDbContext context, ILogger logger)
+    {
+        if (await context.Set<TaskStatusEntity>().AnyAsync())
+        {
+            return;
+        }
+
+        var statuses = new List<TaskStatusEntity>
+        {
+            new() 
+            { 
+                Name = "Todo", 
+                Color = "#6c757d", 
+                Order = 1, 
+                IsDefault = true, 
+                IsCompleted = false, 
+                ProjectId = null,
+                CreatedAt = DateTime.UtcNow
+            },
+            new() 
+            { 
+                Name = "In Progress", 
+                Color = "#007bff", 
+                Order = 2, 
+                IsDefault = false, 
+                IsCompleted = false, 
+                ProjectId = null,
+                CreatedAt = DateTime.UtcNow
+            },
+            new() 
+            { 
+                Name = "Done", 
+                Color = "#28a745", 
+                Order = 3, 
+                IsDefault = false, 
+                IsCompleted = true, 
+                ProjectId = null,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        await context.Set<TaskStatusEntity>().AddRangeAsync(statuses);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {StatusCount} global task statuses", statuses.Count);
+    }
+
+    private static async System.Threading.Tasks.Task SeedSpecialistsAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.Specialists.AnyAsync())
         {
@@ -395,7 +445,7 @@ public static class DataSeeder
         logger.LogInformation("Seeded {SpecialistCount} specialists with random licenses (5-10 per specialist)", specialists.Count);
     }
 
-    private static async Task SeedProjectsAsync(ApplicationDbContext context, ILogger logger)
+    private static async System.Threading.Tasks.Task SeedProjectsAsync(ApplicationDbContext context, ILogger logger)
     {
         if (await context.Projects.AnyAsync())
         {

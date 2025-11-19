@@ -336,7 +336,11 @@ public class ProjectService : IProjectService
 
     public async Task<IEnumerable<ProjectDto>> GetProjectsAsync(
         string userId, 
-        string[] userRoles, 
+        string[] userRoles,
+        string[]? statuses = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        string? search = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<Project> query = _context.Projects
@@ -370,6 +374,59 @@ public class ProjectService : IProjectService
         {
             _logger.LogWarning("User {UserId} has no recognized role, returning empty list", userId);
             return Enumerable.Empty<ProjectDto>();
+        }
+
+        // Apply optional filters
+        if (statuses != null && statuses.Length > 0)
+        {
+            var parsedStatuses = statuses
+                .Where(s => Enum.TryParse<ProjectStatus>(s, true, out _))
+                .Select(s => Enum.Parse<ProjectStatus>(s, true))
+                .ToList();
+            
+            if (parsedStatuses.Count > 0)
+            {
+                query = query.Where(p => parsedStatuses.Contains(p.Status));
+            }
+        }
+
+        if (dateFrom.HasValue)
+        {
+            // Convert to UTC if Kind is Unspecified or Local
+            var dateFromUtc = dateFrom.Value.Kind == DateTimeKind.Utc 
+                ? dateFrom.Value 
+                : DateTime.SpecifyKind(dateFrom.Value, DateTimeKind.Utc);
+            
+            query = query.Where(p => p.CreatedAt >= dateFromUtc);
+        }
+
+        if (dateTo.HasValue)
+        {
+            // Convert to UTC if Kind is Unspecified or Local
+            var dateToUtc = dateTo.Value.Kind == DateTimeKind.Utc 
+                ? dateTo.Value 
+                : DateTime.SpecifyKind(dateTo.Value, DateTimeKind.Utc);
+            
+            var endOfDay = dateToUtc.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(p => p.CreatedAt <= endOfDay);
+        }
+
+        // Server-side search filter (project name, description, address, client name/email)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(searchLower) ||
+                p.Description.ToLower().Contains(searchLower) ||
+                p.StreetAddress.ToLower().Contains(searchLower) ||
+                p.City.ToLower().Contains(searchLower) ||
+                p.State.ToLower().Contains(searchLower) ||
+                (p.Client != null && (
+                    (p.Client.FirstName != null && p.Client.FirstName.ToLower().Contains(searchLower)) ||
+                    (p.Client.LastName != null && p.Client.LastName.ToLower().Contains(searchLower)) ||
+                    (p.Client.Email != null && p.Client.Email.ToLower().Contains(searchLower))
+                ))
+            );
         }
 
         var projects = await query

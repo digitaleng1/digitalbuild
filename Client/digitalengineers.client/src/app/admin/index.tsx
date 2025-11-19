@@ -5,6 +5,7 @@ const Error404Alt = lazy(() => import('../error/404-alt/page'));
 const Dashboards = lazy(() => import('./dashboards'));
 const Projects = lazy(() => import('./projects'));
 const Bids = lazy(() => import('./bids'));
+const Tasks = lazy(() => import('./tasks'));
 const ProvidersPage = lazy(() => import('./providers/page'));
 const ClientsPage = lazy(() => import('./clients/page'));
 
@@ -15,6 +16,7 @@ export default function Admin() {
                 <Route path="dashboard/*" element={<Dashboards />} />
                 <Route path="projects/*" element={<Projects />} />
                 <Route path="bids/*" element={<Bids />} />
+                <Route path="tasks/*" element={<Tasks />} />
                 <Route path="providers" element={<ProvidersPage />} />
                 <Route path="clients" element={<ClientsPage />} />
                 <Route path="*" element={<Error404Alt />} />

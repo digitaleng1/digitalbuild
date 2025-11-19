@@ -12,10 +12,19 @@ import { Link } from "react-router";
 import { useRolePrefix } from '@/common/hooks/useRolePrefix';
 import { useUserRole } from '@/common/hooks/useUserRole';
 import { useThemeContext } from '@/common/context';
+import { useAuthContext } from '@/common/context/useAuthContext';
 
 import SimplebarReactClient from "@/components/wrappers/SimplebarReactClient";
 
 const UserBox = () => {
+	const { user } = useAuthContext();
+	
+	const username = user?.firstName && user?.lastName 
+		? `${user.firstName} ${user.lastName}` 
+		: user?.email || 'Guest';
+	
+	const userImage = user?.profilePictureUrl || profileImg;
+	
 	return (
 		<div className="leftbar-user">
 			<Link to="/pages/profile">
@@ -84,12 +93,6 @@ const LeftSidebar = ({ isCondensed, leftbarDark }: LeftSidebarProps) => {
 				<span className="logo-sm">
 					<img src={leftbarDark ? logoSm : logoDarkSm} alt="logo" />
 				</span>
-				{/*<span className={`logo-lg  font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>*/}
-				{/*	Digital Engineers*/}
-				{/*</span>*/}
-				{/*<span className={`logo-sm font-24 ${leftbarDark ? 'text-light' : 'text-dark'}`}>*/}
-				{/*	DE*/}
-				{/*</span>*/}
 			</Link>
 
 			{!isCondensed && (

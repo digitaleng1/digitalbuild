@@ -12,7 +12,14 @@ public interface IProjectService
         CancellationToken cancellationToken = default);
 
     Task<ProjectDetailsDto?> GetProjectByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<ProjectDto>> GetProjectsAsync(string userId, string[] userRoles, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ProjectDto>> GetProjectsAsync(
+        string userId, 
+        string[] userRoles, 
+        string[]? statuses = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        string? search = null,
+        CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Updates project status (Admin/SuperAdmin only)

@@ -533,6 +533,86 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.ToTable("ProjectSpecialists", (string)null);
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssignedToUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("Deadline")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2147483647)
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsMilestone")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ParentTaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId")
+                        .HasDatabaseName("IX_Tasks_AssignedToUserId");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("IX_Tasks_CreatedByUserId");
+
+                    b.HasIndex("Deadline")
+                        .HasDatabaseName("IX_Tasks_Deadline");
+
+                    b.HasIndex("IsMilestone")
+                        .HasDatabaseName("IX_Tasks_IsMilestone");
+
+                    b.HasIndex("ParentTaskId")
+                        .HasDatabaseName("IX_Tasks_ParentTaskId");
+
+                    b.HasIndex("ProjectId")
+                        .HasDatabaseName("IX_Tasks_ProjectId");
+
+                    b.HasIndex("StatusId")
+                        .HasDatabaseName("IX_Tasks_StatusId");
+
+                    b.ToTable("Tasks", (string)null);
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -543,11 +623,13 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.Property<string>("ClientId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
 
                     b.Property<string>("Comment")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -569,7 +651,7 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.HasIndex("SpecialistId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Specialist", b =>
@@ -679,6 +761,269 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("SpecialistLicenseTypes", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UploadedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("TaskAttachments", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FieldName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NewValue")
+                        .HasMaxLength(2147483647)
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValue")
+                        .HasMaxLength(2147483647)
+                        .HasColumnType("text");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_TaskAuditLogs_CreatedAt");
+
+                    b.HasIndex("TaskId")
+                        .HasDatabaseName("IX_TaskAuditLogs_TaskId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_TaskAuditLogs_UserId");
+
+                    b.ToTable("TaskAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2147483647)
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEdited")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TaskComments", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskLabel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("Name", "ProjectId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TaskLabels_Name_ProjectId");
+
+                    b.ToTable("TaskLabels", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskLabelAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LabelId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabelId");
+
+                    b.HasIndex("TaskId", "LabelId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TaskLabelAssignments_TaskId_LabelId");
+
+                    b.ToTable("TaskLabelAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("TaskStatuses", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskWatcher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TaskId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TaskWatchers_TaskId_UserId");
+
+                    b.ToTable("TaskWatchers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -944,12 +1289,53 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Specialist");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectTask", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "AssignedToUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "ParentTask")
+                        .WithMany("ChildTasks")
+                        .HasForeignKey("ParentTaskId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.TaskStatus", "Status")
+                        .WithMany("Tasks")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedToUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ParentTask");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Status");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Review", b =>
                 {
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "Client")
                         .WithMany()
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
@@ -999,6 +1385,121 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("LicenseType");
 
                     b.Navigation("Specialist");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskAttachment", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "Task")
+                        .WithMany("Attachments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "UploadedByUser")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("UploadedByUser");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskAuditLog", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "Task")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskComment", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "Task")
+                        .WithMany("Comments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskLabel", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskLabelAssignment", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.TaskLabel", "Label")
+                        .WithMany("TaskAssignments")
+                        .HasForeignKey("LabelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "Task")
+                        .WithMany("LabelAssignments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Label");
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskStatus", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskWatcher", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectTask", "Task")
+                        .WithMany("Watchers")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1077,6 +1578,21 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Reviews");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectTask", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("ChildTasks");
+
+                    b.Navigation("Comments");
+
+                    b.Navigation("LabelAssignments");
+
+                    b.Navigation("Watchers");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Specialist", b =>
                 {
                     b.Navigation("AssignedProjects");
@@ -1086,6 +1602,16 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Portfolio");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskLabel", b =>
+                {
+                    b.Navigation("TaskAssignments");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.TaskStatus", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

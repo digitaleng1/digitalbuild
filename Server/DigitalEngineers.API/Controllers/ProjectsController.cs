@@ -113,6 +113,10 @@ public class ProjectsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ProjectViewModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<ProjectViewModel>>> GetProjects(
+        [FromQuery] string[]? statuses,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] string? search,
         CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -124,7 +128,14 @@ public class ProjectsController : ControllerBase
 
         var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
 
-        var projects = await _projectService.GetProjectsAsync(userId, roles, cancellationToken);
+        var projects = await _projectService.GetProjectsAsync(
+            userId, 
+            roles, 
+            statuses, 
+            dateFrom, 
+            dateTo, 
+            search, 
+            cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<ProjectViewModel>>(projects);
         
         return Ok(viewModels);

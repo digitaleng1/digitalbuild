@@ -5,6 +5,7 @@ const List = lazy(() => import('./list/page'));
 const Details = lazy(() => import('./details/page'));
 const Gantt = lazy(() => import('./gantt/page'));
 const Create = lazy(() => import('./create/page'));
+const Tasks = lazy(() => import('./tasks/page'));
 
 export default function Projects() {
     return (
@@ -14,6 +15,7 @@ export default function Projects() {
                 <Route path="details/:id" element={<Details />} />
                 <Route path="gantt" element={<Gantt />} />
                 <Route path="create" element={<Create />} />
+                <Route path="tasks/:id" element={<Tasks />} />
             </Route>
         </Routes>
     );

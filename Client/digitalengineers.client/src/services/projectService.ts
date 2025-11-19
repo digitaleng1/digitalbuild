@@ -5,8 +5,35 @@ class ProjectService {
 	/**
 	 * Get all projects for current user
 	 */
-	async getProjects(): Promise<ProjectDto[]> {
-		const data = await httpClient.get<ProjectDto[]>('/api/projects');
+	async getProjects(params?: {
+		statuses?: string[];
+		dateFrom?: string;
+		dateTo?: string;
+		search?: string;
+	}): Promise<ProjectDto[]> {
+		const queryParams = new URLSearchParams();
+		
+		if (params?.statuses && params.statuses.length > 0) {
+			params.statuses.forEach(status => queryParams.append('statuses', status));
+		}
+		
+		if (params?.dateFrom) {
+			queryParams.append('dateFrom', params.dateFrom);
+		}
+		
+		if (params?.dateTo) {
+			queryParams.append('dateTo', params.dateTo);
+		}
+		
+		if (params?.search) {
+			queryParams.append('search', params.search);
+		}
+		
+		const url = queryParams.toString() 
+			? `/api/projects?${queryParams.toString()}`
+			: '/api/projects';
+		
+		const data = await httpClient.get<ProjectDto[]>(url);
 		return data as ProjectDto[];
 	}
 

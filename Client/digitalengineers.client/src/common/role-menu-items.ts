@@ -75,6 +75,27 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
+		key: 'projects-tasks',
+		label: 'Tasks',
+		isTitle: false,
+		icon: 'uil-clipboard-alt',
+		expanded: true,
+		children: [
+			{
+				key: 'task-list',
+				label: 'List',
+				url: '/tasks/list',
+				parentKey: 'projects-tasks',
+			},
+			{
+				key: 'task-kanban',
+				label: 'Kanban Board',
+				url: '/tasks/kanban',
+				parentKey: 'projects-tasks',
+			},
+		],
+	},
+	{
 		key: 'account',
 		label: 'Account',
 		isTitle: false,
