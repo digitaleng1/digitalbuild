@@ -136,6 +136,21 @@ const ProjectTableRow = ({
 				</Badge>
 			</td>
 
+			{/* Metadata - Task Count */}
+			<td className="col-metadata">
+				<Link 
+					to={isAdmin ? `/admin/projects/tasks/${project.id}` : `/client/projects/tasks/${project.id}`}
+					className="text-decoration-none"
+					title="View project tasks"
+					onClick={(e) => e.stopPropagation()}
+				>
+					<span className="text-primary d-flex align-items-center">
+						<i className="mdi mdi-format-list-checks me-1"></i>
+						<strong>{project.taskCount} Tasks</strong>
+					</span>
+				</Link>
+			</td>
+
 			{/* Created Date */}
 			<td className="col-date">
 				<i className="mdi mdi-calendar text-muted me-1"></i>

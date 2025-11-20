@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DigitalEngineers.Infrastructure.Data.Configurations;
 
-using TaskStatusEntity = Entities.TaskStatus;
+using ProjectTaskStatusEntity = Entities.ProjectTaskStatus;
 
-public class TaskStatusConfiguration : IEntityTypeConfiguration<TaskStatusEntity>
+public class ProjectTaskStatusConfiguration : IEntityTypeConfiguration<ProjectTaskStatusEntity>
 {
-    public void Configure(EntityTypeBuilder<TaskStatusEntity> builder)
+    public void Configure(EntityTypeBuilder<ProjectTaskStatusEntity> builder)
     {
-        builder.ToTable("TaskStatuses");
+        builder.ToTable("ProjectTaskStatuses");
 
         builder.HasKey(ts => ts.Id);
 

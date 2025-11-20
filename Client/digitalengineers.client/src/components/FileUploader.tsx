@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { FormLabel, Row, Col } from 'react-bootstrap';
+import { FormLabel } from 'react-bootstrap';
 
 interface FileUploaderProps {
 	label?: string;
@@ -123,101 +123,94 @@ const FileUploader = ({
 
 	return (
 		<div className="file-uploader">
-			<Row>
-				<Col lg={6}>
-					{label && <FormLabel>{label}</FormLabel>}
-					<div
-						className={`file-drop-zone border rounded p-4 text-center ${
-							isDragging ? 'border-primary bg-light' : 'border-2 border-dashed'
-						}`}
-						onDragEnter={handleDragEnter}
-						onDragLeave={handleDragLeave}
-						onDragOver={handleDragOver}
-						onDrop={handleDrop}
-						onClick={handleClick}
-						style={{ cursor: 'pointer', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}
+			{label && <FormLabel>{label}</FormLabel>}
+			
+			{/* Drop Zone - Top */}
+			<div
+				className={`file-drop-zone border rounded p-4 text-center mb-3 ${
+					isDragging ? 'border-primary bg-light' : 'border-2 border-dashed'
+				}`}
+				onDragEnter={handleDragEnter}
+				onDragLeave={handleDragLeave}
+				onDragOver={handleDragOver}
+				onDrop={handleDrop}
+				onClick={handleClick}
+				style={{ cursor: 'pointer', minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}
+			>
+				<i className="mdi mdi-cloud-upload fs-1 text-muted mb-2"></i>
+				<p className="mb-1 fw-semibold">
+					Click to upload or drag and drop
+				</p>
+				<small className="text-muted d-block">
+					{acceptedFileTypes.join(', ')}
+				</small>
+				<small className="text-muted d-block mt-1">
+					Max {maxFileSize}MB per file • Maximum {maxFiles} files
+				</small>
+			</div>
+
+			<input
+				ref={fileInputRef}
+				type="file"
+				multiple
+				accept={acceptedFileTypes.join(',')}
+				onChange={handleFileInputChange}
+				style={{ display: 'none' }}
+			/>
+
+			{helpText && <small className="text-muted d-block mb-2">{helpText}</small>}
+
+			{error && (
+				<div className="alert alert-danger mb-2" role="alert">
+					<i className="mdi mdi-alert-circle-outline me-1"></i>
+					{error}
+				</div>
+			)}
+
+			{/* File List - Bottom */}
+			<div className="uploaded-files-container">
+				<div className="d-flex justify-content-between align-items-center mb-2">
+					<h6 className="mb-0">Uploaded Files</h6>
+					<span className="badge bg-primary">{value.length}/{maxFiles}</span>
+				</div>
+				
+				{value.length === 0 ? (
+					<div 
+						className="border border-dashed rounded p-3 text-center text-muted"
 					>
-						<i className="mdi mdi-cloud-upload fs-1 text-muted mb-2"></i>
-						<p className="mb-1 fw-semibold">
-							Click to upload or drag and drop
-						</p>
-						<small className="text-muted d-block">
-							{acceptedFileTypes.join(', ')}
-						</small>
-						<small className="text-muted d-block mt-1">
-							Max {maxFileSize}MB per file
-						</small>
-						<small className="text-muted d-block">
-							Maximum {maxFiles} files
-						</small>
+						<i className="mdi mdi-file-outline fs-2 mb-2"></i>
+						<p className="mb-0">No files uploaded yet</p>
+						<small>Upload files using the area above</small>
 					</div>
-
-					<input
-						ref={fileInputRef}
-						type="file"
-						multiple
-						accept={acceptedFileTypes.join(',')}
-						onChange={handleFileInputChange}
-						style={{ display: 'none' }}
-					/>
-
-					{helpText && <small className="text-muted d-block mt-2">{helpText}</small>}
-
-					{error && (
-						<div className="alert alert-danger mt-2 mb-0" role="alert">
-							<i className="mdi mdi-alert-circle-outline me-1"></i>
-							{error}
-						</div>
-					)}
-				</Col>
-
-				<Col lg={6}>
-					<div className="uploaded-files-container" style={{ minHeight: '300px' }}>
-						<div className="d-flex justify-content-between align-items-center mb-1">
-							<h6 className="mb-0">Uploaded Files</h6>
-							<span className="badge bg-primary">{value.length}/{maxFiles}</span>
-						</div>
-						
-						{value.length === 0 ? (
-							<div 
-								className="border border-dashed rounded p-4 text-center text-muted"
-								style={{ minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}
+				) : (
+					<div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+						{value.map((file, index) => (
+							<div
+								key={index}
+								className="list-group-item d-flex justify-content-between align-items-center py-2"
 							>
-								<i className="mdi mdi-file-outline fs-1 mb-2"></i>
-								<p className="mb-0">No files uploaded yet</p>
-								<small>Upload files using the area on the left</small>
-							</div>
-						) : (
-							<div className="list-group" style={{ maxHeight: '260px', overflowY: 'auto' }}>
-								{value.map((file, index) => (
-									<div
-										key={index}
-										className="list-group-item d-flex justify-content-between align-items-center py-2"
-									>
-										<div className="d-flex align-items-center flex-grow-1 me-2" style={{ minWidth: 0 }}>
-											<i className="mdi mdi-file-document-outline fs-4 text-primary me-2 flex-shrink-0"></i>
-											<div className="flex-grow-1" style={{ minWidth: 0 }}>
-												<div className="fw-semibold text-truncate" title={file.name}>
-													{file.name}
-												</div>
-												<small className="text-muted">{formatFileSize(file.size)}</small>
-											</div>
+								<div className="d-flex align-items-center flex-grow-1 me-2" style={{ minWidth: 0 }}>
+									<i className="mdi mdi-file-document-outline fs-4 text-primary me-2 flex-shrink-0"></i>
+									<div className="flex-grow-1" style={{ minWidth: 0 }}>
+										<div className="fw-semibold text-truncate" title={file.name}>
+											{file.name}
 										</div>
-										<button
-											type="button"
-											className="btn btn-sm btn-link text-danger p-0 flex-shrink-0"
-											onClick={() => handleRemoveFile(index)}
-											title="Remove file"
-										>
-											<i className="mdi mdi-close fs-5"></i>
-										</button>
+										<small className="text-muted">{formatFileSize(file.size)}</small>
 									</div>
-								))}
+								</div>
+								<button
+									type="button"
+									className="btn btn-sm btn-link text-danger p-0 flex-shrink-0"
+									onClick={() => handleRemoveFile(index)}
+									title="Remove file"
+								>
+									<i className="mdi mdi-close fs-5"></i>
+								</button>
 							</div>
-						)}
+						))}
 					</div>
-				</Col>
-			</Row>
+				)}
+			</div>
 		</div>
 	);
 };

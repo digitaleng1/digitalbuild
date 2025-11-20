@@ -1,3 +1,4 @@
+using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.Task;
 using DigitalEngineers.Domain.DTOs.TaskComment;
 using DigitalEngineers.Domain.DTOs.TaskAttachment;
@@ -12,18 +13,23 @@ using DigitalEngineers.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using TaskStatusEntity = DigitalEngineers.Infrastructure.Entities.TaskStatus;
+using ProjectTaskStatusEntity = DigitalEngineers.Infrastructure.Entities.ProjectTaskStatus;
 
 namespace DigitalEngineers.Application.Services;
 
 public class TaskService : ITaskService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<TaskService> _logger;
 
-    public TaskService(ApplicationDbContext context, ILogger<TaskService> logger)
+    public TaskService(
+        ApplicationDbContext context,
+        IFileStorageService fileStorageService,
+        ILogger<TaskService> logger)
     {
         _context = context;
+        _fileStorageService = fileStorageService;
         _logger = logger;
     }
 
@@ -33,7 +39,7 @@ public class TaskService : ITaskService
         if (!projectExists)
             throw new ProjectNotFoundException(dto.ProjectId);
 
-        var statusExists = await _context.Set<TaskStatusEntity>().AnyAsync(s => s.Id == dto.StatusId, cancellationToken);
+        var statusExists = await _context.Set<ProjectTaskStatusEntity>().AnyAsync(s => s.Id == dto.StatusId, cancellationToken);
         if (!statusExists)
             throw new ValidationException("Invalid status ID");
 
@@ -273,7 +279,7 @@ public class TaskService : ITaskService
         if (task == null)
             throw new TaskNotFoundException(id);
 
-        var statusExists = await _context.Set<TaskStatusEntity>().AnyAsync(s => s.Id == dto.StatusId, cancellationToken);
+        var statusExists = await _context.Set<ProjectTaskStatusEntity>().AnyAsync(s => s.Id == dto.StatusId, cancellationToken);
         if (!statusExists)
             throw new ValidationException("Invalid status ID");
 
@@ -285,7 +291,7 @@ public class TaskService : ITaskService
         }
 
         var oldStatus = task.Status;
-        var newStatus = await _context.Set<TaskStatusEntity>().FindAsync(dto.StatusId);
+        var newStatus = await _context.Set<ProjectTaskStatusEntity>().FindAsync(dto.StatusId);
 
         var changes = new List<(string Field, string? OldValue, string? NewValue)>();
 
@@ -630,6 +636,25 @@ public class TaskService : ITaskService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<TaskStatusDto>> GetStatusesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var statuses = await _context.Set<ProjectTaskStatusEntity>()
+            .Where(s => s.ProjectId == projectId || s.ProjectId == null)
+            .OrderBy(s => s.Order)
+            .ToListAsync(cancellationToken);
+
+        return statuses.Select(s => new TaskStatusDto
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Color = s.Color,
+            Order = s.Order,
+            IsDefault = s.IsDefault,
+            IsCompleted = s.IsCompleted,
+            CreatedAt = s.CreatedAt
+        });
+    }
+
     public async Task<IEnumerable<TaskAuditLogDto>> GetAuditLogsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default)
     {
         var logs = await _context.Set<TaskAuditLog>()
@@ -650,6 +675,193 @@ public class TaskService : ITaskService
             NewValue = al.NewValue,
             CreatedAt = al.CreatedAt
         });
+    }
+
+    public async Task<TaskDto> CreateTaskAsync(
+        CreateTaskDto dto, 
+        string createdByUserId,
+        List<FileUploadInfo>? attachments = null,
+        CancellationToken cancellationToken = default)
+    {
+        var projectExists = await _context.Projects.AnyAsync(p => p.Id == dto.ProjectId, cancellationToken);
+        if (!projectExists)
+            throw new ProjectNotFoundException(dto.ProjectId);
+
+        var statusExists = await _context.Set<ProjectTaskStatusEntity>().AnyAsync(s => s.Id == dto.StatusId, cancellationToken);
+        if (!statusExists)
+            throw new ValidationException("Invalid status ID");
+
+        if (dto.AssignedToUserId != null)
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.AssignedToUserId, cancellationToken);
+            if (!userExists)
+                throw new ValidationException("Assigned user not found");
+        }
+
+        if (dto.ParentTaskId.HasValue)
+        {
+            var parentExists = await _context.Set<ProjectTask>().AnyAsync(t => t.Id == dto.ParentTaskId.Value, cancellationToken);
+            if (!parentExists)
+                throw new TaskNotFoundException(dto.ParentTaskId.Value);
+        }
+
+        if (dto.LabelIds.Length > 0)
+        {
+            var existingLabelIds = await _context.ProjectTaskLabels
+                .Where(l => dto.LabelIds.Contains(l.Id))
+                .Select(l => l.Id)
+                .ToListAsync(cancellationToken);
+
+            if (existingLabelIds.Count != dto.LabelIds.Length)
+            {
+                var invalidIds = dto.LabelIds.Except(existingLabelIds);
+                throw new ValidationException($"Invalid label IDs: {string.Join(", ", invalidIds)}");
+            }
+        }
+
+        var uploadedS3Keys = new List<string>();
+        
+        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            // 1. Create task
+            var task = new ProjectTask
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Priority = dto.Priority,
+                Deadline = dto.Deadline?.ToUniversalTime(),
+                IsMilestone = dto.IsMilestone,
+                AssignedToUserId = dto.AssignedToUserId,
+                ProjectId = dto.ProjectId,
+                CreatedByUserId = createdByUserId,
+                ParentTaskId = dto.ParentTaskId,
+                StatusId = dto.StatusId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Set<ProjectTask>().Add(task);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // 2. Upload attachments to S3
+            if (attachments != null && attachments.Count > 0)
+            {
+                foreach (var attachment in attachments)
+                {
+                    if (attachment.FileSize == 0)
+                        continue;
+
+                    try
+                    {
+                        // Upload to S3: projects/{projectId}/tasks/{taskId}/{GUID}_{fileName}
+                        var fileKey = await _fileStorageService.UploadTaskFileAsync(
+                            attachment.FileStream,
+                            attachment.FileName,
+                            attachment.ContentType,
+                            dto.ProjectId,
+                            task.Id,
+                            cancellationToken);
+
+                        uploadedS3Keys.Add(fileKey);
+
+                        // Create TaskAttachment record
+                        var taskAttachment = new TaskAttachment
+                        {
+                            TaskId = task.Id,
+                            FileName = attachment.FileName,
+                            FileUrl = fileKey,
+                            FileSize = attachment.FileSize,
+                            ContentType = attachment.ContentType,
+                            UploadedByUserId = createdByUserId,
+                            UploadedAt = DateTime.UtcNow
+                        };
+
+                        _context.Set<TaskAttachment>().Add(taskAttachment);
+
+                        // Audit log for attachment
+                        var attachmentAuditLog = new TaskAuditLog
+                        {
+                            TaskId = task.Id,
+                            UserId = createdByUserId,
+                            Action = TaskAuditAction.AttachmentAdded.ToString(),
+                            NewValue = attachment.FileName,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Set<TaskAuditLog>().Add(attachmentAuditLog);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to upload attachment {FileName} for task", attachment.FileName);
+                        throw;
+                    }
+                }
+            }
+
+            // 3. Add labels
+            if (dto.LabelIds.Length > 0)
+            {
+                var taskLabels = dto.LabelIds.Select(labelId => new TaskLabel
+                {
+                    TaskId = task.Id,
+                    LabelId = labelId,
+                    CreatedAt = DateTime.UtcNow
+                }).ToList();
+
+                _context.TaskLabels.AddRange(taskLabels);
+            }
+
+            // 4. Add watcher
+            var watcher = new TaskWatcher
+            {
+                TaskId = task.Id,
+                UserId = createdByUserId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Set<TaskWatcher>().Add(watcher);
+
+            // 5. Add audit log
+            var auditLog = new TaskAuditLog
+            {
+                TaskId = task.Id,
+                UserId = createdByUserId,
+                Action = TaskAuditAction.Created.ToString(),
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Set<TaskAuditLog>().Add(auditLog);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return await MapToTaskDtoAsync(task.Id, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            
+            _logger.LogError(ex, "Error creating task '{Title}' for project {ProjectId}. Rolling back transaction and cleaning up uploaded files.", 
+                dto.Title, dto.ProjectId);
+
+            // Cleanup: Delete all uploaded files from S3
+            if (uploadedS3Keys.Count > 0)
+            {
+                _logger.LogWarning("Cleaning up {FileCount} uploaded files from S3", uploadedS3Keys.Count);
+                
+                foreach (var s3Key in uploadedS3Keys)
+                {
+                    try
+                    {
+                        await _fileStorageService.DeleteFileAsync(s3Key, cancellationToken);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        _logger.LogError(deleteEx, "Failed to delete file from S3: {S3Key}. Manual cleanup may be required.", s3Key);
+                    }
+                }
+            }
+
+            throw;
+        }
     }
 
     private TaskDto MapToTaskDto(ProjectTask task)

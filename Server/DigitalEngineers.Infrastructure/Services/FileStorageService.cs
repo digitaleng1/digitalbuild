@@ -91,34 +91,6 @@ public class FileStorageService : IFileStorageService
         }
     }
 
-    public async Task<string> UploadFileAsync(
-        Stream fileStream, 
-        string fileName, 
-        string contentType, 
-        int projectId, 
-        CancellationToken cancellationToken = default)
-    {
-        var key = $"projects/{projectId}/files/{Guid.NewGuid()}_{fileName}";
-        
-        _logger.LogInformation("Uploading file to S3: {Key}, ContentType: {ContentType}", key, contentType);
-
-        var putRequest = new PutObjectRequest
-        {
-            BucketName = _settings.BucketName,
-            Key = key,
-            InputStream = fileStream,
-            ContentType = contentType,
-            AutoCloseStream = false
-        };
-
-        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
-        
-        _logger.LogInformation("File uploaded successfully: {Key}", key);
-
-        // Return S3 key instead of full URL
-        return key;
-    }
-
     public async Task<string> UploadPortfolioFileAsync(
         Stream fileStream, 
         string fileName, 
@@ -174,7 +146,29 @@ public class FileStorageService : IFileStorageService
     {
         var key = $"users/{userId}/{fileName}";
 
-        _logger.LogInformation("Uploading user avatar to S3: {Key}, ContentType: {ContentType}", key, contentType);
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+
+        return key;
+    }
+
+    public async Task<string> UploadTaskFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        int projectId,
+        int taskId,
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"projects/{projectId}/tasks/{taskId}/{Guid.NewGuid()}_{fileName}";
 
         var putRequest = new PutObjectRequest
         {
@@ -186,8 +180,52 @@ public class FileStorageService : IFileStorageService
         };
 
         await _s3Client.PutObjectAsync(putRequest, cancellationToken);
-        
-        _logger.LogInformation("User avatar uploaded successfully: {Key}", key);
+
+        return key;
+    }
+
+    public async Task<string> UploadProjectThumbnailAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        int projectId,
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"projects/{projectId}/thumbnail_{Guid.NewGuid()}_{fileName}";
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+
+        return key;
+    }
+
+    public async Task<string> UploadProjectFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        int projectId,
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"projects/{projectId}/files/{Guid.NewGuid()}_{fileName}";
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
 
         return key;
     }
@@ -197,8 +235,6 @@ public class FileStorageService : IFileStorageService
         try
         {
             var key = ExtractKeyFromUrl(fileUrl);
-            
-            _logger.LogInformation("Deleting file from S3: {Key}", key);
 
             var deleteRequest = new DeleteObjectRequest
             {
@@ -207,8 +243,6 @@ public class FileStorageService : IFileStorageService
             };
 
             await _s3Client.DeleteObjectAsync(deleteRequest, cancellationToken);
-            
-            _logger.LogInformation("File deleted successfully: {Key}", key);
             return true;
         }
         catch (AmazonS3Exception ex)
@@ -221,8 +255,6 @@ public class FileStorageService : IFileStorageService
     public async Task<Stream> DownloadFileAsync(string fileUrl, CancellationToken cancellationToken = default)
     {
         var key = ExtractKeyFromUrl(fileUrl);
-        
-        _logger.LogInformation("Downloading file from S3: {Key}", key);
 
         var getRequest = new GetObjectRequest
         {
@@ -235,8 +267,6 @@ public class FileStorageService : IFileStorageService
         var memoryStream = new MemoryStream();
         await response.ResponseStream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;
-        
-        _logger.LogInformation("File downloaded successfully: {Key}, Size: {Size} bytes", key, memoryStream.Length);
         
         return memoryStream;
     }

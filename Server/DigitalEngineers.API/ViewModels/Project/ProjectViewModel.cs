@@ -21,6 +21,9 @@ public class ProjectViewModel
     
     // Quote field
     public decimal? QuotedAmount { get; set; }
+    
+    // Task count
+    public int TaskCount { get; set; }
 }
 
 public class ProjectDetailsViewModel

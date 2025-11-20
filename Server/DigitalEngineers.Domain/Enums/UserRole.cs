@@ -1,9 +1,14 @@
 namespace DigitalEngineers.Domain.Enums;
 
-public enum UserRole
+public class UserRoles
 {
-    SuperAdmin,
-    Admin,
-    Client,
-    Provider
+    public const string SuperAdmin = "SuperAdmin";
+    public const string Admin = "Admin";
+    public const string Client = "Client";
+    public const string Provider = "Provider";
+    private readonly static string[] Array = new[] { SuperAdmin, Admin, Client, Provider };
+
+    public static string[] ToArray() {
+        return Array;
+    }
 }

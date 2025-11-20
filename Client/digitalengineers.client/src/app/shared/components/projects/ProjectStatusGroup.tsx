@@ -136,6 +136,7 @@ const ProjectStatusGroup = ({
 									<th className="col-client">Client</th>
 									<th className="col-location">Location</th>
 									<th className="col-scope">Scope</th>
+									<th className="col-metadata">Detais</th>
 									<th className="col-date">Created</th>
 									<th className="col-actions"></th>
 								</tr>

@@ -82,6 +82,7 @@ export interface ProjectDto {
 	managementType: string;
 	licenseTypeIds: number[];
 	quotedAmount?: number;
+	taskCount: number;
 }
 
 // Synchronized with ProjectDetailsViewModel from server

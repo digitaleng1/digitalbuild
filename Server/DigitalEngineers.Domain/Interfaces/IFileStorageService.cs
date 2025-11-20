@@ -2,7 +2,9 @@ namespace DigitalEngineers.Domain.Interfaces;
 
 public interface IFileStorageService
 {
-    Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType, int projectId, CancellationToken cancellationToken = default);
+    Task<string> UploadProjectThumbnailAsync(Stream fileStream, string fileName, string contentType, int projectId, CancellationToken cancellationToken = default);
+    Task<string> UploadProjectFileAsync(Stream fileStream, string fileName, string contentType, int projectId, CancellationToken cancellationToken = default);
+    Task<string> UploadTaskFileAsync(Stream fileStream, string fileName, string contentType, int projectId, int taskId, CancellationToken cancellationToken = default);
     Task<string> UploadPortfolioFileAsync(Stream fileStream, string fileName, string contentType, int specialistId, CancellationToken cancellationToken = default);
     Task<string> UploadLicenseFileAsync(Stream fileStream, string fileName, string contentType, int specialistId, CancellationToken cancellationToken = default);
     Task<string> UploadUserAvatarAsync(Stream fileStream, string fileName, string contentType, string userId, CancellationToken cancellationToken = default);

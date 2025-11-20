@@ -33,7 +33,7 @@ public class ProjectTask
     public Project Project { get; set; } = null!;
     public User CreatedByUser { get; set; } = null!;
     public ProjectTask? ParentTask { get; set; }
-    public TaskStatus Status { get; set; } = null!;
+    public ProjectTaskStatus Status { get; set; } = null!;
     
     // Child relationships
     public ICollection<ProjectTask> ChildTasks { get; set; } = new List<ProjectTask>();

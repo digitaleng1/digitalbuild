@@ -7,6 +7,7 @@ import { ToastProvider } from '@/contexts';
 // For Saas import Saas.scss
 import './assets/scss/app.scss';
 import './styles/toast-animations.css';
+import './styles/modal-custom.css';
 
 configureFakeBackend();
 

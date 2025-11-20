@@ -51,6 +51,11 @@
     width: 120px;
 }
 
+.project-table .col-metadata {
+    width: 100px;
+    text-align: center;
+}
+
 .project-table .col-date {
     width: 140px;
 }

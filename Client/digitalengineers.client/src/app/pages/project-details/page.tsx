@@ -1,7 +1,7 @@
 import { Row, Col, Card, CardBody, Badge, Spinner, Alert } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/common/context/useAuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Comments from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
 import Files from '@/app/client/projects/details/Files';
@@ -16,6 +16,7 @@ import QuoteReviewCard from '@/app/client/projects/details/QuoteReviewCard';
 import QuoteAcceptedAlert from '@/app/client/projects/details/QuoteAcceptedAlert';
 import QuoteSubmittedAlert from '@/app/client/projects/details/QuoteSubmittedAlert';
 import PendingAlert from '@/app/client/projects/details/PendingAlert';
+import { taskService } from '@/services/taskService';
 import classNames from 'classnames';
 
 const ProjectDetailsPage = () => {
@@ -23,12 +24,34 @@ const ProjectDetailsPage = () => {
 	const projectId = id ? parseInt(id, 10) : undefined;
 	const { hasAnyRole } = useAuthContext();
 	const [showStatusModal, setShowStatusModal] = useState(false);
+	const [taskCount, setTaskCount] = useState<number>(0);
+	const [loadingTaskCount, setLoadingTaskCount] = useState(false);
 	
 	const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
 	const isClient = hasAnyRole(['Client']);
 	const isProvider = hasAnyRole(['Provider']);
+
+	// Fetch task count
+	useEffect(() => {
+		const fetchTaskCount = async () => {
+			if (!projectId) return;
+			
+			try {
+				setLoadingTaskCount(true);
+				const tasks = await taskService.getTasksByProject(projectId);
+				setTaskCount(tasks.length);
+			} catch (err) {
+				console.error('Failed to fetch task count:', err);
+				setTaskCount(0);
+			} finally {
+				setLoadingTaskCount(false);
+			}
+		};
+
+		fetchTaskCount();
+	}, [projectId]);
 
 	if (loading) {
 		return (
@@ -150,6 +173,22 @@ const ProjectDetailsPage = () => {
 									<i className="mdi mdi-chart-timeline-variant me-1"></i>
 									<small>Scope: {scopeLabel}</small>
 								</div>
+								
+								{/* Task Count with Link */}
+								<Link 
+									to={isAdmin ? `/admin/projects/tasks/${projectId}` : `/client/projects/tasks/${projectId}`}
+									className="d-flex align-items-center text-decoration-none"
+									title="View project tasks"
+								>
+									<div className="d-flex align-items-center text-primary">
+										<i className="mdi mdi-format-list-checks me-1"></i>
+										{loadingTaskCount ? (
+											<span className="spinner-border spinner-border-sm" role="status"></span>
+										) : (
+											<small><strong>{taskCount}</strong> {taskCount === 1 ? 'Task' : 'Tasks'}</small>
+										)}
+									</div>
+								</Link>
 							</div>
 
 							{project.thumbnailUrl && (

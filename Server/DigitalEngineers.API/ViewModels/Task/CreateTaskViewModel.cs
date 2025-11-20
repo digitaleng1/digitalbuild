@@ -1,4 +1,6 @@
 using DigitalEngineers.Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace DigitalEngineers.API.ViewModels.Task;
 
@@ -15,5 +17,9 @@ public class CreateTaskViewModel
     public int? ParentTaskId { get; set; }
     public int StatusId { get; set; }
     
-    public int[] LabelIds { get; set; } = [];
+    // Serialized as JSON string in multipart form
+    public string? LabelIdsJson { get; set; }
+    
+    // NEW: File attachments
+    public List<IFormFile>? Attachments { get; set; }
 }

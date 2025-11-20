@@ -1,9 +1,9 @@
 namespace DigitalEngineers.Infrastructure.Entities;
 
 /// <summary>
-/// Task status entity - dynamic statuses for tasks
+/// Project task status entity - dynamic statuses for tasks
 /// </summary>
-public class TaskStatus
+public class ProjectTaskStatus
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;

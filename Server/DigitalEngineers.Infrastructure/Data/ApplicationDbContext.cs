@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DigitalEngineers.Infrastructure.Data;
 
 using ProjectTaskEntity = Entities.ProjectTask;
-using TaskStatusEntity = Entities.TaskStatus;
+using ProjectTaskStatusEntity = Entities.ProjectTaskStatus;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
@@ -32,7 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     // Task Management System
     public DbSet<ProjectTaskEntity> Tasks => Set<ProjectTaskEntity>();
-    public DbSet<TaskStatusEntity> TaskStatuses => Set<TaskStatusEntity>();
+    public DbSet<ProjectTaskStatusEntity> ProjectTaskStatuses => Set<ProjectTaskStatusEntity>();
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
     public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();

@@ -104,6 +104,9 @@ const AdminProjectsManagement = () => {
 					basePath="/admin/projects"
 					showCreateButton={false}
 					projects={filteredProjects}
+					loading={loading}
+					error={error}
+					onRefresh={() => window.location.reload()}
 				/>
 			)}
 

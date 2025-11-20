@@ -3,12 +3,13 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { Card, Badge, Spinner, Button } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
-import type { TaskViewModel, TaskStatusViewModel } from '@/types/task';
+import type { TaskViewModel, ProjectTaskStatusViewModel } from '@/types/task';
 import type { ProjectDto } from '@/types/project';
 import { taskService } from '@/services/taskService';
 import { getPriorityColor, getPriorityLabel, formatDate, isOverdue } from '@/utils/taskHelpers';
-import CreateTaskModal from './CreateTaskModal';
+import TaskModal from './TaskModal';
 import ProjectTaskStats from '@/components/project/ProjectTaskStats';
+import { useToast } from '@/contexts/ToastContext';
 
 interface TaskKanbanBoardProps {
   projectId: number;
@@ -18,24 +19,31 @@ interface TaskKanbanBoardProps {
 }
 
 interface TaskColumn {
-  status: TaskStatusViewModel;
+  status: ProjectTaskStatusViewModel;
   tasks: TaskViewModel[];
 }
 
 const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: TaskKanbanBoardProps) => {
   const [columns, setColumns] = useState<TaskColumn[]>([]);
-  const [statuses, setStatuses] = useState<TaskStatusViewModel[]>([]);
+  const [statuses, setStatuses] = useState<ProjectTaskStatusViewModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>();
+  const { showSuccess, showError } = useToast();
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Load tasks for the project - handle errors separately
+      // Load statuses first
+      const statusList = await taskService.getStatusesByProject(projectId);
+      setStatuses(statusList);
+
+      // Load tasks for the project
       let tasks: TaskViewModel[] = [];
       
       try {
@@ -45,32 +53,6 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
         // Keep tasks as empty array
       }
 
-      // If no tasks, show empty board (no columns)
-      if (!tasks || tasks.length === 0) {
-        setStatuses([]);
-        setColumns([]);
-        return; // Exit early - show empty state
-      }
-
-      // Get unique statuses from tasks (in order)
-      const uniqueStatuses = new Map<number, TaskStatusViewModel>();
-      tasks.forEach(task => {
-        if (!uniqueStatuses.has(task.statusId)) {
-          uniqueStatuses.set(task.statusId, {
-            id: task.statusId,
-            name: task.statusName,
-            color: task.statusColor,
-            order: 0, // Will be set by server
-            isDefault: false,
-            isCompleted: false,
-            createdAt: new Date().toISOString(),
-          });
-        }
-      });
-
-      const statusList = Array.from(uniqueStatuses.values()).sort((a, b) => a.id - b.id);
-      setStatuses(statusList);
-
       // Group tasks by status
       const cols = statusList.map(status => ({
         status,
@@ -79,8 +61,8 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
 
       setColumns(cols);
     } catch (err) {
-      console.error('Failed to load tasks:', err);
-      setError('Failed to load tasks. Please try again.');
+      console.error('Failed to load data:', err);
+      setError('Failed to load task board. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -94,11 +76,20 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
     onTaskClick?.(taskId);
   };
 
-  const handleCreateTask = () => {
-    setShowCreateModal(true);
+  const handleViewTask = (e: React.MouseEvent, taskId: number) => {
+    e.stopPropagation();
+    setSelectedTaskId(taskId);
+    setModalMode('edit');
+    setShowModal(true);
   };
 
-  const handleCreateSuccess = () => {
+  const handleCreateTask = () => {
+    setSelectedTaskId(undefined);
+    setModalMode('create');
+    setShowModal(true);
+  };
+
+  const handleModalSuccess = () => {
     loadData();
   };
 
@@ -171,10 +162,13 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
           labelIds: [], // Labels will be preserved on server
         });
 
+        showSuccess('Task Updated', `Task moved to ${destColumn.status.name}`);
+
         // Reload data to get updated task
         await loadData();
       } catch (error) {
         console.error('Failed to update task status:', error);
+        showError('Update Failed', 'Failed to update task status');
         // Rollback on error
         setColumns(columns);
       } finally {
@@ -202,37 +196,6 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
     );
   }
 
-  // Show empty state if no columns
-  if (columns.length === 0) {
-    return (
-      <>
-        <ProjectTaskStats projectId={projectId} project={project} />
-
-        <div className="alert alert-info d-flex align-items-center justify-content-between mt-3" role="alert">
-          <div className="d-flex align-items-center">
-            <Icon icon="mdi:information-outline" width={24} className="me-2" />
-            <span>No tasks found for this project. Create your first task to get started!</span>
-          </div>
-          {canEdit && (
-            <Button variant="primary" size="sm" onClick={handleCreateTask}>
-              <Icon icon="mdi:plus" width={18} className="me-1" />
-              Create Task
-            </Button>
-          )}
-        </div>
-
-        <CreateTaskModal
-          show={showCreateModal}
-          onHide={() => setShowCreateModal(false)}
-          projectId={projectId}
-          statuses={statuses.length > 0 ? statuses : [{ id: 1, name: 'To Do', color: '#6c757d', order: 0, isDefault: true, isCompleted: false, createdAt: new Date().toISOString() }]
-          }
-          onSuccess={handleCreateSuccess}
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <ProjectTaskStats projectId={projectId} project={project} />
@@ -247,152 +210,172 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
         )}
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="board">
-          {columns.map(column => (
-            <Droppable key={column.status.id} droppableId={String(column.status.id)}>
-              {(provided) => (
-                <div 
-                  className="tasks" 
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  <h5 className="mt-0 task-header text-uppercase d-flex align-items-center gap-2">
-                    {column.status.color && (
-                      <span 
-                        className="badge rounded-pill" 
-                        style={{ backgroundColor: column.status.color, width: '10px', height: '10px' }}
-                      />
+      {columns.length === 0 ? (
+        <div className="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+          <div className="d-flex align-items-center">
+            <Icon icon="mdi:information-outline" width={24} className="me-2" />
+            <span>No task statuses found for this project. Please configure task statuses first.</span>
+          </div>
+        </div>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="board">
+            {columns.map(column => (
+              <Droppable key={column.status.id} droppableId={String(column.status.id)}>
+                {(provided) => (
+                  <div 
+                    className="tasks" 
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                  >
+                    <h5 className="mt-0 task-header text-uppercase d-flex align-items-center gap-2">
+                      {column.status.color && (
+                        <span 
+                          className="badge rounded-pill" 
+                          style={{ backgroundColor: column.status.color, width: '10px', height: '10px' }}
+                        />
+                      )}
+                      {column.status.name} ({column.tasks.length})
+                    </h5>
+
+                    {column.tasks.length === 0 && (
+                      <p className="text-center text-muted pt-2 mb-0">No tasks</p>
                     )}
-                    {column.status.name} ({column.tasks.length})
-                  </h5>
 
-                  {column.tasks.length === 0 && (
-                    <p className="text-center text-muted pt-2 mb-0">No tasks</p>
-                  )}
-
-                  {column.tasks.map((task, index) => (
-                    <Draggable 
-                      key={task.id} 
-                      draggableId={String(task.id)} 
-                      index={index}
-                      isDragDisabled={!canEdit || updating}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                            ...provided.draggableProps.style,
-                            marginTop: '1rem',
-                          }}
-                        >
-                          <Card 
-                            className="mb-0 shadow-sm"
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => handleTaskClick(task.id)}
+                    {column.tasks.map((task, index) => (
+                      <Draggable 
+                        key={task.id} 
+                        draggableId={String(task.id)} 
+                        index={index}
+                        isDragDisabled={!canEdit || updating}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              marginTop: '1rem',
+                            }}
                           >
-                            <Card.Body className="p-3">
-                              <div className="d-flex justify-content-between align-items-start mb-2">
-                                <h6 className="mb-0 fw-semibold">{task.title}</h6>
-                                <Badge bg={getPriorityColor(task.priority)} className="ms-2">
-                                  {getPriorityLabel(task.priority)}
-                                </Badge>
-                              </div>
-
-                              {task.description && (
-                                <p className="text-muted small mb-2" style={{ 
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                }}>
-                                  {task.description}
-                                </p>
-                              )}
-
-                              {task.deadline && (
-                                <div className="mb-2">
-                                  <Badge bg={isOverdue(task.deadline) ? 'danger' : 'secondary'} className="small">
-                                    <Icon icon="mdi:calendar-clock" width={14} className="me-1" />
-                                    {formatDate(task.deadline)}
-                                  </Badge>
-                                </div>
-                              )}
-
-                              {task.assignedToUserName && (
-                                <div className="d-flex align-items-center gap-1 mb-2">
-                                  <Icon icon="mdi:account-circle" width={16} className="text-primary" />
-                                  <span className="small text-muted">{task.assignedToUserName}</span>
-                                </div>
-                              )}
-
-                              {task.labels.length > 0 && (
-                                <div className="d-flex gap-1 flex-wrap mb-2">
-                                  {task.labels.slice(0, 3).map((label, idx) => (
-                                    <Badge key={idx} bg="light" text="dark" className="small">
-                                      {label}
+                            <Card 
+                              className="mb-0 shadow-sm"
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <Card.Body className="p-3">
+                                <div className="d-flex justify-content-between align-items-start mb-2">
+                                  <h6 className="mb-0 fw-semibold flex-grow-1">{task.title}</h6>
+                                  <div className="d-flex align-items-center gap-2">
+                                    {task.isMilestone && (
+                                      <Badge bg="warning" className="d-flex align-items-center gap-1">
+                                        <Icon icon="mdi:flag" width={14} />
+                                        <span>Milestone</span>
+                                      </Badge>
+                                    )}
+                                    <Badge bg={getPriorityColor(task.priority)}>
+                                      {getPriorityLabel(task.priority)}
                                     </Badge>
-                                  ))}
-                                  {task.labels.length > 3 && (
-                                    <Badge bg="light" text="dark" className="small">
-                                      +{task.labels.length - 3}
+                                  </div>
+                                </div>
+
+                                {task.description && (
+                                  <p className="text-muted small mb-2" style={{ 
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                  }}>
+                                    {task.description}
+                                  </p>
+                                )}
+
+                                {task.deadline && (
+                                  <div className="mb-2">
+                                    <Badge bg={isOverdue(task.deadline) ? 'danger' : 'secondary'} className="small">
+                                      <Icon icon="mdi:calendar-clock" width={14} className="me-1" />
+                                      {formatDate(task.deadline)}
                                     </Badge>
+                                  </div>
+                                )}
+
+                                {task.assignedToUserName && (
+                                  <div className="d-flex align-items-center gap-1 mb-2">
+                                    <Icon icon="mdi:account-circle" width={16} className="text-primary" />
+                                    <span className="small text-muted">{task.assignedToUserName}</span>
+                                  </div>
+                                )}
+
+                                {task.labels.length > 0 && (
+                                  <div className="d-flex gap-1 flex-wrap mb-2">
+                                    {task.labels.slice(0, 3).map((label, idx) => (
+                                      <Badge key={idx} bg="light" text="dark" className="small">
+                                        {label}
+                                      </Badge>
+                                    ))}
+                                    {task.labels.length > 3 && (
+                                      <Badge bg="light" text="dark" className="small">
+                                        +{task.labels.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="d-flex align-items-center justify-content-between gap-3 mt-2 text-muted small">
+                                  <div className="d-flex align-items-center gap-3">
+                                    <div className="d-flex align-items-center gap-1">
+                                      <Icon icon="mdi:comment-outline" width={16} />
+                                      <span>{task.commentsCount}</span>
+                                    </div>
+                                  
+                                    <div className="d-flex align-items-center gap-1">
+                                      <Icon icon="mdi:paperclip" width={16} />
+                                      <span>{task.attachmentsCount}</span>
+                                    </div>
+
+                                    {task.watchersCount > 0 && (
+                                      <div className="d-flex align-items-center gap-1">
+                                        <Icon icon="mdi:eye-outline" width={16} />
+                                        <span>{task.watchersCount}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {canEdit && (
+                                    <Icon 
+                                      icon="mdi:pencil-outline" 
+                                      width={18} 
+                                      className="text-primary"
+                                      style={{ cursor: 'pointer' }}
+                                      onClick={(e) => handleViewTask(e, task.id)}
+                                      title="Edit task"
+                                    />
                                   )}
                                 </div>
-                              )}
+                              </Card.Body>
+                            </Card>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+        </DragDropContext>
+      )}
 
-                              <div className="d-flex align-items-center gap-3 mt-2 text-muted small">
-                                {task.commentsCount > 0 && (
-                                  <div className="d-flex align-items-center gap-1">
-                                    <Icon icon="mdi:comment-outline" width={16} />
-                                    <span>{task.commentsCount}</span>
-                                  </div>
-                                )}
-                              
-                                {task.attachmentsCount > 0 && (
-                                  <div className="d-flex align-items-center gap-1">
-                                    <Icon icon="mdi:paperclip" width={16} />
-                                    <span>{task.attachmentsCount}</span>
-                                  </div>
-                                )}
-                              
-                                {task.watchersCount > 0 && (
-                                  <div className="d-flex align-items-center gap-1">
-                                    <Icon icon="mdi:eye-outline" width={16} />
-                                    <span>{task.watchersCount}</span>
-                                  </div>
-                                )}
-
-                                {task.isMilestone && (
-                                  <div className="d-flex align-items-center gap-1 text-warning">
-                                    <Icon icon="mdi:flag" width={16} />
-                                    <span>Milestone</span>
-                                  </div>
-                                )}
-                              </div>
-                            </Card.Body>
-                          </Card>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
-      </DragDropContext>
-
-      <CreateTaskModal
-        show={showCreateModal}
-        onHide={() => setShowCreateModal(false)}
+      <TaskModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        mode={modalMode}
+        taskId={selectedTaskId}
         projectId={projectId}
         statuses={statuses}
-        onSuccess={handleCreateSuccess}
+        onSuccess={handleModalSuccess}
       />
     </>
   );

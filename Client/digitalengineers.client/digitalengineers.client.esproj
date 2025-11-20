@@ -11,5 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\app\client\projects\hooks\" />
+    <Folder Include="src\components\task\details\" />
   </ItemGroup>
 </Project>

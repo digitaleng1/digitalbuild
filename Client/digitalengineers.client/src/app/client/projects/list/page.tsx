@@ -1,7 +1,10 @@
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { ProjectList } from '@/app/shared/components/projects';
+import useProjects from '@/app/shared/hooks/useProjects';
 
 const ListProject = () => {
+	const { projects, loading, error } = useProjects();
+
 	return (
 		<>
 			<PageBreadcrumb title="Project List" subName="Projects" />
@@ -10,6 +13,9 @@ const ListProject = () => {
 				basePath="/client/projects"
 				createProjectUrl="/client/projects/create"
 				showCreateButton={true}
+				projects={projects}
+				loading={loading}
+				error={error}
 			/>
 		</>
 	);

@@ -2,6 +2,7 @@ using DigitalEngineers.API.ViewModels.Task;
 using DigitalEngineers.API.ViewModels.TaskComment;
 using DigitalEngineers.API.ViewModels.TaskLabel;
 using DigitalEngineers.API.ViewModels.TaskAuditLog;
+using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.Task;
 using DigitalEngineers.Domain.DTOs.TaskComment;
 using DigitalEngineers.Domain.DTOs.TaskLabel;
@@ -9,6 +10,7 @@ using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using AutoMapper;
 
 namespace DigitalEngineers.API.Controllers;
 
@@ -18,33 +20,42 @@ namespace DigitalEngineers.API.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+    private readonly IMapper _mapper;
 
-    public TasksController(ITaskService taskService)
+    public TasksController(ITaskService taskService, IMapper mapper)
     {
         _taskService = taskService;
+        _mapper = mapper;
     }
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [HttpPost]
-    public async Task<ActionResult<TaskViewModel>> CreateTask([FromBody] CreateTaskViewModel viewModel, CancellationToken cancellationToken)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<TaskViewModel>> CreateTask([FromForm] CreateTaskViewModel viewModel, CancellationToken cancellationToken)
     {
-        var dto = new CreateTaskDto
+        var dto = _mapper.Map<CreateTaskDto>(viewModel);
+        
+        // Parse LabelIdsJson if provided
+        if (!string.IsNullOrWhiteSpace(viewModel.LabelIdsJson))
         {
-            Title = viewModel.Title,
-            Description = viewModel.Description,
-            Priority = viewModel.Priority,
-            Deadline = viewModel.Deadline,
-            IsMilestone = viewModel.IsMilestone,
-            AssignedToUserId = viewModel.AssignedToUserId,
-            ProjectId = viewModel.ProjectId,
-            ParentTaskId = viewModel.ParentTaskId,
-            StatusId = viewModel.StatusId,
-            LabelIds = viewModel.LabelIds
-        };
-
-        var task = await _taskService.CreateTaskAsync(dto, GetUserId(), cancellationToken);
-        var result = MapToViewModel(task);
+            dto.LabelIds = System.Text.Json.JsonSerializer.Deserialize<int[]>(viewModel.LabelIdsJson) ?? [];
+        }
+        
+        // Convert IFormFile to FileUploadInfo
+        List<FileUploadInfo>? attachments = null;
+        if (viewModel.Attachments != null && viewModel.Attachments.Count > 0)
+        {
+            attachments = viewModel.Attachments.Select(f => new FileUploadInfo(
+                f.OpenReadStream(),
+                f.FileName,
+                f.ContentType,
+                f.Length
+            )).ToList();
+        }
+        
+        var task = await _taskService.CreateTaskAsync(dto, GetUserId(), attachments, cancellationToken);
+        var result = _mapper.Map<TaskViewModel>(task);
         
         return CreatedAtAction(nameof(GetTaskById), new { id = result.Id }, result);
     }
@@ -53,41 +64,29 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<TaskDetailViewModel>> GetTaskById(int id, CancellationToken cancellationToken)
     {
         var task = await _taskService.GetTaskByIdAsync(id, cancellationToken);
-        return Ok(MapToDetailViewModel(task));
+        return Ok(_mapper.Map<TaskDetailViewModel>(task));
     }
 
     [HttpGet("project/{projectId}")]
     public async Task<ActionResult<IEnumerable<TaskViewModel>>> GetTasksByProject(int projectId, CancellationToken cancellationToken)
     {
         var tasks = await _taskService.GetTasksByProjectIdAsync(projectId, cancellationToken);
-        return Ok(tasks.Select(MapToViewModel));
+        return Ok(_mapper.Map<IEnumerable<TaskViewModel>>(tasks));
     }
 
     [HttpGet("assigned")]
     public async Task<ActionResult<IEnumerable<TaskViewModel>>> GetMyTasks(CancellationToken cancellationToken)
     {
         var tasks = await _taskService.GetTasksByAssignedUserIdAsync(GetUserId(), cancellationToken);
-        return Ok(tasks.Select(MapToViewModel));
+        return Ok(_mapper.Map<IEnumerable<TaskViewModel>>(tasks));
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<TaskViewModel>> UpdateTask(int id, [FromBody] UpdateTaskViewModel viewModel, CancellationToken cancellationToken)
     {
-        var dto = new UpdateTaskDto
-        {
-            Title = viewModel.Title,
-            Description = viewModel.Description,
-            Priority = viewModel.Priority,
-            Deadline = viewModel.Deadline,
-            IsMilestone = viewModel.IsMilestone,
-            AssignedToUserId = viewModel.AssignedToUserId,
-            ParentTaskId = viewModel.ParentTaskId,
-            StatusId = viewModel.StatusId,
-            LabelIds = viewModel.LabelIds
-        };
-
+        var dto = _mapper.Map<UpdateTaskDto>(viewModel);
         var task = await _taskService.UpdateTaskAsync(id, dto, GetUserId(), cancellationToken);
-        return Ok(MapToViewModel(task));
+        return Ok(_mapper.Map<TaskViewModel>(task));
     }
 
     [HttpDelete("{id}")]
@@ -100,14 +99,9 @@ public class TasksController : ControllerBase
     [HttpPost("comments")]
     public async Task<ActionResult<TaskCommentViewModel>> AddComment([FromBody] CreateTaskCommentViewModel viewModel, CancellationToken cancellationToken)
     {
-        var dto = new CreateTaskCommentDto
-        {
-            TaskId = viewModel.TaskId,
-            Content = viewModel.Content
-        };
-
+        var dto = _mapper.Map<CreateTaskCommentDto>(viewModel);
         var comment = await _taskService.AddCommentAsync(dto, GetUserId(), cancellationToken);
-        var result = MapToCommentViewModel(comment);
+        var result = _mapper.Map<TaskCommentViewModel>(comment);
         
         return CreatedAtAction(nameof(GetTaskById), new { id = dto.TaskId }, result);
     }
@@ -115,13 +109,9 @@ public class TasksController : ControllerBase
     [HttpPut("comments/{commentId}")]
     public async Task<ActionResult<TaskCommentViewModel>> UpdateComment(int commentId, [FromBody] UpdateTaskCommentViewModel viewModel, CancellationToken cancellationToken)
     {
-        var dto = new UpdateTaskCommentDto
-        {
-            Content = viewModel.Content
-        };
-
+        var dto = _mapper.Map<UpdateTaskCommentDto>(viewModel);
         var comment = await _taskService.UpdateCommentAsync(commentId, dto, GetUserId(), cancellationToken);
-        return Ok(MapToCommentViewModel(comment));
+        return Ok(_mapper.Map<TaskCommentViewModel>(comment));
     }
 
     [HttpDelete("comments/{commentId}")]
@@ -148,15 +138,9 @@ public class TasksController : ControllerBase
     [HttpPost("labels")]
     public async Task<ActionResult<TaskLabelViewModel>> CreateLabel([FromBody] CreateTaskLabelViewModel viewModel, CancellationToken cancellationToken)
     {
-        var dto = new CreateTaskLabelDto
-        {
-            Name = viewModel.Name,
-            Color = viewModel.Color,
-            ProjectId = viewModel.ProjectId
-        };
-
+        var dto = _mapper.Map<CreateTaskLabelDto>(viewModel);
         var label = await _taskService.CreateLabelAsync(dto, cancellationToken);
-        var result = MapToLabelViewModel(label);
+        var result = _mapper.Map<TaskLabelViewModel>(label);
         
         return CreatedAtAction(nameof(GetLabelsByProject), new { projectId = dto.ProjectId }, result);
     }
@@ -165,7 +149,7 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<IEnumerable<TaskLabelViewModel>>> GetLabelsByProject(int? projectId, CancellationToken cancellationToken)
     {
         var labels = await _taskService.GetLabelsByProjectIdAsync(projectId, cancellationToken);
-        return Ok(labels.Select(MapToLabelViewModel));
+        return Ok(_mapper.Map<IEnumerable<TaskLabelViewModel>>(labels));
     }
 
     [HttpDelete("labels/{labelId}")]
@@ -179,121 +163,13 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<IEnumerable<TaskAuditLogViewModel>>> GetAuditLogs(int taskId, CancellationToken cancellationToken)
     {
         var logs = await _taskService.GetAuditLogsByTaskIdAsync(taskId, cancellationToken);
-        return Ok(logs.Select(MapToAuditLogViewModel));
+        return Ok(_mapper.Map<IEnumerable<TaskAuditLogViewModel>>(logs));
     }
 
-    private static TaskViewModel MapToViewModel(TaskDto dto) => new()
+    [HttpGet("statuses/project/{projectId}")]
+    public async Task<ActionResult<IEnumerable<TaskStatusViewModel>>> GetStatusesByProject(int projectId, CancellationToken cancellationToken)
     {
-        Id = dto.Id,
-        Title = dto.Title,
-        Description = dto.Description,
-        Priority = dto.Priority,
-        Deadline = dto.Deadline,
-        StartedAt = dto.StartedAt,
-        CompletedAt = dto.CompletedAt,
-        IsMilestone = dto.IsMilestone,
-        CreatedAt = dto.CreatedAt,
-        UpdatedAt = dto.UpdatedAt,
-        AssignedToUserId = dto.AssignedToUserId,
-        AssignedToUserName = dto.AssignedToUserName,
-        ProjectId = dto.ProjectId,
-        ProjectName = dto.ProjectName,
-        CreatedByUserId = dto.CreatedByUserId,
-        CreatedByUserName = dto.CreatedByUserName,
-        ParentTaskId = dto.ParentTaskId,
-        StatusId = dto.StatusId,
-        StatusName = dto.StatusName,
-        StatusColor = dto.StatusColor,
-        CommentsCount = dto.CommentsCount,
-        AttachmentsCount = dto.AttachmentsCount,
-        WatchersCount = dto.WatchersCount,
-        Labels = dto.Labels
-    };
-
-    private TaskDetailViewModel MapToDetailViewModel(TaskDetailDto dto) => new()
-    {
-        Id = dto.Id,
-        Title = dto.Title,
-        Description = dto.Description,
-        Priority = dto.Priority,
-        Deadline = dto.Deadline,
-        StartedAt = dto.StartedAt,
-        CompletedAt = dto.CompletedAt,
-        IsMilestone = dto.IsMilestone,
-        CreatedAt = dto.CreatedAt,
-        UpdatedAt = dto.UpdatedAt,
-        AssignedToUserId = dto.AssignedToUserId,
-        AssignedToUserName = dto.AssignedToUserName,
-        AssignedToUserEmail = dto.AssignedToUserEmail,
-        ProjectId = dto.ProjectId,
-        ProjectName = dto.ProjectName,
-        CreatedByUserId = dto.CreatedByUserId,
-        CreatedByUserName = dto.CreatedByUserName,
-        ParentTaskId = dto.ParentTaskId,
-        ParentTaskTitle = dto.ParentTaskTitle,
-        StatusId = dto.StatusId,
-        StatusName = dto.StatusName,
-        StatusColor = dto.StatusColor,
-        Comments = dto.Comments.Select(MapToCommentViewModel).ToArray(),
-        Attachments = dto.Attachments.Select(a => new API.ViewModels.TaskAttachment.TaskAttachmentViewModel
-        {
-            Id = a.Id,
-            TaskId = a.TaskId,
-            FileName = a.FileName,
-            FileUrl = a.FileUrl,
-            FileSize = a.FileSize,
-            ContentType = a.ContentType,
-            UploadedByUserId = a.UploadedByUserId,
-            UploadedByUserName = a.UploadedByUserName,
-            UploadedAt = a.UploadedAt
-        }).ToArray(),
-        Watchers = dto.Watchers.Select(w => new API.ViewModels.TaskWatcher.TaskWatcherViewModel
-        {
-            Id = w.Id,
-            TaskId = w.TaskId,
-            UserId = w.UserId,
-            UserName = w.UserName,
-            UserEmail = w.UserEmail,
-            UserProfilePictureUrl = w.UserProfilePictureUrl,
-            CreatedAt = w.CreatedAt
-        }).ToArray(),
-        Labels = dto.Labels.Select(MapToLabelViewModel).ToArray(),
-        ChildTasks = dto.ChildTasks.Select(MapToViewModel).ToArray(),
-        AuditLogs = dto.AuditLogs.Select(MapToAuditLogViewModel).ToArray()
-    };
-
-    private static TaskCommentViewModel MapToCommentViewModel(Domain.DTOs.TaskComment.TaskCommentDto dto) => new()
-    {
-        Id = dto.Id,
-        TaskId = dto.TaskId,
-        UserId = dto.UserId,
-        UserName = dto.UserName,
-        UserProfilePictureUrl = dto.UserProfilePictureUrl,
-        Content = dto.Content,
-        CreatedAt = dto.CreatedAt,
-        UpdatedAt = dto.UpdatedAt,
-        IsEdited = dto.IsEdited
-    };
-
-    private static TaskLabelViewModel MapToLabelViewModel(Domain.DTOs.TaskLabel.TaskLabelDto dto) => new()
-    {
-        Id = dto.Id,
-        Name = dto.Name,
-        Color = dto.Color,
-        ProjectId = dto.ProjectId,
-        CreatedAt = dto.CreatedAt
-    };
-
-    private static TaskAuditLogViewModel MapToAuditLogViewModel(Domain.DTOs.TaskAuditLog.TaskAuditLogDto dto) => new()
-    {
-        Id = dto.Id,
-        TaskId = dto.TaskId,
-        UserId = dto.UserId,
-        UserName = dto.UserName,
-        Action = dto.Action,
-        FieldName = dto.FieldName,
-        OldValue = dto.OldValue,
-        NewValue = dto.NewValue,
-        CreatedAt = dto.CreatedAt
-    };
+        var statuses = await _taskService.GetStatusesByProjectIdAsync(projectId, cancellationToken);
+        return Ok(_mapper.Map<IEnumerable<TaskStatusViewModel>>(statuses));
+    }
 }

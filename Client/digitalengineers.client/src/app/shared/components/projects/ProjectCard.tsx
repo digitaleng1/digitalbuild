@@ -171,6 +171,21 @@ export default function ProjectCard({
 					</div>
 				)}
 
+				{/* Task Count with Link */}
+				<div className="mb-1">
+					<Link 
+						to={isAdmin ? `/admin/projects/tasks/${project.id}` : `/client/projects/tasks/${project.id}`}
+						className="text-decoration-none"
+						title="View project tasks"
+					>
+						<span className="text-primary">
+							<i className="mdi mdi-format-list-checks me-1"></i>
+							<strong>{project.taskCount}</strong>
+							{' '}{project.taskCount === 1 ? 'Task' : 'Tasks'}
+						</span>
+					</Link>
+				</div>
+
 				<div className="mt-auto d-flex justify-content-between align-items-center">
 					<div className="d-flex gap-2">
 						<Link 

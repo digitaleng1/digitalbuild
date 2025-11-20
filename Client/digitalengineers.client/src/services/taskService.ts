@@ -10,13 +10,62 @@ import type {
   CreateTaskLabelViewModel,
   TaskLabelViewModel,
   TaskAuditLogViewModel,
+  ProjectTaskStatusViewModel,
 } from '@/types/task';
 
 const BASE_URL = '/api/tasks';
 
 export const taskService = {
-  async createTask(data: CreateTaskViewModel): Promise<TaskViewModel> {
-    return await httpClient.post<TaskViewModel>(BASE_URL, data) as TaskViewModel;
+  async createTask(
+    data: CreateTaskViewModel,
+    attachments?: File[]
+  ): Promise<TaskViewModel> {
+    const formData = new FormData();
+    
+    // Add task fields
+    formData.append('title', data.title);
+    formData.append('projectId', data.projectId.toString());
+    formData.append('statusId', data.statusId.toString());
+    formData.append('priority', data.priority.toString());
+    formData.append('isMilestone', data.isMilestone.toString());
+    
+    if (data.description) {
+      formData.append('description', data.description);
+    }
+    
+    if (data.deadline) {
+      formData.append('deadline', data.deadline.toISOString());
+    }
+    
+    if (data.assignedToUserId) {
+      formData.append('assignedToUserId', data.assignedToUserId);
+    }
+    
+    if (data.parentTaskId) {
+      formData.append('parentTaskId', data.parentTaskId.toString());
+    }
+    
+    // Serialize labelIds as JSON string
+    if (data.labelIds && data.labelIds.length > 0) {
+      formData.append('labelIdsJson', JSON.stringify(data.labelIds));
+    }
+    
+    // Add attachments
+    if (attachments && attachments.length > 0) {
+      attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+    
+    return await httpClient.post<TaskViewModel>(
+      BASE_URL, 
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    ) as TaskViewModel;
   },
 
   async getTaskById(id: number): Promise<TaskDetailViewModel> {
@@ -77,6 +126,10 @@ export const taskService = {
 
   async deleteLabel(labelId: number): Promise<void> {
     await httpClient.delete(`${BASE_URL}/labels/${labelId}`);
+  },
+
+  async getStatusesByProject(projectId: number): Promise<ProjectTaskStatusViewModel[]> {
+    return (await httpClient.get<ProjectTaskStatusViewModel[]>(`${BASE_URL}/statuses/project/${projectId}`) || []) as ProjectTaskStatusViewModel[];
   },
 
   async getAuditLogs(taskId: number): Promise<TaskAuditLogViewModel[]> {

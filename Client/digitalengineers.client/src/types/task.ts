@@ -5,7 +5,7 @@ export enum TaskPriority {
   Critical = 3
 }
 
-export interface TaskStatusViewModel {
+export interface ProjectTaskStatusViewModel {
   id: number;
   name: string;
   color?: string;

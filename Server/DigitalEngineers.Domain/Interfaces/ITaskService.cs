@@ -4,13 +4,14 @@ using DigitalEngineers.Domain.DTOs.TaskAttachment;
 using DigitalEngineers.Domain.DTOs.TaskWatcher;
 using DigitalEngineers.Domain.DTOs.TaskLabel;
 using DigitalEngineers.Domain.DTOs.TaskAuditLog;
+using DigitalEngineers.Domain.DTOs;
 
 namespace DigitalEngineers.Domain.Interfaces;
 
 public interface ITaskService
 {
     // Task CRUD
-    Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, string createdByUserId, CancellationToken cancellationToken = default);
+    Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, string createdByUserId, List<FileUploadInfo>? attachments = null, CancellationToken cancellationToken = default);
     Task<TaskDetailDto> GetTaskByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskDto>> GetTasksByAssignedUserIdAsync(string userId, CancellationToken cancellationToken = default);
@@ -34,6 +35,9 @@ public interface ITaskService
     Task<TaskLabelDto> CreateLabelAsync(CreateTaskLabelDto dto, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskLabelDto>> GetLabelsByProjectIdAsync(int? projectId, CancellationToken cancellationToken = default);
     Task DeleteLabelAsync(int labelId, CancellationToken cancellationToken = default);
+    
+    // Statuses
+    Task<IEnumerable<TaskStatusDto>> GetStatusesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     
     // Audit Logs
     Task<IEnumerable<TaskAuditLogDto>> GetAuditLogsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default);

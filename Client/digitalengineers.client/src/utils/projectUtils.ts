@@ -1,4 +1,5 @@
-import { ProjectStatus } from '@/types/project';
+import { ProjectStatus, ProjectManagementType } from '@/types/project';
+import type { ProjectDto, ProjectDetailsDto } from '@/types/project';
 
 /**
  * Project Status Display Names
@@ -126,4 +127,32 @@ export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'pri
 		default:
 			return 'secondary';
 	}
+}
+
+/**
+ * Check if client can edit project tasks
+ * Clients can only edit tasks for ClientManaged projects
+ * @param project - Project or ProjectDetails
+ * @returns true if client can edit tasks, false otherwise
+ */
+export function canClientEditTasks(project: ProjectDto | ProjectDetailsDto): boolean {
+	return project.managementType === ProjectManagementType.ClientManaged;
+}
+
+/**
+ * Check if project is managed by Digital Engineers
+ * @param project - Project or ProjectDetails
+ * @returns true if managed by Digital Engineers, false otherwise
+ */
+export function isDigitalEngineersManaged(project: ProjectDto | ProjectDetailsDto): boolean {
+	return project.managementType === ProjectManagementType.DigitalEngineersManaged;
+}
+
+/**
+ * Get human-readable label for project management type
+ */
+export function getManagementTypeLabel(managementType: string): string {
+	return managementType === ProjectManagementType.ClientManaged 
+		? 'Client Managed' 
+		: 'Digital Engineers Managed';
 }

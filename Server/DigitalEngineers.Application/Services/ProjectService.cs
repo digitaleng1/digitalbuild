@@ -81,13 +81,86 @@ public class ProjectService : IProjectService
             _context.Projects.Add(project);
             await _context.SaveChangesAsync(cancellationToken);
 
+            // Create default task statuses
+            var defaultStatuses = new List<ProjectTaskStatus>
+            {
+                new ProjectTaskStatus
+                {
+                    Name = "Todo",
+                    Color = "#6c757d",
+                    Order = 1,
+                    IsDefault = true,
+                    IsCompleted = false,
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new ProjectTaskStatus
+                {
+                    Name = "In Progress",
+                    Color = "#007bff",
+                    Order = 2,
+                    IsDefault = false,
+                    IsCompleted = false,
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new ProjectTaskStatus
+                {
+                    Name = "Done",
+                    Color = "#28a745",
+                    Order = 3,
+                    IsDefault = false,
+                    IsCompleted = true,
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+            
+            _context.Set<ProjectTaskStatus>().AddRange(defaultStatuses);
+
+            // Create default task labels
+            var defaultLabels = new List<ProjectTaskLabel>
+            {
+                new ProjectTaskLabel
+                {
+                    Name = "Bug",
+                    Color = "#dc3545",
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new ProjectTaskLabel
+                {
+                    Name = "Feature",
+                    Color = "#28a745",
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new ProjectTaskLabel
+                {
+                    Name = "Enhancement",
+                    Color = "#17a2b8",
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new ProjectTaskLabel
+                {
+                    Name = "Documentation",
+                    Color = "#6610f2",
+                    ProjectId = project.Id,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+            
+            _context.Set<ProjectTaskLabel>().AddRange(defaultLabels);
+            await _context.SaveChangesAsync(cancellationToken);
+
             if (thumbnail != null)
             {
                 try
                 {
-                    var thumbnailKey = await _fileStorageService.UploadFileAsync(
+                    var thumbnailKey = await _fileStorageService.UploadProjectThumbnailAsync(
                         thumbnail.FileStream,
-                        $"thumbnail_{thumbnail.FileName}",
+                        thumbnail.FileName,
                         thumbnail.ContentType,
                         project.Id,
                         cancellationToken);
@@ -111,7 +184,7 @@ public class ProjectService : IProjectService
 
                     try
                     {
-                        var fileKey = await _fileStorageService.UploadFileAsync(
+                        var fileKey = await _fileStorageService.UploadProjectFileAsync(
                             file.FileStream,
                             file.FileName,
                             file.ContentType,
@@ -202,7 +275,8 @@ public class ProjectService : IProjectService
                 ProjectScope = (int)project.ProjectScope,
                 ManagementType = project.ManagementType.ToString(),
                 LicenseTypeIds = dto.LicenseTypeIds,
-                QuotedAmount = project.QuotedAmount
+                QuotedAmount = project.QuotedAmount,
+                TaskCount = 0
             };
         }
         catch (Exception ex)
@@ -440,7 +514,8 @@ public class ProjectService : IProjectService
                         ? p.Client.Email
                         : $"{p.Client.FirstName ?? ""} {p.Client.LastName ?? ""}".Trim())
                     : null,
-                ClientProfilePictureUrl = p.Client != null ? p.Client.ProfilePictureUrl : null
+                ClientProfilePictureUrl = p.Client != null ? p.Client.ProfilePictureUrl : null,
+                TaskCount = _context.Tasks.Count(t => t.ProjectId == p.Id)
             })
             .ToListAsync(cancellationToken);
 
@@ -470,7 +545,8 @@ public class ProjectService : IProjectService
                 ProjectScope = (int)p.Project.ProjectScope,
                 ManagementType = p.Project.ManagementType.ToString(),
                 LicenseTypeIds = p.LicenseTypeIds,
-                QuotedAmount = p.Project.QuotedAmount
+                QuotedAmount = p.Project.QuotedAmount,
+                TaskCount = p.TaskCount
             };
         });
     }
