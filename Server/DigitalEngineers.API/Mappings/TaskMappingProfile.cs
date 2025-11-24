@@ -28,7 +28,12 @@ public class TaskMappingProfile : Profile
 
         // DTO -> ViewModel (Response)
         CreateMap<TaskDto, TaskViewModel>();
-        CreateMap<TaskDetailDto, TaskDetailViewModel>();
+        
+        CreateMap<TaskDetailDto, TaskDetailViewModel>()
+            .ForMember(dest => dest.CommentsCount, opt => opt.MapFrom(src => src.Comments.Length))
+            .ForMember(dest => dest.FilesCount, opt => opt.MapFrom(src => src.Attachments.Length))
+            .ForMember(dest => dest.WatchersCount, opt => opt.MapFrom(src => src.Watchers.Length));
+        
         CreateMap<TaskCommentDto, TaskCommentViewModel>();
         CreateMap<TaskLabelDto, TaskLabelViewModel>();
         CreateMap<TaskAuditLogDto, TaskAuditLogViewModel>();

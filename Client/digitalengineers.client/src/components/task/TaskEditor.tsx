@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button, Form, Row, Col, Card, CardBody } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import classNames from 'classnames';
@@ -10,13 +10,17 @@ import type {
   UpdateTaskViewModel,
   TaskLabelViewModel, 
   TaskPriority,
-  TaskDetailViewModel
+  TaskDetailViewModel,
+  TaskCommentViewModel
 } from '@/types/task';
 import type { ProjectSpecialistDto } from '@/types/project';
 import UserSelector from './UserSelector';
 import ParentTaskSelector from './ParentTaskSelector';
 import LabelSelector from './LabelSelector';
+import TaskCommentList from './TaskCommentList';
+import TaskCommentForm from './TaskCommentForm';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuthContext } from '@/common/context/useAuthContext';
 import CardTitle from '@/components/CardTitle';
 import FileUploader from '@/components/FileUploader';
 
@@ -47,17 +51,33 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
   const [taskLabels, setTaskLabels] = useState<TaskLabelViewModel[]>([]);
   const [parentTasks, setParentTasks] = useState<Array<{ id: number; title: string }>>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [comment, setComment] = useState('');
+  const [existingFiles, setExistingFiles] = useState<TaskAttachmentViewModel[]>([]);
+  const [comments, setComments] = useState<TaskCommentViewModel[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { showSuccess, showError } = useToast();
+  const { user } = useAuthContext();
 
   useEffect(() => {
     loadData();
   }, [projectId, taskId, mode]);
+
+  // Load files separately for edit mode
+  useEffect(() => {
+    if (mode === 'edit' && taskId) {
+      loadFiles();
+    }
+  }, [mode, taskId]);
+
+  // Separate effect for loading comments
+  useEffect(() => {
+    if (mode === 'edit' && taskId) {
+      loadComments();
+    }
+  }, [mode, taskId]);
 
   const loadData = async () => {
     setIsLoadingData(true);
@@ -72,7 +92,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       setTaskLabels(labels || []);
       setParentTasks((tasks || []).filter(t => mode === 'edit' && taskId ? t.id !== taskId : true));
 
-      // Load task data if in edit mode
+      // Load task data if in edit mode (without files and comments)
       if (mode === 'edit' && taskId) {
         const taskDetail = await taskService.getTaskById(taskId);
         setFormData({
@@ -98,6 +118,28 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       setIsLoadingData(false);
     }
   };
+
+  const loadFiles = useCallback(async () => {
+    if (!taskId) return;
+    
+    try {
+      const files = await taskService.getTaskFiles(taskId);
+      setExistingFiles(files || []);
+    } catch (err) {
+      console.error('Failed to load files:', err);
+    }
+  }, [taskId]);
+
+  const loadComments = useCallback(async () => {
+    if (!taskId) return;
+    
+    try {
+      const taskComments = await taskService.getCommentsByTaskId(taskId);
+      setComments(taskComments || []);
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    }
+  }, [taskId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -170,13 +212,39 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
     }
   };
 
-  const handleCommentSubmit = () => {
-    if (!comment.trim()) return;
+  const handleCommentAdded = useCallback((newComment: TaskCommentViewModel) => {
+    setComments(prev => [...prev, newComment]);
+  }, []);
+
+  const handleCommentUpdated = useCallback(() => {
+    loadComments();
+  }, [loadComments]);
+
+  const handleCommentDeleted = useCallback(() => {
+    loadComments();
+  }, [loadComments]);
+
+  const handleFileDelete = useCallback(async (fileId: number) => {
+    try {
+      await taskService.deleteTaskFile(fileId);
+      setExistingFiles(prev => prev.filter(f => f.id !== fileId));
+      showSuccess('File Deleted', 'File has been deleted successfully');
+    } catch (err: any) {
+      showError('Error', err.response?.data?.message || 'Failed to delete file');
+    }
+  }, [showSuccess, showError]);
+
+  const handleFileUpload = useCallback(async (files: File[]) => {
+    if (!taskId) return;
     
-    // TODO: Implement comment submission
-    console.log('Comment submitted:', comment);
-    setComment('');
-  };
+    try {
+      const uploaded = await taskService.uploadTaskFiles(taskId, files);
+      setExistingFiles(prev => [...prev, ...uploaded]);
+      showSuccess('Files Uploaded', `${uploaded.length} file(s) uploaded successfully`);
+    } catch (err: any) {
+      showError('Error', err.response?.data?.message || 'Failed to upload files');
+    }
+  }, [taskId, showSuccess, showError]);
 
   const getPriorityBadge = (priority: TaskPriority) => {
     const badges = {
@@ -209,16 +277,6 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
         <Col xxl={8} xl={7}>
           <Card>
             <CardBody>
-              {/*<CardTitle*/}
-              {/*  containerClass="d-flex align-items-center justify-content-between"*/}
-              {/*  title={*/}
-              {/*    <div className="d-flex align-items-center">*/}
-              {/*      <Icon icon={mode === 'create' ? 'mdi:plus-circle' : 'mdi:pencil'} width={20} className="me-2 text-primary" />*/}
-              {/*      <h4 className="mb-0">{mode === 'create' ? 'Task' : 'Task'}</h4>*/}
-              {/*    </div>*/}
-              {/*  }*/}
-              {/*/>*/}
-
               <div className="clearfix"></div>
 
               {error && (
@@ -388,46 +446,34 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
             <CardBody>
               <h5 className="card-title mb-3">
                 <Icon icon="mdi:comment-multiple-outline" width={20} className="me-2" />
-                Comments
+                Comments {isEditMode && comments.length > 0 && `(${comments.length})`}
               </h5>
               
-              {/* Comment Area */}
-              <div className="border rounded">
-                <div className="comment-area-box">
-                  <textarea 
-                    rows={3} 
-                    className="form-control border-0 resize-none" 
-                    placeholder="Add a comment..."
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    disabled={isCreateMode}
+              {isEditMode && user ? (
+                <>
+                  {/* Comments List */}
+                  <TaskCommentList
+                    taskId={taskId!}
+                    comments={comments}
+                    currentUserId={user.id}
+                    onCommentUpdated={handleCommentUpdated}
+                    onCommentDeleted={handleCommentDeleted}
                   />
-                  <div className="p-2 bg-light d-flex justify-content-between align-items-center">
-                    <div>
-                      <button type="button" className="btn btn-sm px-1 btn-light" title="Attach file" disabled={isCreateMode}>
-                        <Icon icon="mdi:paperclip" width={16} />
-                      </button>
-                      <button type="button" className="btn btn-sm px-1 btn-light" title="Mention user" disabled={isCreateMode}>
-                        <Icon icon="mdi:at" width={16} />
-                      </button>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="btn btn-sm btn-success" 
-                      disabled={isCreateMode || !comment.trim()}
-                      onClick={handleCommentSubmit}
-                    >
-                      <Icon icon="mdi:send" width={16} className="me-1" />
-                      Submit
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              <Form.Text className="text-muted d-block mt-2">
-                <Icon icon="mdi:information-outline" width={14} className="me-1" />
-                {isCreateMode ? 'Comments will be available after task is created' : 'Add comments to communicate with team members'}
-              </Form.Text>
+                  {/* Comment Form */}
+                  <div className="mt-3">
+                    <TaskCommentForm
+                      taskId={taskId!}
+                      onCommentAdded={handleCommentAdded}
+                    />
+                  </div>
+                </>
+              ) : (
+                <Form.Text className="text-muted d-block">
+                  <Icon icon="mdi:information-outline" width={14} className="me-1" />
+                  Comments will be available after task is created
+                </Form.Text>
+              )}
             </CardBody>
           </Card>
         </Col>
@@ -451,20 +497,55 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                 <Icon icon="mdi:paperclip" width={20} className="me-2" />
                 Attachments
               </h5>
-              {mode === 'create' ? (
+              {mode === 'edit' ? (
                 <>
+                  {/* Existing files list */}
+                  {existingFiles.length > 0 && (
+                    <div className="mb-3">
+                      {existingFiles.map(file => (
+                        <Card key={file.id} className="mb-2 shadow-none border">
+                          <div className="p-2">
+                            <Row className="align-items-center">
+                              <Col className="col-auto">
+                                <div className="avatar-sm">
+                                  <span className="avatar-title rounded">
+                                    {file.fileName.split('.').pop()?.toUpperCase() || 'FILE'}
+                                  </span>
+                                </div>
+                              </Col>
+                              <Col className="ps-0">
+                                <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="text-muted fw-bold">
+                                  {file.fileName}
+                                </a>
+                                <p className="mb-0">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</p>
+                              </Col>
+                              <Col className="col-auto">
+                                <button
+                                  type="button"
+                                  onClick={() => handleFileDelete(file.id)}
+                                  className="btn btn-link btn-lg text-danger p-0"
+                                >
+                                  <Icon icon="mdi:close" width={20} />
+                                </button>
+                              </Col>
+                            </Row>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* File uploader for new files */}
                   <FileUploader
-                    onFilesChange={setAttachments}
-                    value={attachments}
+                    onFilesChange={(files) => {
+                      if (files.length > 0) {
+                        handleFileUpload(files);
+                      }
+                    }}
+                    value={[]}
                     maxFiles={10}
                     maxFileSize={10}
                   />
-                  {attachments.length > 0 && (
-                    <Form.Text className="text-muted d-block mt-2">
-                      <Icon icon="mdi:information-outline" width={14} className="me-1" />
-                      {attachments.length} file(s) selected
-                    </Form.Text>
-                  )}
                 </>
               ) : (
                 <Form.Text className="text-muted">

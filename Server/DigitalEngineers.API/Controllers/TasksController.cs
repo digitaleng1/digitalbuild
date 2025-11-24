@@ -2,6 +2,7 @@ using DigitalEngineers.API.ViewModels.Task;
 using DigitalEngineers.API.ViewModels.TaskComment;
 using DigitalEngineers.API.ViewModels.TaskLabel;
 using DigitalEngineers.API.ViewModels.TaskAuditLog;
+using DigitalEngineers.API.ViewModels.TaskAttachment;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.Task;
 using DigitalEngineers.Domain.DTOs.TaskComment;
@@ -20,11 +21,13 @@ namespace DigitalEngineers.API.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+    private readonly IFileStorageService _fileStorageService;
     private readonly IMapper _mapper;
 
-    public TasksController(ITaskService taskService, IMapper mapper)
+    public TasksController(ITaskService taskService, IFileStorageService fileStorageService, IMapper mapper)
     {
         _taskService = taskService;
+        _fileStorageService = fileStorageService;
         _mapper = mapper;
     }
 
@@ -121,6 +124,13 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{taskId}/comments")]
+    public async Task<ActionResult<IEnumerable<TaskCommentViewModel>>> GetCommentsByTaskId(int taskId, CancellationToken cancellationToken)
+    {
+        var comments = await _taskService.GetCommentsByTaskIdAsync(taskId, cancellationToken);
+        return Ok(_mapper.Map<IEnumerable<TaskCommentViewModel>>(comments));
+    }
+
     [HttpPost("{taskId}/watchers")]
     public async Task<IActionResult> AddWatcher(int taskId, CancellationToken cancellationToken)
     {
@@ -171,5 +181,87 @@ public class TasksController : ControllerBase
     {
         var statuses = await _taskService.GetStatusesByProjectIdAsync(projectId, cancellationToken);
         return Ok(_mapper.Map<IEnumerable<TaskStatusViewModel>>(statuses));
+    }
+
+    [HttpGet("{taskId}/files")]
+    public async Task<ActionResult<IEnumerable<TaskAttachmentViewModel>>> GetTaskFiles(int taskId, CancellationToken cancellationToken)
+    {
+        var taskDetail = await _taskService.GetTaskByIdAsync(taskId, cancellationToken);
+        
+        var files = taskDetail.Attachments.Select(a => new TaskAttachmentViewModel
+        {
+            Id = a.Id,
+            TaskId = a.TaskId,
+            FileName = a.FileName,
+            FileUrl = _fileStorageService.GetPresignedUrl(a.FileUrl),
+            FileSize = a.FileSize,
+            ContentType = a.ContentType,
+            UploadedByUserId = a.UploadedByUserId,
+            UploadedByUserName = a.UploadedByUserName,
+            UploadedAt = a.UploadedAt
+        });
+        
+        return Ok(files);
+    }
+
+    [HttpPost("{taskId}/files")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<IEnumerable<TaskAttachmentViewModel>>> UploadTaskFiles(
+        int taskId,
+        [FromForm] List<IFormFile> files,
+        CancellationToken cancellationToken)
+    {
+        if (files == null || files.Count == 0)
+            return BadRequest("No files provided");
+
+        var result = new List<TaskAttachmentViewModel>();
+        var userId = GetUserId();
+
+        var task = await _taskService.GetTaskByIdAsync(taskId, cancellationToken);
+        
+        foreach (var file in files)
+        {
+            if (file.Length == 0)
+                continue;
+
+            var fileKey = await _fileStorageService.UploadTaskFileAsync(
+                file.OpenReadStream(),
+                file.FileName,
+                file.ContentType,
+                task.ProjectId,
+                taskId,
+                cancellationToken);
+
+            var attachment = await _taskService.AddAttachmentAsync(
+                taskId,
+                file.FileName,
+                fileKey,
+                file.Length,
+                file.ContentType,
+                userId,
+                cancellationToken);
+
+            result.Add(new TaskAttachmentViewModel
+            {
+                Id = attachment.Id,
+                TaskId = attachment.TaskId,
+                FileName = attachment.FileName,
+                FileUrl = _fileStorageService.GetPresignedUrl(attachment.FileUrl),
+                FileSize = attachment.FileSize,
+                ContentType = attachment.ContentType,
+                UploadedByUserId = attachment.UploadedByUserId,
+                UploadedByUserName = attachment.UploadedByUserName,
+                UploadedAt = attachment.UploadedAt
+            });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("files/{fileId}")]
+    public async Task<IActionResult> DeleteTaskFile(int fileId, CancellationToken cancellationToken)
+    {
+        await _taskService.DeleteAttachmentAsync(fileId, GetUserId(), cancellationToken);
+        return NoContent();
     }
 }

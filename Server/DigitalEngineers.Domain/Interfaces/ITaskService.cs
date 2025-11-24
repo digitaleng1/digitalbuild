@@ -22,6 +22,7 @@ public interface ITaskService
     Task<TaskCommentDto> AddCommentAsync(CreateTaskCommentDto dto, string userId, CancellationToken cancellationToken = default);
     Task<TaskCommentDto> UpdateCommentAsync(int commentId, UpdateTaskCommentDto dto, string userId, CancellationToken cancellationToken = default);
     Task DeleteCommentAsync(int commentId, string userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TaskCommentDto>> GetCommentsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default);
     
     // Attachments
     Task<TaskAttachmentDto> AddAttachmentAsync(int taskId, string fileName, string fileUrl, long fileSize, string contentType, string uploadedByUserId, CancellationToken cancellationToken = default);

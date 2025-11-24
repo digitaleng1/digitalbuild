@@ -11,6 +11,7 @@ import type {
   TaskLabelViewModel,
   TaskAuditLogViewModel,
   ProjectTaskStatusViewModel,
+  TaskAttachmentViewModel,
 } from '@/types/task';
 
 const BASE_URL = '/api/tasks';
@@ -105,6 +106,10 @@ export const taskService = {
     await httpClient.delete(`${BASE_URL}/comments/${commentId}`);
   },
 
+  async getCommentsByTaskId(taskId: number): Promise<TaskCommentViewModel[]> {
+    return (await httpClient.get<TaskCommentViewModel[]>(`${BASE_URL}/${taskId}/comments`) || []) as TaskCommentViewModel[];
+  },
+
   async addWatcher(taskId: number): Promise<void> {
     await httpClient.post(`${BASE_URL}/${taskId}/watchers`);
   },
@@ -134,5 +139,38 @@ export const taskService = {
 
   async getAuditLogs(taskId: number): Promise<TaskAuditLogViewModel[]> {
     return (await httpClient.get<TaskAuditLogViewModel[]>(`${BASE_URL}/${taskId}/audit-logs`) || []) as TaskAuditLogViewModel[];
+  },
+
+  /**
+   * Get task files (attachments)
+   */
+  async getTaskFiles(taskId: number): Promise<TaskAttachmentViewModel[]> {
+    const data = await httpClient.get(`/api/tasks/${taskId}/files`);
+    return data as TaskAttachmentViewModel[];
+  },
+
+  /**
+   * Upload files to task
+   */
+  async uploadTaskFiles(taskId: number, files: File[]): Promise<TaskAttachmentViewModel[]> {
+    const formData = new FormData();
+    files.forEach(file => {
+        formData.append('files', file);
+    });
+
+    const result = await httpClient.post(`/api/tasks/${taskId}/files`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+
+    return result as TaskAttachmentViewModel[];
+  },
+
+  /**
+   * Delete task file
+   */
+  async deleteTaskFile(fileId: number): Promise<void> {
+    await httpClient.delete(`/api/tasks/files/${fileId}`);
   },
 };

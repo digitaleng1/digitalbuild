@@ -92,7 +92,7 @@ export interface TaskViewModel {
   statusName: string;
   statusColor?: string;
   commentsCount: number;
-  attachmentsCount: number;
+  filesCount: number;
   watchersCount: number;
   labels: string[];
 }
@@ -100,9 +100,10 @@ export interface TaskViewModel {
 export interface TaskDetailViewModel extends Omit<TaskViewModel, 'labels'> {
   assignedToUserEmail?: string;
   parentTaskTitle?: string;
-  comments: TaskCommentViewModel[];
-  attachments: TaskAttachmentViewModel[];
-  watchers: TaskWatcherViewModel[];
+  // Load these separately via dedicated endpoints
+  // comments: TaskCommentViewModel[];
+  // attachments: TaskAttachmentViewModel[];
+  // watchers: TaskWatcherViewModel[];
   labels: TaskLabelViewModel[];
   childTasks: TaskViewModel[];
   auditLogs: TaskAuditLogViewModel[];

@@ -1,6 +1,3 @@
-using DigitalEngineers.API.ViewModels.TaskComment;
-using DigitalEngineers.API.ViewModels.TaskAttachment;
-using DigitalEngineers.API.ViewModels.TaskWatcher;
 using DigitalEngineers.API.ViewModels.TaskLabel;
 using DigitalEngineers.API.ViewModels.TaskAuditLog;
 using DigitalEngineers.Domain.Enums;
@@ -33,9 +30,12 @@ public class TaskDetailViewModel
     public string StatusName { get; set; } = string.Empty;
     public string? StatusColor { get; set; }
     
-    public TaskCommentViewModel[] Comments { get; set; } = [];
-    public TaskAttachmentViewModel[] Attachments { get; set; } = [];
-    public TaskWatcherViewModel[] Watchers { get; set; } = [];
+    // Counts instead of full arrays - load data separately via dedicated endpoints
+    public int CommentsCount { get; set; }
+    public int FilesCount { get; set; }
+    public int WatchersCount { get; set; }
+    
+    // Keep labels and child tasks - they are lightweight
     public TaskLabelViewModel[] Labels { get; set; } = [];
     public TaskViewModel[] ChildTasks { get; set; } = [];
     public TaskAuditLogViewModel[] AuditLogs { get; set; } = [];

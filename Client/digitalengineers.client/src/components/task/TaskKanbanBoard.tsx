@@ -331,7 +331,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                   
                                     <div className="d-flex align-items-center gap-1">
                                       <Icon icon="mdi:paperclip" width={16} />
-                                      <span>{task.attachmentsCount}</span>
+                                      <span>{task.filesCount}</span>
                                     </div>
 
                                     {task.watchersCount > 0 && (

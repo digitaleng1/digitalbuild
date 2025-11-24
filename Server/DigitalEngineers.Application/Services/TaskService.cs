@@ -467,6 +467,32 @@ public class TaskService : ITaskService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<TaskCommentDto>> GetCommentsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default)
+    {
+        var taskExists = await _context.Set<ProjectTask>().AnyAsync(t => t.Id == taskId, cancellationToken);
+        if (!taskExists)
+            throw new TaskNotFoundException(taskId);
+
+        var comments = await _context.Set<TaskComment>()
+            .Include(c => c.User)
+            .Where(c => c.TaskId == taskId)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return comments.Select(c => new TaskCommentDto
+        {
+            Id = c.Id,
+            TaskId = c.TaskId,
+            UserId = c.UserId,
+            UserName = $"{c.User.FirstName} {c.User.LastName}",
+            UserProfilePictureUrl = c.User.ProfilePictureUrl,
+            Content = c.Content,
+            CreatedAt = c.CreatedAt,
+            UpdatedAt = c.UpdatedAt,
+            IsEdited = c.IsEdited
+        });
+    }
+
     public async Task<TaskAttachmentDto> AddAttachmentAsync(int taskId, string fileName, string fileUrl, long fileSize, string contentType, string uploadedByUserId, CancellationToken cancellationToken = default)
     {
         var taskExists = await _context.Set<ProjectTask>().AnyAsync(t => t.Id == taskId, cancellationToken);
@@ -889,7 +915,7 @@ public class TaskService : ITaskService
             StatusName = task.Status.Name,
             StatusColor = task.Status.Color,
             CommentsCount = task.Comments.Count,
-            AttachmentsCount = task.Attachments.Count,
+            FilesCount = task.Attachments.Count,
             WatchersCount = task.Watchers.Count,
             Labels = task.TaskLabels.Select(tl => tl.Label.Name).ToArray()
         };

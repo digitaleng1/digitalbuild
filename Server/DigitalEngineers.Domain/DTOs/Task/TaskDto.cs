@@ -27,7 +27,7 @@ public class TaskDto
     public string? StatusColor { get; set; }
     
     public int CommentsCount { get; set; }
-    public int AttachmentsCount { get; set; }
+    public int FilesCount { get; set; }
     public int WatchersCount { get; set; }
     public string[] Labels { get; set; } = [];
 }
