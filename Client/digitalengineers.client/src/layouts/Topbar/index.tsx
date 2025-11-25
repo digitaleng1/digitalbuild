@@ -149,9 +149,9 @@ const Topbar = ({ topbarDark, toggleMenu, navOpen }: TopbarProps) => {
 					<li className="dropdown notification-list">
 						<NotificationDropdown notifications={notifications} />
 					</li>
-					<li className="dropdown d-none d-sm-inline-block">
-						<AppsDropdown />
-					</li>
+					{/*<li className="dropdown d-none d-sm-inline-block">*/}
+					{/*	<AppsDropdown />*/}
+					{/*</li>*/}
 					<li className="d-none d-sm-inline-block">
 						<button className="nav-link dropdown-toggle end-bar-toggle arrow-none btn btn-link shadow-none" onClick={handleRightSideBar}>
 							<i className="ri-settings-3-line font-22"></i>
