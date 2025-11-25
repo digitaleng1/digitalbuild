@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
+import { Row, Col, Card, Spinner, Alert, ButtonGroup, Button } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import TaskKanbanBoard from '@/components/task/TaskKanbanBoard';
+import TaskListView from '@/components/task/TaskListView';
 import projectService from '@/services/projectService';
 import type { ProjectDetailsDto } from '@/types/project';
 import { canClientEditTasks } from '@/utils/projectUtils';
+
+type ViewMode = 'kanban' | 'list';
 
 const ProjectTasksPage = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectDetailsDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
 
   useEffect(() => {
     const loadProject = async () => {
@@ -68,7 +72,6 @@ const ProjectTasksPage = () => {
     );
   }
 
-  // Check if client can edit tasks (only for ClientManaged projects)
   const canEdit = canClientEditTasks(project);
 
   return (
@@ -82,7 +85,6 @@ const ProjectTasksPage = () => {
         <Col>
           <Card>
             <Card.Body>
-              {/* Show info banner for DigitalEngineersManaged projects */}
               {!canEdit && (
                 <Alert variant="info" className="d-flex align-items-center mb-3">
                   <Icon icon="mdi:information-outline" width={24} className="me-2" />
@@ -93,12 +95,41 @@ const ProjectTasksPage = () => {
                 </Alert>
               )}
 
-              <TaskKanbanBoard
-                projectId={Number(id)}
-                project={project}
-                canEdit={canEdit}
-                onTaskClick={(taskId) => console.log('Task clicked:', taskId)}
-              />
+              <div className="d-flex justify-content-end mb-3">
+                <ButtonGroup>
+                  <Button
+                    variant={viewMode === 'kanban' ? 'primary' : 'outline-primary'}
+                    onClick={() => setViewMode('kanban')}
+                    className="d-flex align-items-center gap-1"
+                  >
+                    <Icon icon="mdi:view-column" width={18} />
+                    <span>Kanban</span>
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'primary' : 'outline-primary'}
+                    onClick={() => setViewMode('list')}
+                    className="d-flex align-items-center gap-1"
+                  >
+                    <Icon icon="mdi:view-list" width={18} />
+                    <span>List</span>
+                  </Button>
+                </ButtonGroup>
+              </div>
+
+              {viewMode === 'kanban' ? (
+                <TaskKanbanBoard
+                  projectId={Number(id)}
+                  project={project}
+                  canEdit={canEdit}
+                  onTaskClick={(taskId) => console.log('Task clicked:', taskId)}
+                />
+              ) : (
+                <TaskListView
+                  projectId={Number(id)}
+                  project={project}
+                  canEdit={canEdit}
+                />
+              )}
             </Card.Body>
           </Card>
         </Col>
