@@ -160,6 +160,24 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
+    /// Update project management type (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpPatch("{id}/management-type")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateProjectManagementType(
+        int id,
+        [FromBody] UpdateProjectManagementTypeViewModel model,
+        CancellationToken cancellationToken)
+    {
+        await _projectService.UpdateProjectManagementTypeAsync(id, model.ManagementType, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Get project specialists (assigned + pending bids) with role-based filtering
     /// </summary>
     [HttpGet("{id}/specialists")]

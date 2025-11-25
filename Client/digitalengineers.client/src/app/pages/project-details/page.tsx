@@ -1,14 +1,15 @@
-import { Row, Col, Card, CardBody, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Row, Col, Card, CardBody, Badge, Spinner, Alert, Form } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/common/context/useAuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Comments from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
 import Files from '@/app/client/projects/details/Files';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import CardTitle from '@/components/CardTitle';
 import { useProjectDetails } from '@/app/shared/hooks';
-import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
+import { getProjectScopeLabel, getStatusBadgeVariant, getManagementTypeLabel } from '@/utils/projectUtils';
+import { ProjectManagementType } from '@/types/project';
 import { TeamMembers } from '@/app/shared/components/common';
 import ProjectStatusModal from '@/app/admin/projects/details/ProjectStatusModal';
 import QuoteCreationCard from '@/app/admin/projects/details/QuoteCreationCard';
@@ -17,6 +18,8 @@ import QuoteAcceptedAlert from '@/app/client/projects/details/QuoteAcceptedAlert
 import QuoteSubmittedAlert from '@/app/client/projects/details/QuoteSubmittedAlert';
 import PendingAlert from '@/app/client/projects/details/PendingAlert';
 import { taskService } from '@/services/taskService';
+import projectService from '@/services/projectService';
+import { useToast } from '@/contexts';
 import classNames from 'classnames';
 
 const ProjectDetailsPage = () => {
@@ -26,6 +29,8 @@ const ProjectDetailsPage = () => {
 	const [showStatusModal, setShowStatusModal] = useState(false);
 	const [taskCount, setTaskCount] = useState<number>(0);
 	const [loadingTaskCount, setLoadingTaskCount] = useState(false);
+	const [updatingManagementType, setUpdatingManagementType] = useState(false);
+	const { showSuccess, showError } = useToast();
 	
 	const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
@@ -33,6 +38,27 @@ const ProjectDetailsPage = () => {
 	const isClient = hasAnyRole(['Client']);
 	const isProvider = hasAnyRole(['Provider']);
 	const isSpecialist = hasAnyRole(['Specialist']);
+
+	const handleManagementTypeChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (!project) return;
+		
+		const isClientManaged = e.target.checked;
+		const newManagementType = isClientManaged 
+			? ProjectManagementType.ClientManaged 
+			: ProjectManagementType.DigitalEngineersManaged;
+		
+		setUpdatingManagementType(true);
+		try {
+			await projectService.updateProjectManagementType(project.id, newManagementType);
+			showSuccess('Management Type Updated', 'Project management type has been updated successfully');
+			await refetch();
+		} catch (err) {
+			console.error('Failed to update management type:', err);
+			showError('Update Failed', 'Failed to update project management type');
+		} finally {
+			setUpdatingManagementType(false);
+		}
+	}, [project, showSuccess, showError, refetch]);
 
 	// Fetch task count
 	useEffect(() => {
@@ -197,6 +223,35 @@ const ProjectDetailsPage = () => {
 									</div>
 								</Link>
 							</div>
+
+							{/* Management Type Switcher - Admin Only */}
+							{isAdmin && (
+								<div className="mb-4">
+									<h5 className="mb-3">Project Management Type</h5>
+									<div className="d-flex align-items-center justify-content-between p-3 border rounded">
+										<div>
+											<strong className="d-block mb-1">
+												{project.managementType === ProjectManagementType.DigitalEngineersManaged 
+													? 'Digital Engineers Managed' 
+													: 'Client Managed (Self-Managed'}
+											</strong>
+											<span className="text-muted small">
+												{project.managementType === ProjectManagementType.DigitalEngineersManaged 
+													? 'Your admin team manages the project and specialists' 
+													: 'Client manages the project and specialists themselves'}
+											</span>
+										</div>
+										<Form.Check
+											type="switch"
+											id="management-type-switch"
+											checked={project.managementType === ProjectManagementType.ClientManaged}
+											onChange={handleManagementTypeChange}
+											disabled={updatingManagementType}
+											label=""
+										/>
+									</div>
+								</div>
+							)}
 
 							{project.thumbnailUrl && (
 								<Row className="mb-4">

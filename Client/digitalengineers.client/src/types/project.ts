@@ -36,6 +36,7 @@ export interface ProjectFormData {
 	state: string;
 	zipCode: string;
 	projectScope: 1 | 2 | 3;
+	managementType: ProjectManagementType;
 
 	// Step 3
 	description: string;
@@ -51,6 +52,7 @@ export interface CreateProjectRequest {
 	state: string;
 	zipCode: string;
 	projectScope: number;
+	managementType: ProjectManagementType;
 	description: string;
 	files: File[];
 	thumbnail: File | null;

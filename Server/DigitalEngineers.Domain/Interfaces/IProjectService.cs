@@ -35,6 +35,18 @@ public interface IProjectService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates project management type (Admin/SuperAdmin only)
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="managementType">New management type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    Task UpdateProjectManagementTypeAsync(
+        int projectId,
+        string managementType,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets project specialists (assigned + pending bids) with role-based filtering
     /// </summary>
     /// <param name="projectId">Project ID</param>

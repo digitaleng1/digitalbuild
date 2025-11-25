@@ -165,6 +165,7 @@ const FormFields = ({
 				acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.png', '.jpg', '.jpeg', '.dwg']}
 				onFilesChange={setFiles}
 				value={files}
+				showFileList={true}
 			/>
 
 			<Alert variant="info" className="mt-3 mb-3">

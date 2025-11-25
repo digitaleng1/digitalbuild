@@ -67,6 +67,7 @@ class ProjectService {
 		formData.append('state', data.state);
 		formData.append('zipCode', data.zipCode);
 		formData.append('projectScope', data.projectScope.toString());
+		formData.append('managementType', data.managementType);
 		
 		// Append license type IDs
 		data.licenseTypeIds.forEach(id => {
@@ -99,6 +100,13 @@ class ProjectService {
 	 */
 	async updateProjectStatus(id: number, status: string): Promise<void> {
 		await httpClient.patch(`/api/projects/${id}/status`, { status });
+	}
+
+	/**
+	 * Update project management type (Admin/SuperAdmin only)
+	 */
+	async updateProjectManagementType(id: number, managementType: string): Promise<void> {
+		await httpClient.patch(`/api/projects/${id}/management-type`, { managementType });
 	}
 }
 

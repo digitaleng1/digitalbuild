@@ -577,6 +577,32 @@ public class ProjectService : IProjectService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task UpdateProjectManagementTypeAsync(
+        int projectId,
+        string managementType,
+        CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            _logger.LogWarning("Attempt to update management type for non-existent project {ProjectId}", projectId);
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        if (!Enum.TryParse<ProjectManagementType>(managementType, ignoreCase: true, out var newManagementType))
+        {
+            _logger.LogWarning("Invalid management type '{ManagementType}' provided for project {ProjectId}", managementType, projectId);
+            throw new ArgumentException($"Invalid management type: {managementType}", nameof(managementType));
+        }
+        
+        project.ManagementType = newManagementType;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<ProjectSpecialistDto>> GetProjectSpecialistsAsync(
         int projectId,
         string userId,

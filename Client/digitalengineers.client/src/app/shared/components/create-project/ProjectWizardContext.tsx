@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { ProjectFormData } from '@/types/project';
+import { ProjectManagementType } from '@/types/project';
 import projectService from '@/services/projectService';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/contexts';
@@ -21,6 +22,7 @@ const initialFormData: ProjectFormData = {
 	state: '',
 	zipCode: '',
 	projectScope: 1,
+	managementType: ProjectManagementType.DigitalEngineersManaged,
 	description: '',
 	files: [],
 	thumbnail: null,
