@@ -24,6 +24,7 @@ const ProjectTableRow = ({
 }: ProjectTableRowProps) => {
 	const { hasAnyRole } = useAuthContext();
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
+	const isProvider = hasAnyRole(['Provider']);
 	const [isDragging, setIsDragging] = useState(false);
 
 	const handleDragStart = (e: React.DragEvent<HTMLTableRowElement>) => {
@@ -139,7 +140,13 @@ const ProjectTableRow = ({
 			{/* Metadata - Task Count */}
 			<td className="col-metadata">
 				<Link 
-					to={isAdmin ? `/admin/projects/tasks/${project.id}` : `/client/projects/tasks/${project.id}`}
+					to={
+						isAdmin 
+							? `/admin/projects/tasks/${project.id}` 
+							: isProvider
+								? `/specialist/projects/tasks/${project.id}`
+								: `/client/projects/tasks/${project.id}`
+					}
 					className="text-decoration-none"
 					title="View project tasks"
 					onClick={(e) => e.stopPropagation()}

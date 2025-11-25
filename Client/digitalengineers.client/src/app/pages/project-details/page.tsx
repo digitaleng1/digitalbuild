@@ -32,6 +32,7 @@ const ProjectDetailsPage = () => {
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
 	const isClient = hasAnyRole(['Client']);
 	const isProvider = hasAnyRole(['Provider']);
+	const isSpecialist = hasAnyRole(['Specialist']);
 
 	// Fetch task count
 	useEffect(() => {
@@ -176,7 +177,13 @@ const ProjectDetailsPage = () => {
 								
 								{/* Task Count with Link */}
 								<Link 
-									to={isAdmin ? `/admin/projects/tasks/${projectId}` : `/client/projects/tasks/${projectId}`}
+									to={
+										isAdmin 
+											? `/admin/projects/tasks/${projectId}` 
+											: isSpecialist
+												? `/specialist/projects/tasks/${projectId}`
+												: `/client/projects/tasks/${projectId}`
+									}
 									className="d-flex align-items-center text-decoration-none"
 									title="View project tasks"
 								>

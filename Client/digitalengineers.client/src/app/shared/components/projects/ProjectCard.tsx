@@ -179,7 +179,7 @@ export default function ProjectCard({
 				<div className="mb-1">
 					<Link 
 						to={isAdmin ? `/admin/projects/tasks/${project.id}` : 
-						    isProvider ? `/specialist/projects/details/${project.id}` :
+						    isProvider ? `/specialist/projects/tasks/${project.id}` :
 						    `/client/projects/tasks/${project.id}`}
 						className="text-decoration-none"
 						title="View project tasks"
