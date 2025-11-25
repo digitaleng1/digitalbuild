@@ -9,6 +9,7 @@ interface FileUploaderProps {
 	acceptedFileTypes?: string[];
 	onFilesChange: (files: File[]) => void;
 	value: File[];
+	showFileList?: boolean; // New prop to control file list visibility
 }
 
 const FileUploader = ({
@@ -19,6 +20,7 @@ const FileUploader = ({
 	acceptedFileTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.png', '.jpg', '.jpeg'],
 	onFilesChange,
 	value,
+	showFileList = false, // Default to false for tasks
 }: FileUploaderProps) => {
 	const [isDragging, setIsDragging] = useState(false);
 	const [error, setError] = useState<string>('');
@@ -125,9 +127,9 @@ const FileUploader = ({
 		<div className="file-uploader">
 			{label && <FormLabel>{label}</FormLabel>}
 			
-			{/* Drop Zone - Top */}
+			{/* Drop Zone */}
 			<div
-				className={`file-drop-zone border rounded p-4 text-center mb-3 ${
+				className={`file-drop-zone border rounded p-4 text-center ${
 					isDragging ? 'border-primary bg-light' : 'border-2 border-dashed'
 				}`}
 				onDragEnter={handleDragEnter}
@@ -158,31 +160,23 @@ const FileUploader = ({
 				style={{ display: 'none' }}
 			/>
 
-			{helpText && <small className="text-muted d-block mb-2">{helpText}</small>}
+			{helpText && <small className="text-muted d-block mt-2">{helpText}</small>}
 
 			{error && (
-				<div className="alert alert-danger mb-2" role="alert">
+				<div className="alert alert-danger mt-2 mb-0" role="alert">
 					<i className="mdi mdi-alert-circle-outline me-1"></i>
 					{error}
 				</div>
 			)}
 
-			{/* File List - Bottom */}
-			<div className="uploaded-files-container">
-				<div className="d-flex justify-content-between align-items-center mb-2">
-					<h6 className="mb-0">Uploaded Files</h6>
-					<span className="badge bg-primary">{value.length}/{maxFiles}</span>
-				</div>
-				
-				{value.length === 0 ? (
-					<div 
-						className="border border-dashed rounded p-3 text-center text-muted"
-					>
-						<i className="mdi mdi-file-outline fs-2 mb-2"></i>
-						<p className="mb-0">No files uploaded yet</p>
-						<small>Upload files using the area above</small>
+			{/* Optional File List - hidden by default for tasks */}
+			{showFileList && value.length > 0 && (
+				<div className="uploaded-files-container mt-3">
+					<div className="d-flex justify-content-between align-items-center mb-2">
+						<h6 className="mb-0">Uploaded Files</h6>
+						<span className="badge bg-primary">{value.length}/{maxFiles}</span>
 					</div>
-				) : (
+					
 					<div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
 						{value.map((file, index) => (
 							<div
@@ -209,8 +203,8 @@ const FileUploader = ({
 							</div>
 						))}
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 };

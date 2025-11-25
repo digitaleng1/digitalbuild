@@ -7,7 +7,6 @@ import { useAuthContext } from '@/common/context/useAuthContext';
 
 interface ProjectCardProps {
 	project: ProjectDto;
-	basePath?: string;
 	variant?: 'default' | 'compact';
 	onEdit?: (projectId: number) => void;
 	onDelete?: (projectId: number) => void;
@@ -15,7 +14,6 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ 
 	project, 
-	basePath = '/client/projects',
 	variant = 'default', 
 	onEdit, 
 	onDelete 
@@ -23,6 +21,12 @@ export default function ProjectCard({
 	const { hasAnyRole } = useAuthContext();
 	const isProvider = hasAnyRole(['Provider']);
 	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
+	
+	// Determine basePath based on role
+	const projectBasePath = isAdmin ? '/admin/projects' :
+	                        isProvider ? '/specialist/projects' :
+	                        '/client/projects';
+	
 	const hasImage = !!project.thumbnailUrl;
 	const statusVariant = getStatusBadgeVariant(project.status);
 
@@ -91,7 +95,7 @@ export default function ProjectCard({
 				)}
 
 				<h4 className="mt-0">
-					<Link to={`${basePath}/details/${project.id}`} className="text-title">
+					<Link to={`${projectBasePath}/details/${project.id}`} className="text-title">
 						{project.name}
 					</Link>
 				</h4>
@@ -174,7 +178,9 @@ export default function ProjectCard({
 				{/* Task Count with Link */}
 				<div className="mb-1">
 					<Link 
-						to={isAdmin ? `/admin/projects/tasks/${project.id}` : `/client/projects/tasks/${project.id}`}
+						to={isAdmin ? `/admin/projects/tasks/${project.id}` : 
+						    isProvider ? `/specialist/projects/details/${project.id}` :
+						    `/client/projects/tasks/${project.id}`}
 						className="text-decoration-none"
 						title="View project tasks"
 					>
@@ -189,7 +195,7 @@ export default function ProjectCard({
 				<div className="mt-auto d-flex justify-content-between align-items-center">
 					<div className="d-flex gap-2">
 						<Link 
-							to={`${basePath}/details/${project.id}`} 
+							to={`${projectBasePath}/details/${project.id}`} 
 							className="text-muted"
 							title="View Details"
 						>

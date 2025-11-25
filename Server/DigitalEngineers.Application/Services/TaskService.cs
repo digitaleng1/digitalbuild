@@ -358,6 +358,53 @@ public class TaskService : ITaskService
         return await MapToTaskDtoAsync(task.Id, cancellationToken);
     }
 
+    public async Task<TaskDto> UpdateTaskStatusAsync(int id, int statusId, string updatedByUserId, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.Set<ProjectTask>()
+            .Include(t => t.Status)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+        if (task == null)
+            throw new TaskNotFoundException(id);
+
+        var newStatus = await _context.Set<ProjectTaskStatusEntity>().FindAsync([statusId], cancellationToken);
+        if (newStatus == null)
+            throw new TaskStatusNotFoundException(statusId);
+
+        if (task.StatusId == statusId)
+            return await MapToTaskDtoAsync(task.Id, cancellationToken);
+
+        var oldStatus = task.Status;
+
+        // Update status
+        task.StatusId = statusId;
+        task.UpdatedAt = DateTime.UtcNow;
+
+        // Update timestamps based on status
+        if (newStatus.Name == "In Progress" && task.StartedAt == null)
+            task.StartedAt = DateTime.UtcNow;
+
+        if (newStatus.IsCompleted && task.CompletedAt == null)
+            task.CompletedAt = DateTime.UtcNow;
+
+        // Audit log
+        var auditLog = new TaskAuditLog
+        {
+            TaskId = task.Id,
+            UserId = updatedByUserId,
+            Action = TaskAuditAction.Updated.ToString(),
+            FieldName = "Status",
+            OldValue = oldStatus.Name,
+            NewValue = newStatus.Name,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Set<TaskAuditLog>().Add(auditLog);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return await MapToTaskDtoAsync(task.Id, cancellationToken);
+    }
+
     public async Task DeleteTaskAsync(int id, string deletedByUserId, CancellationToken cancellationToken = default)
     {
         var task = await _context.Set<ProjectTask>().FindAsync([id], cancellationToken);
@@ -681,26 +728,119 @@ public class TaskService : ITaskService
         });
     }
 
-    public async Task<IEnumerable<TaskAuditLogDto>> GetAuditLogsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default)
+    public async Task<TaskStatusDto> CreateStatusAsync(CreateTaskStatusDto dto, CancellationToken cancellationToken = default)
     {
-        var logs = await _context.Set<TaskAuditLog>()
-            .Include(al => al.User)
-            .Where(al => al.TaskId == taskId)
-            .OrderByDescending(al => al.CreatedAt)
+        var projectExists = await _context.Projects.AnyAsync(p => p.Id == dto.ProjectId, cancellationToken);
+        if (!projectExists)
+            throw new ProjectNotFoundException(dto.ProjectId);
+
+        var exists = await _context.Set<ProjectTaskStatusEntity>()
+            .AnyAsync(s => s.Name == dto.Name && s.ProjectId == dto.ProjectId, cancellationToken);
+
+        if (exists)
+            throw new ValidationException($"Status with name '{dto.Name}' already exists for this project");
+
+        var status = new ProjectTaskStatusEntity
+        {
+            Name = dto.Name,
+            Color = dto.Color,
+            Order = dto.Order,
+            IsDefault = false,
+            IsCompleted = dto.IsCompleted,
+            ProjectId = dto.ProjectId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Set<ProjectTaskStatusEntity>().Add(status);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new TaskStatusDto
+        {
+            Id = status.Id,
+            Name = status.Name,
+            Color = status.Color,
+            Order = status.Order,
+            IsDefault = status.IsDefault,
+            IsCompleted = status.IsCompleted,
+            CreatedAt = status.CreatedAt
+        };
+    }
+
+    public async Task<TaskStatusDto> UpdateStatusAsync(int statusId, UpdateTaskStatusDto dto, CancellationToken cancellationToken = default)
+    {
+        var status = await _context.Set<ProjectTaskStatusEntity>().FindAsync([statusId], cancellationToken);
+
+        if (status == null)
+            throw new TaskStatusNotFoundException(statusId);
+
+        var exists = await _context.Set<ProjectTaskStatusEntity>()
+            .AnyAsync(s => s.Name == dto.Name && s.ProjectId == status.ProjectId && s.Id != statusId, cancellationToken);
+
+        if (exists)
+            throw new ValidationException($"Status with name '{dto.Name}' already exists for this project");
+
+        status.Name = dto.Name;
+        status.Color = dto.Color;
+        status.IsCompleted = dto.IsCompleted;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new TaskStatusDto
+        {
+            Id = status.Id,
+            Name = status.Name,
+            Color = status.Color,
+            Order = status.Order,
+            IsDefault = status.IsDefault,
+            IsCompleted = status.IsCompleted,
+            CreatedAt = status.CreatedAt
+        };
+    }
+
+    public async Task DeleteStatusAsync(int statusId, CancellationToken cancellationToken = default)
+    {
+        var status = await _context.Set<ProjectTaskStatusEntity>().FindAsync([statusId], cancellationToken);
+
+        if (status == null)
+            throw new TaskStatusNotFoundException(statusId);
+
+        if (status.IsDefault)
+            throw new ValidationException("Cannot delete default status");
+
+        var hasTasksUsingStatus = await _context.Set<ProjectTask>()
+            .AnyAsync(t => t.StatusId == statusId, cancellationToken);
+
+        if (hasTasksUsingStatus)
+            throw new ValidationException("Cannot delete status that is being used by tasks");
+
+        _context.Set<ProjectTaskStatusEntity>().Remove(status);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ReorderStatusesAsync(int projectId, IEnumerable<ReorderTaskStatusDto> statuses, CancellationToken cancellationToken = default)
+    {
+        var projectExists = await _context.Projects.AnyAsync(p => p.Id == projectId, cancellationToken);
+        if (!projectExists)
+            throw new ProjectNotFoundException(projectId);
+
+        var statusIds = statuses.Select(s => s.StatusId).ToList();
+        var existingStatuses = await _context.Set<ProjectTaskStatusEntity>()
+            .Where(s => s.ProjectId == projectId && statusIds.Contains(s.Id))
             .ToListAsync(cancellationToken);
 
-        return logs.Select(al => new TaskAuditLogDto
+        if (existingStatuses.Count != statusIds.Count)
+            throw new ValidationException("Some status IDs are invalid");
+
+        foreach (var statusDto in statuses)
         {
-            Id = al.Id,
-            TaskId = al.TaskId,
-            UserId = al.UserId,
-            UserName = $"{al.User.FirstName} {al.User.LastName}",
-            Action = al.Action,
-            FieldName = al.FieldName,
-            OldValue = al.OldValue,
-            NewValue = al.NewValue,
-            CreatedAt = al.CreatedAt
-        });
+            var status = existingStatuses.FirstOrDefault(s => s.Id == statusDto.StatusId);
+            if (status != null)
+            {
+                status.Order = statusDto.NewOrder;
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<TaskDto> CreateTaskAsync(
@@ -888,6 +1028,35 @@ public class TaskService : ITaskService
 
             throw;
         }
+    }
+
+    // Audit Logs
+    public async Task<IEnumerable<TaskAuditLogDto>> GetAuditLogsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default)
+    {
+        var auditLogs = await _context.Set<TaskAuditLog>()
+            .AsNoTracking()
+            .Where(log => log.TaskId == taskId)
+            .OrderByDescending(log => log.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var userIds = auditLogs.Select(log => log.UserId).Distinct().ToList();
+        var users = await _context.Users
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, FullName = $"{u.FirstName} {u.LastName}" })
+            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+
+        return auditLogs.Select(log => new TaskAuditLogDto
+        {
+            Id = log.Id,
+            TaskId = log.TaskId,
+            UserId = log.UserId,
+            UserName = users.GetValueOrDefault(log.UserId) ?? "Unknown",
+            Action = log.Action,
+            FieldName = log.FieldName,
+            OldValue = log.OldValue,
+            NewValue = log.NewValue,
+            CreatedAt = log.CreatedAt
+        });
     }
 
     private TaskDto MapToTaskDto(ProjectTask task)

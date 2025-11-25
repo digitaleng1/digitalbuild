@@ -469,10 +469,10 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                   </div>
                 </>
               ) : (
-                <Form.Text className="text-muted d-block">
-                  <Icon icon="mdi:information-outline" width={14} className="me-1" />
-                  Comments will be available after task is created
-                </Form.Text>
+                <div className="text-center text-muted py-3">
+                  <Icon icon="mdi:information-outline" width={48} className="d-block mx-auto mb-2 opacity-50" />
+                  <p className="mb-0">Comments will be available after task is created</p>
+                </div>
               )}
             </CardBody>
           </Card>

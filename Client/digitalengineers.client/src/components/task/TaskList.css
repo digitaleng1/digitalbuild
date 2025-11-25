@@ -1,0 +1,45 @@
+.task-list-item {
+  transition: background-color 0.2s ease;
+}
+
+.task-list-item:hover {
+  background-color: #f8f9fa !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.task-list-section-header {
+  user-select: none;
+}
+
+/* Drag & Drop Styles */
+.task-sortable-list {
+  min-height: 50px;
+}
+
+.task-item-wrapper {
+  cursor: move;
+  transition: all 0.2s ease;
+  margin-bottom: 0.25rem;
+}
+
+.task-item-wrapper:hover {
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background: #e9ecef !important;
+  border-radius: 0.25rem;
+}
+
+.sortable-drag {
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 0.25rem;
+  background: white !important;
+  z-index: 1000 !important;
+}

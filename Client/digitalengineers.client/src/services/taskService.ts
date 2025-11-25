@@ -12,6 +12,9 @@ import type {
   TaskAuditLogViewModel,
   ProjectTaskStatusViewModel,
   TaskAttachmentViewModel,
+  CreateTaskStatusRequest,
+  UpdateTaskStatus,
+  ReorderTaskStatusItem,
 } from '@/types/task';
 
 const BASE_URL = '/api/tasks';
@@ -90,6 +93,10 @@ export const taskService = {
     return await httpClient.put<TaskViewModel>(`${BASE_URL}/${id}`, data) as TaskViewModel;
   },
 
+  async updateTaskStatus(id: number, statusId: number): Promise<TaskViewModel> {
+    return await httpClient.patch<TaskViewModel>(`${BASE_URL}/${id}/status`, { statusId }) as TaskViewModel;
+  },
+
   async deleteTask(id: number): Promise<void> {
     await httpClient.delete(`${BASE_URL}/${id}`);
   },
@@ -135,6 +142,22 @@ export const taskService = {
 
   async getStatusesByProject(projectId: number): Promise<ProjectTaskStatusViewModel[]> {
     return (await httpClient.get<ProjectTaskStatusViewModel[]>(`${BASE_URL}/statuses/project/${projectId}`) || []) as ProjectTaskStatusViewModel[];
+  },
+
+  async createStatus(data: CreateTaskStatusRequest): Promise<ProjectTaskStatusViewModel> {
+    return await httpClient.post<ProjectTaskStatusViewModel>(`${BASE_URL}/statuses`, data) as ProjectTaskStatusViewModel;
+  },
+
+  async updateStatus(statusId: number, data: UpdateTaskStatus): Promise<ProjectTaskStatusViewModel> {
+    return await httpClient.put<ProjectTaskStatusViewModel>(`${BASE_URL}/statuses/${statusId}`, data) as ProjectTaskStatusViewModel;
+  },
+
+  async deleteStatus(statusId: number): Promise<void> {
+    await httpClient.delete(`${BASE_URL}/statuses/${statusId}`);
+  },
+
+  async reorderStatuses(projectId: number, statuses: ReorderTaskStatusItem[]): Promise<void> {
+    await httpClient.post(`${BASE_URL}/statuses/reorder?projectId=${projectId}`, { statuses });
   },
 
   async getAuditLogs(taskId: number): Promise<TaskAuditLogViewModel[]> {

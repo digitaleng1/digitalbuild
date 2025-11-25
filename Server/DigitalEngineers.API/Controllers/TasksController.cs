@@ -92,6 +92,13 @@ public class TasksController : ControllerBase
         return Ok(_mapper.Map<TaskViewModel>(task));
     }
 
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult<TaskViewModel>> UpdateTaskStatus(int id, [FromBody] UpdateTaskStatusOnlyViewModel viewModel, CancellationToken cancellationToken)
+    {
+        var task = await _taskService.UpdateTaskStatusAsync(id, viewModel.StatusId, GetUserId(), cancellationToken);
+        return Ok(_mapper.Map<TaskViewModel>(task));
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id, CancellationToken cancellationToken)
     {
@@ -181,6 +188,39 @@ public class TasksController : ControllerBase
     {
         var statuses = await _taskService.GetStatusesByProjectIdAsync(projectId, cancellationToken);
         return Ok(_mapper.Map<IEnumerable<TaskStatusViewModel>>(statuses));
+    }
+
+    [HttpPost("statuses")]
+    public async Task<ActionResult<TaskStatusViewModel>> CreateStatus([FromBody] CreateTaskStatusViewModel viewModel, CancellationToken cancellationToken)
+    {
+        var dto = _mapper.Map<CreateTaskStatusDto>(viewModel);
+        var status = await _taskService.CreateStatusAsync(dto, cancellationToken);
+        var result = _mapper.Map<TaskStatusViewModel>(status);
+        
+        return CreatedAtAction(nameof(GetStatusesByProject), new { projectId = dto.ProjectId }, result);
+    }
+
+    [HttpPut("statuses/{statusId}")]
+    public async Task<ActionResult<TaskStatusViewModel>> UpdateStatus(int statusId, [FromBody] UpdateTaskStatusViewModel viewModel, CancellationToken cancellationToken)
+    {
+        var dto = _mapper.Map<UpdateTaskStatusDto>(viewModel);
+        var status = await _taskService.UpdateStatusAsync(statusId, dto, cancellationToken);
+        return Ok(_mapper.Map<TaskStatusViewModel>(status));
+    }
+
+    [HttpDelete("statuses/{statusId}")]
+    public async Task<IActionResult> DeleteStatus(int statusId, CancellationToken cancellationToken)
+    {
+        await _taskService.DeleteStatusAsync(statusId, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("statuses/reorder")]
+    public async Task<IActionResult> ReorderStatuses([FromBody] ReorderTaskStatusesViewModel viewModel, [FromQuery] int projectId, CancellationToken cancellationToken)
+    {
+        var dtos = _mapper.Map<IEnumerable<ReorderTaskStatusDto>>(viewModel.Statuses);
+        await _taskService.ReorderStatusesAsync(projectId, dtos, cancellationToken);
+        return NoContent();
     }
 
     [HttpGet("{taskId}/files")]

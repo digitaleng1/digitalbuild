@@ -16,6 +16,7 @@ public interface ITaskService
     Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskDto>> GetTasksByAssignedUserIdAsync(string userId, CancellationToken cancellationToken = default);
     Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto, string updatedByUserId, CancellationToken cancellationToken = default);
+    Task<TaskDto> UpdateTaskStatusAsync(int id, int statusId, string updatedByUserId, CancellationToken cancellationToken = default);
     Task DeleteTaskAsync(int id, string deletedByUserId, CancellationToken cancellationToken = default);
     
     // Comments
@@ -38,7 +39,11 @@ public interface ITaskService
     Task DeleteLabelAsync(int labelId, CancellationToken cancellationToken = default);
     
     // Statuses
+    Task<TaskStatusDto> CreateStatusAsync(CreateTaskStatusDto dto, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskStatusDto>> GetStatusesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
+    Task<TaskStatusDto> UpdateStatusAsync(int statusId, UpdateTaskStatusDto dto, CancellationToken cancellationToken = default);
+    Task DeleteStatusAsync(int statusId, CancellationToken cancellationToken = default);
+    Task ReorderStatusesAsync(int projectId, IEnumerable<ReorderTaskStatusDto> statuses, CancellationToken cancellationToken = default);
     
     // Audit Logs
     Task<IEnumerable<TaskAuditLogDto>> GetAuditLogsByTaskIdAsync(int taskId, CancellationToken cancellationToken = default);

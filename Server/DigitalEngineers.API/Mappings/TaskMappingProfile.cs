@@ -25,6 +25,7 @@ public class TaskMappingProfile : Profile
         CreateMap<CreateTaskCommentViewModel, CreateTaskCommentDto>();
         CreateMap<UpdateTaskCommentViewModel, UpdateTaskCommentDto>();
         CreateMap<CreateTaskLabelViewModel, CreateTaskLabelDto>();
+        CreateMap<CreateTaskStatusViewModel, CreateTaskStatusDto>();
 
         // DTO -> ViewModel (Response)
         CreateMap<TaskDto, TaskViewModel>();
@@ -39,6 +40,11 @@ public class TaskMappingProfile : Profile
         CreateMap<TaskAuditLogDto, TaskAuditLogViewModel>();
         CreateMap<TaskAttachmentDto, TaskAttachmentViewModel>();
         CreateMap<TaskWatcherDto, TaskWatcherViewModel>();
+        
+        // Task Status mappings
+        CreateMap<CreateTaskStatusViewModel, CreateTaskStatusDto>();
+        CreateMap<UpdateTaskStatusViewModel, UpdateTaskStatusDto>();
+        CreateMap<ReorderTaskStatusViewModel, ReorderTaskStatusDto>();
         CreateMap<TaskStatusDto, TaskStatusViewModel>();
     }
 }

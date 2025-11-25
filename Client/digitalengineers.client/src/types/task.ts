@@ -148,3 +148,26 @@ export interface CreateTaskLabelViewModel {
   color: string;
   projectId?: number;
 }
+
+export interface CreateTaskStatusRequest {
+  projectId: number;
+  name: string;
+  color: string;
+  order: number;
+  isCompleted: boolean;
+}
+
+export interface UpdateTaskStatus {
+  name: string;
+  color: string;
+  isCompleted: boolean;
+}
+
+export interface ReorderTaskStatusItem {
+  statusId: number;
+  newOrder: number;
+}
+
+export interface ReorderTaskStatusRequest {
+  statuses: ReorderTaskStatusItem[];
+}
