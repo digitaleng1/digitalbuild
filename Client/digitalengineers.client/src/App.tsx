@@ -1,8 +1,9 @@
 import AppRoutes from '@/routes';
 import {AuthProvider} from "@/common/context/useAuthContext";
-import { NotificationProvider, ThemeProvider } from '@/common/context';
+import { ThemeProvider } from '@/common/context';
 import { configureFakeBackend } from './common';
 import { ToastProvider } from '@/contexts';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 // For Saas import Saas.scss
 import './assets/scss/app.scss';
@@ -14,13 +15,13 @@ configureFakeBackend();
 const App = () => {
   return (
       <ThemeProvider>
-        <NotificationProvider>
-          <ToastProvider>
-            <AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <NotificationProvider>
               <AppRoutes />
-            </AuthProvider>
-          </ToastProvider>
-        </NotificationProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </ToastProvider>
       </ThemeProvider>
   );
 };

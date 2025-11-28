@@ -371,3 +371,4 @@ FodyWeavers.xsd
 /Server/DigitalEngineers.API/appsettings.Development.json
 /ADMIN_PANEL_IMPLEMENTATION_PLAN.md
 *.md
+/Server/DigitalEngineers.API/test-notificator-firebase-adminsdk-fbsvc-bdb9e467a9.json

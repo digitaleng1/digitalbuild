@@ -39,6 +39,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProjectTaskLabel> ProjectTaskLabels => Set<ProjectTaskLabel>();
     public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
     public DbSet<TaskAuditLog> TaskAuditLogs => Set<TaskAuditLog>();
+    
+    // Notifications
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<UserDevice> UserDevices => Set<UserDevice>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

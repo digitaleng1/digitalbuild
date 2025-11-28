@@ -16,6 +16,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(e => e.Location).HasMaxLength(200);
         builder.Property(e => e.Website).HasMaxLength(500);
         builder.Property(e => e.RefreshToken).HasMaxLength(500);
+        builder.Property(e => e.FcmToken).HasMaxLength(500);
         builder.HasIndex(e => e.Email).IsUnique();
     }
 }

@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
 
         // Configuration bindings
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.Configure<FirebaseSettings>(configuration.GetSection("FirebaseSettings"));
 
         // Service registrations
         services.AddScoped<IAuthService, AuthService>();
@@ -52,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILicensesService, LicensesService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

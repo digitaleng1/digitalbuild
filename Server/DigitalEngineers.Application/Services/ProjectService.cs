@@ -18,19 +18,22 @@ public class ProjectService : IProjectService
     private readonly ILogger<ProjectService> _logger;
     private readonly IEmailService _emailService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
     public ProjectService(
         ApplicationDbContext context,
         IFileStorageService fileStorageService,
         ILogger<ProjectService> logger,
         IEmailService emailService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        INotificationService notificationService)
     {
         _context = context;
         _fileStorageService = fileStorageService;
         _logger = logger;
         _emailService = emailService;
         _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     public async Task<ProjectDto> CreateProjectAsync(
@@ -234,7 +237,7 @@ public class ProjectService : IProjectService
             _context.ProjectLicenseTypes.AddRange(projectLicenseTypes);
             await _context.SaveChangesAsync(cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken);
+            //await transaction.CommitAsync(cancellationToken);
 
             var client = await _context.Users
                 .Where(u => u.Id == clientId)
@@ -259,6 +262,28 @@ public class ProjectService : IProjectService
                 clientProfilePictureUrl = client.ProfilePictureUrl;
             }
 
+            // Send push notification to client
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: clientId,
+                type: NotificationType.Project,
+                subType: NotificationSubType.Created,
+                title: "Project Created",
+                body: $"Your project '{project.Name}' has been successfully created and is awaiting a quote.",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "projectId", project.Id.ToString() },
+                    { "projectName", project.Name }
+                },
+                cancellationToken: cancellationToken);
+
+            string? thumbnailPresignedUrl = null;
+            if (!string.IsNullOrEmpty(project.ThumbnailUrl))
+            {
+                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+
             // Send project created email to client
             await _emailService.SendProjectCreatedNotificationAsync(
                 client!.Email!,
@@ -267,12 +292,6 @@ public class ProjectService : IProjectService
                 project.Description,
                 $"{project.StreetAddress}, {project.City}, {project.State}",
                 cancellationToken);
-
-            string? thumbnailPresignedUrl = null;
-            if (!string.IsNullOrEmpty(project.ThumbnailUrl))
-            {
-                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
-            }
 
             return new ProjectDto
             {
