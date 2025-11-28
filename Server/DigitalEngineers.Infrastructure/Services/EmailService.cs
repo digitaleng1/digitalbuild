@@ -3,6 +3,7 @@ using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Configuration;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -58,7 +59,17 @@ public class EmailService : IEmailService
             message.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();
-            await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, _emailSettings.EnableSsl, cancellationToken);
+            
+            // Use STARTTLS for port 587 (Gmail standard)
+            var secureSocketOptions = _emailSettings.SmtpPort == 587 
+                ? SecureSocketOptions.StartTls 
+                : (_emailSettings.EnableSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None);
+            
+            await client.ConnectAsync(
+                _emailSettings.SmtpHost, 
+                _emailSettings.SmtpPort, 
+                secureSocketOptions, 
+                cancellationToken);
 
             if (!string.IsNullOrEmpty(_emailSettings.Username) && !string.IsNullOrEmpty(_emailSettings.Password))
             {
