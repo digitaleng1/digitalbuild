@@ -259,6 +259,7 @@ public class BidService : IBidService
     public async Task<BidResponseDto> CreateBidResponseAsync(CreateBidResponseDto dto, CancellationToken cancellationToken = default)
     {
         var bidRequest = await _context.Set<BidRequest>()
+            .Include(br => br.Project)
             .FirstOrDefaultAsync(br => br.Id == dto.BidRequestId, cancellationToken);
 
         if (bidRequest == null)
@@ -306,12 +307,37 @@ public class BidService : IBidService
             .Include(s => s.User)
             .FirstAsync(s => s.Id == dto.SpecialistId, cancellationToken);
 
+        // Send bid response received email to all admins
+        var admins = await _context.Users
+            .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+            .Join(_context.Roles, x => x.ur.RoleId, r => r.Id, (x, r) => new { x.u, r })
+            .Where(x => x.r.Name == "Admin" || x.r.Name == "SuperAdmin")
+            .Select(x => x.u)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var specialistName = $"{specialist.User.FirstName} {specialist.User.LastName}";
+        var bidResponseUrl = $"https://localhost:5173/admin/bids/{bidResponse.Id}";
+
+        foreach (var admin in admins)
+        {
+            await _emailService.SendBidResponseReceivedNotificationAsync(
+                admin.Email!,
+                $"{admin.FirstName} {admin.LastName}",
+                bidRequest.Project.Name,
+                specialistName,
+                bidResponse.ProposedPrice,
+                bidResponse.EstimatedDays,
+                bidResponseUrl,
+                cancellationToken);
+        }
+
         return new BidResponseDto
         {
             Id = bidResponse.Id,
             BidRequestId = bidResponse.BidRequestId,
             SpecialistId = bidResponse.SpecialistId,
-            SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
+            SpecialistName = specialistName,
             SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
             SpecialistRating = specialist.Rating,
             CoverLetter = bidResponse.CoverLetter,
@@ -467,12 +493,29 @@ public class BidService : IBidService
             .ToListAsync(cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send bid accepted email to specialist
+        var specialistFullName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
+        var finalPrice = bidResponse.ProposedPrice * (1 + adminMarkupPercentage / 100);
+        var projectUrl = $"https://localhost:5173/specialist/projects/{bidResponse.BidRequest.ProjectId}";
+
+        await _emailService.SendBidAcceptedNotificationAsync(
+            bidResponse.Specialist.User.Email!,
+            specialistFullName,
+            bidResponse.BidRequest.Project.Name,
+            finalPrice,
+            adminComment,
+            projectUrl,
+            cancellationToken);
     }
 
     public async Task RejectBidResponseAsync(int id, string? reason = null, CancellationToken cancellationToken = default)
     {
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
+                .ThenInclude(br => br.Project)
+            .Include(r => r.Specialist)
+                .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
@@ -501,6 +544,16 @@ public class BidService : IBidService
         bidResponse.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send bid rejected email to specialist
+        var specialistFullName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
+
+        await _emailService.SendBidRejectedNotificationAsync(
+            bidResponse.Specialist.User.Email!,
+            specialistFullName,
+            bidResponse.BidRequest.Project.Name,
+            reason,
+            cancellationToken);
     }
 
     public async Task<BidMessageDto> CreateMessageAsync(CreateBidMessageDto dto, CancellationToken cancellationToken = default)

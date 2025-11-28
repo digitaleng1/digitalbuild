@@ -14,15 +14,18 @@ public class SpecialistService : ISpecialistService
     private readonly ApplicationDbContext _context;
     private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<SpecialistService> _logger;
+    private readonly IEmailService _emailService;
 
     public SpecialistService(
         ApplicationDbContext context,
         IFileStorageService fileStorageService,
-        ILogger<SpecialistService> logger)
+        ILogger<SpecialistService> logger,
+        IEmailService emailService)
     {
         _context = context;
         _fileStorageService = fileStorageService;
         _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<SpecialistDto> CreateSpecialistAsync(CreateSpecialistDto dto, CancellationToken cancellationToken = default)
@@ -279,15 +282,18 @@ public class SpecialistService : ISpecialistService
 
     public async Task AssignSpecialistToProjectAsync(int projectId, int specialistId, string? role = null, CancellationToken cancellationToken = default)
     {
-        var projectExists = await _context.Projects.AnyAsync(p => p.Id == projectId, cancellationToken);
-        if (!projectExists)
+        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        if (project == null)
         {
             _logger.LogWarning("Project with ID {ProjectId} not found", projectId);
             throw new ProjectNotFoundException(projectId);
         }
 
-        var specialistExists = await _context.Set<Specialist>().AnyAsync(s => s.Id == specialistId, cancellationToken);
-        if (!specialistExists)
+        var specialist = await _context.Set<Specialist>()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == specialistId, cancellationToken);
+        
+        if (specialist == null)
         {
             _logger.LogWarning("Specialist with ID {SpecialistId} not found", specialistId);
             throw new SpecialistNotFoundException(specialistId);
@@ -309,6 +315,21 @@ public class SpecialistService : ISpecialistService
 
         _context.Set<ProjectSpecialist>().Add(projectSpecialist);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send project assigned email to specialist
+        var specialistName = $"{specialist.User.FirstName} {specialist.User.LastName}";
+        var address = $"{project.StreetAddress}, {project.City}, {project.State}";
+        var projectUrl = $"https://localhost:5173/specialist/projects/{projectId}";
+
+        await _emailService.SendProjectAssignedNotificationAsync(
+            specialist.User.Email!,
+            specialistName,
+            project.Name,
+            role ?? "Specialist",
+            address,
+            project.StartDate,
+            projectUrl,
+            cancellationToken);
     }
 
     public async Task RemoveSpecialistFromProjectAsync(int projectId, int specialistId, CancellationToken cancellationToken = default)
