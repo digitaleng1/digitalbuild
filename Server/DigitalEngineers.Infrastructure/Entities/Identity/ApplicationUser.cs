@@ -24,4 +24,7 @@ public class ApplicationUser : IdentityUser
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    
+    // Push Notifications
+    public string? FcmToken { get; set; }
 }

@@ -1,5 +1,5 @@
 import AppsDropdown from './AppsDropdown';
-import { notifications, profileMenus, searchOptions } from './data';
+import { profileMenus, searchOptions } from './data';
 import LanguageDropdown from './LanguageDropdown';
 import MaximizeScreen from './MaximizeScreen';
 import NotificationDropdown from './NotificationDropdown';
@@ -147,7 +147,7 @@ const Topbar = ({ topbarDark, toggleMenu, navOpen }: TopbarProps) => {
 						<LanguageDropdown />
 					</li>
 					<li className="dropdown notification-list">
-						<NotificationDropdown notifications={notifications} />
+						<NotificationDropdown />
 					</li>
 					{/*<li className="dropdown d-none d-sm-inline-block">*/}
 					{/*	<AppsDropdown />*/}

@@ -18,6 +18,7 @@ public class AuthService : IAuthService
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
@@ -25,7 +26,8 @@ public class AuthService : IAuthService
         ITokenService tokenService,
         ApplicationDbContext context,
         IConfiguration configuration,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        IEmailService emailService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -33,6 +35,7 @@ public class AuthService : IAuthService
         _context = context;
         _configuration = configuration;
         _fileStorageService = fileStorageService;
+        _emailService = emailService;
     }
 
     public async Task<TokenData> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -88,6 +91,13 @@ public class AuthService : IAuthService
             _context.Set<Specialist>().Add(specialist);
             await _context.SaveChangesAsync(cancellationToken);
         }
+
+        // Send welcome email
+        await _emailService.SendWelcomeEmailAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            dto.Role,
+            cancellationToken);
 
         return await GenerateTokenResponse(user, cancellationToken);
     }

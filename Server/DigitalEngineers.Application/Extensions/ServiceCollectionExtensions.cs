@@ -3,6 +3,7 @@ using DigitalEngineers.Application.Services;
 using DigitalEngineers.Infrastructure.Data;
 using DigitalEngineers.Infrastructure.Services;
 using DigitalEngineers.Infrastructure.Seeders;
+using DigitalEngineers.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +35,11 @@ public static class ServiceCollectionExtensions
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
+        // Configuration bindings
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.Configure<FirebaseSettings>(configuration.GetSection("FirebaseSettings"));
+
+        // Service registrations
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<ILookupService, LookupService>();
@@ -47,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILicensesService, LicensesService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

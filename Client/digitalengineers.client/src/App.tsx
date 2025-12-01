@@ -1,6 +1,6 @@
 import AppRoutes from '@/routes';
 import {AuthProvider} from "@/common/context/useAuthContext";
-import { NotificationProvider, ThemeProvider } from '@/common/context';
+import { ThemeProvider, NotificationProvider } from '@/common/context';
 import { configureFakeBackend } from './common';
 import { ToastProvider } from '@/contexts';
 
@@ -14,13 +14,13 @@ configureFakeBackend();
 const App = () => {
   return (
       <ThemeProvider>
-        <NotificationProvider>
-          <ToastProvider>
+        <ToastProvider>
+          <NotificationProvider>
             <AuthProvider>
               <AppRoutes />
             </AuthProvider>
-          </ToastProvider>
-        </NotificationProvider>
+          </NotificationProvider>
+        </ToastProvider>
       </ThemeProvider>
   );
 };

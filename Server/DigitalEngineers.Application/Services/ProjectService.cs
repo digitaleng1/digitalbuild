@@ -4,6 +4,8 @@ using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Infrastructure.Data;
+using DigitalEngineers.Infrastructure.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -14,15 +16,24 @@ public class ProjectService : IProjectService
     private readonly ApplicationDbContext _context;
     private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<ProjectService> _logger;
+    private readonly IEmailService _emailService;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
     public ProjectService(
         ApplicationDbContext context,
         IFileStorageService fileStorageService,
-        ILogger<ProjectService> logger)
+        ILogger<ProjectService> logger,
+        IEmailService emailService,
+        UserManager<ApplicationUser> userManager,
+        INotificationService notificationService)
     {
         _context = context;
         _fileStorageService = fileStorageService;
         _logger = logger;
+        _emailService = emailService;
+        _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     public async Task<ProjectDto> CreateProjectAsync(
@@ -226,13 +237,7 @@ public class ProjectService : IProjectService
             _context.ProjectLicenseTypes.AddRange(projectLicenseTypes);
             await _context.SaveChangesAsync(cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken);
-
-            string? thumbnailPresignedUrl = null;
-            if (!string.IsNullOrEmpty(project.ThumbnailUrl))
-            {
-                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
-            }
+            //await transaction.CommitAsync(cancellationToken);
 
             var client = await _context.Users
                 .Where(u => u.Id == clientId)
@@ -256,6 +261,37 @@ public class ProjectService : IProjectService
                     : $"{client.FirstName ?? ""} {client.LastName ?? ""}".Trim();
                 clientProfilePictureUrl = client.ProfilePictureUrl;
             }
+
+            // Send push notification to client
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: clientId,
+                type: NotificationType.Project,
+                subType: NotificationSubType.Created,
+                title: "Project Created",
+                body: $"Your project '{project.Name}' has been successfully created and is awaiting a quote.",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "projectId", project.Id.ToString() },
+                    { "projectName", project.Name }
+                },
+                cancellationToken: cancellationToken);
+
+            string? thumbnailPresignedUrl = null;
+            if (!string.IsNullOrEmpty(project.ThumbnailUrl))
+            {
+                thumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(project.ThumbnailUrl);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+
+            // Send project created email to client
+            await _emailService.SendProjectCreatedNotificationAsync(
+                client!.Email!,
+                clientName!,
+                project.Name,
+                project.Description,
+                $"{project.StreetAddress}, {project.City}, {project.State}",
+                cancellationToken);
 
             return new ProjectDto
             {
@@ -557,6 +593,7 @@ public class ProjectService : IProjectService
         CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
+            .Include(p => p.Client)
             .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
         
         if (project == null)
@@ -571,10 +608,21 @@ public class ProjectService : IProjectService
             throw new InvalidProjectStatusException(status);
         }
         
+        var oldStatus = project.Status.ToString();
         project.Status = newStatus;
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send status changed email to client
+        var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
+        await _emailService.SendProjectStatusChangedNotificationAsync(
+            project.Client.Email!,
+            clientName,
+            project.Name,
+            oldStatus,
+            newStatus.ToString(),
+            cancellationToken);
     }
 
     public async Task UpdateProjectManagementTypeAsync(
@@ -803,6 +851,7 @@ public class ProjectService : IProjectService
     public async Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
+            .Include(p => p.Client)
             .FirstOrDefaultAsync(p => p.Id == dto.ProjectId, cancellationToken);
         
         if (project == null)
@@ -818,8 +867,6 @@ public class ProjectService : IProjectService
                 "submit quote");
         }
         
-        // Allow quote submission even without accepted bids - admin may use own resources
-        
         project.QuotedAmount = dto.QuotedAmount;
         project.QuoteNotes = dto.QuoteNotes;
         project.QuoteSubmittedAt = DateTime.UtcNow;
@@ -827,6 +874,19 @@ public class ProjectService : IProjectService
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send quote submitted email to client
+        var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
+        var quoteUrl = $"https://localhost:5173/client/projects/{project.Id}";
+        
+        await _emailService.SendQuoteSubmittedNotificationAsync(
+            project.Client.Email!,
+            clientName,
+            project.Name,
+            dto.QuotedAmount,
+            dto.QuoteNotes,
+            quoteUrl,
+            cancellationToken);
     }
     
     public async Task UpdateQuoteAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
@@ -858,6 +918,7 @@ public class ProjectService : IProjectService
     public async Task AcceptQuoteAsync(int projectId, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
+            .Include(p => p.Client)
             .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
         
         if (project == null)
@@ -888,11 +949,30 @@ public class ProjectService : IProjectService
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send quote accepted email to all admins
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var superAdmins = await _userManager.GetUsersInRoleAsync("SuperAdmin");
+        var allAdmins = admins.Union(superAdmins);
+
+        var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
+
+        foreach (var admin in allAdmins)
+        {
+            await _emailService.SendQuoteAcceptedNotificationAsync(
+                admin.Email!,
+                $"{admin.FirstName} {admin.LastName}",
+                project.Name,
+                clientName,
+                project.QuotedAmount.Value,
+                cancellationToken);
+        }
     }
     
     public async Task RejectQuoteAsync(int projectId, string? rejectionReason, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
+            .Include(p => p.Client)
             .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
         
         if (project == null)
@@ -913,5 +993,23 @@ public class ProjectService : IProjectService
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send quote rejected email to all admins
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var superAdmins = await _userManager.GetUsersInRoleAsync("SuperAdmin");
+        var allAdmins = admins.Union(superAdmins);
+
+        var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
+
+        foreach (var admin in allAdmins)
+        {
+            await _emailService.SendQuoteRejectedNotificationAsync(
+                admin.Email!,
+                $"{admin.FirstName} {admin.LastName}",
+                project.Name,
+                clientName,
+                rejectionReason,
+                cancellationToken);
+        }
     }
 }
