@@ -45,7 +45,7 @@ public class NotificationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("mark-all-read")]
+    [HttpPatch("read-all")]
     public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

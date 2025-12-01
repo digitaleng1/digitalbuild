@@ -239,9 +239,8 @@ public class NotificationService : INotificationService
         string userId,
         CancellationToken cancellationToken = default)
     {
-        var notifications = await _context.Notifications
-            .Where(n => n.ReceiverId == userId && !n.IsRead)
-            .ToListAsync(cancellationToken);
+        var notifications = _context.Notifications
+            .Where(n => n.ReceiverId == userId && !n.IsRead);
 
         foreach (var notification in notifications)
         {

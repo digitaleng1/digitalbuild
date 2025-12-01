@@ -44,7 +44,13 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
       
       const unread = data.filter(n => !n.isRead).length;
       setUnreadCount(unread);
-    } catch (err) {
+    } catch (err: any) {
+      // Ignore 401 errors - user will be redirected by interceptor
+      if (err?.response?.status === 401 || err === 'Invalid credentials') {
+        console.log('[Notifications] User not authenticated');
+        return;
+      }
+      
       setError(err instanceof Error ? err.message : 'Failed to load notifications');
       console.error('[Notifications] Error loading:', err);
     } finally {
@@ -119,10 +125,8 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
       try {
         const fcmService = FirebaseMessagingService.getInstance();
         
-        // Initialize
         await fcmService.initialize();
         
-        // Get token
         const token = await fcmService.getToken();
         
         if (token) {
@@ -135,11 +139,15 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
           console.log('[FCM] Token registered successfully');
         }
         
-        // Subscribe to notifications
         const unsubscribe = fcmService.onNotification(handleNewNotification);
         
         return unsubscribe;
-      } catch (err) {
+      } catch (err: any) {
+        // Ignore 401 errors during FCM initialization
+        if (err?.response?.status === 401 || err === 'Invalid credentials') {
+          console.log('[FCM] User not authenticated');
+          return;
+        }
         console.error('[FCM] Error initializing:', err);
       }
     };

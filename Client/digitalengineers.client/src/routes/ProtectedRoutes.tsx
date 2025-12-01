@@ -5,6 +5,7 @@ import VerticalLayout from '@/layouts/Vertical';
 import HorizontalLayout from '@/layouts/Horizontal';
 import Root from './Root';
 import RoleProtectedLayout from '@/layouts/RoleProtectedLayout';
+import { NotificationProvider as PushNotificationProvider } from '@/contexts/NotificationContext';
 
 //const Dashboard = lazy(() => import('../app/dashboards'));
 //const Apps = lazy(() => import('../app/apps'));
@@ -22,46 +23,48 @@ export default function ProtectedRoutes() {
             : HorizontalLayout;
 
     return (
-        <ReactRoutes>
-            <Route element={<RoleProtectedLayout allowedRoles={['Client']} />}>
-                <Route path="/client/*" element={<Layout />}>
-                    {/*Client role menu items*/}
-                    <Route index element={<Root />} />
-                    <Route path="*" element={<Client />} />
-                    {/*Template menu items*/}
-                    {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
-                    {/*<Route path="apps/*" element={<Apps />} />*/}
-                    {/*<Route path="pages/*" element={<OtherPages />} />*/}
-                    {/*<Route path="ui/*" element={<UI />} />*/}
-                    <Route path="*" element={<Error404Alt />} />
+        <PushNotificationProvider>
+            <ReactRoutes>
+                <Route element={<RoleProtectedLayout allowedRoles={['Client']} />}>
+                    <Route path="/client/*" element={<Layout />}>
+                        {/*Client role menu items*/}
+                        <Route index element={<Root />} />
+                        <Route path="*" element={<Client />} />
+                        {/*Template menu items*/}
+                        {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
+                        {/*<Route path="apps/*" element={<Apps />} />*/}
+                        {/*<Route path="pages/*" element={<OtherPages />} />*/}
+                        {/*<Route path="ui/*" element={<UI />} />*/}
+                        <Route path="*" element={<Error404Alt />} />
+                    </Route>
                 </Route>
-            </Route>
 
-            <Route element={<RoleProtectedLayout allowedRoles={['Provider']} />}>
-                <Route path="/specialist/*" element={<Layout />}>
-                    <Route index element={<Root />} />
-                    <Route path="*" element={<Specialist />} />
-                    {/*Template menu items*/}
-                    {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
-                    {/*<Route path="apps/*" element={<Apps />} />*/}
-                    {/*<Route path="pages/*" element={<OtherPages />} />*/}
-                    {/*<Route path="ui/*" element={<UI />} />*/}
-                    <Route path="*" element={<Error404Alt />} />
+                <Route element={<RoleProtectedLayout allowedRoles={['Provider']} />}>
+                    <Route path="/specialist/*" element={<Layout />}>
+                        <Route index element={<Root />} />
+                        <Route path="*" element={<Specialist />} />
+                        {/*Template menu items*/}
+                        {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
+                        {/*<Route path="apps/*" element={<Apps />} />*/}
+                        {/*<Route path="pages/*" element={<OtherPages />} />*/}
+                        {/*<Route path="ui/*" element={<UI />} />*/}
+                        <Route path="*" element={<Error404Alt />} />
+                    </Route>
                 </Route>
-            </Route>
 
-            <Route element={<RoleProtectedLayout allowedRoles={['Admin', 'SuperAdmin']} />}>
-                <Route path="/admin/*" element={<Layout />}>
-                    <Route index element={<Root />} />
-                    <Route path="*" element={<Admin />} />
-                    {/*Template menu items*/}
-                    {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
-                    {/*<Route path="apps/*" element={<Apps />} />*/}
-                    {/*<Route path="pages/*" element={<OtherPages />} />*/}
-                    {/*<Route path="ui/*" element={<UI />} />*/}
-                    <Route path="*" element={<Error404Alt />} />
+                <Route element={<RoleProtectedLayout allowedRoles={['Admin', 'SuperAdmin']} />}>
+                    <Route path="/admin/*" element={<Layout />}>
+                        <Route index element={<Root />} />
+                        <Route path="*" element={<Admin />} />
+                        {/*Template menu items*/}
+                        {/*<Route path="dashboards/*" element={<Dashboard />} />*/}
+                        {/*<Route path="apps/*" element={<Apps />} />*/}
+                        {/*<Route path="pages/*" element={<OtherPages />} />*/}
+                        {/*<Route path="ui/*" element={<UI />} />*/}
+                        <Route path="*" element={<Error404Alt />} />
+                    </Route>
                 </Route>
-            </Route>
-        </ReactRoutes>
+            </ReactRoutes>
+        </PushNotificationProvider>
     );
 }
