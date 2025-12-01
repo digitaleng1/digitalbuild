@@ -187,6 +187,13 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		],
 	},
 	{
+		key: 'client-bids',
+		label: 'Bids',
+		isTitle: false,
+		icon: 'uil-file-alt',
+		url: '/bids',
+	},
+	{
 		key: 'projects-tasks',
 		label: 'Tasks',
 		isTitle: false,

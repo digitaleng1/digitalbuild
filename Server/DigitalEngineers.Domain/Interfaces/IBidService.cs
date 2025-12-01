@@ -16,7 +16,7 @@ public interface IBidService
     Task<BidResponseDetailsDto?> GetBidResponseByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidResponseDto>> GetBidResponsesByRequestIdAsync(int requestId, CancellationToken cancellationToken = default);
     Task<BidResponseDto> UpdateBidResponseAsync(int id, UpdateBidResponseDto dto, CancellationToken cancellationToken = default);
-    Task AcceptBidResponseAsync(int id, decimal adminMarkupPercentage, string? adminComment, CancellationToken cancellationToken = default);
+    Task AcceptBidResponseAsync(int id, decimal adminMarkupPercentage, string? adminComment, string acceptedByUserId, CancellationToken cancellationToken = default);
     Task RejectBidResponseAsync(int id, string? reason = null, CancellationToken cancellationToken = default);
 
     Task<BidMessageDto> CreateMessageAsync(CreateBidMessageDto dto, CancellationToken cancellationToken = default);
@@ -27,7 +27,7 @@ public interface IBidService
     Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAsync(int specialistId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAndStatusAsync(int specialistId, BidRequestStatus? status, CancellationToken cancellationToken = default);
     
-    Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(string? clientId = null, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<BidResponseByProjectDto>> GetBidResponsesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
 }

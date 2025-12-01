@@ -741,7 +741,8 @@ public class ProjectService : IProjectService
 
         specialists.AddRange(assignedSpecialists);
 
-        if (isAdmin)
+        // Show pending bids for Admin OR Client with ClientManaged project
+        if (isAdmin || (isClient && project.ManagementType == ProjectManagementType.ClientManaged))
         {
             var assignedSpecialistIds = assignedSpecialists.Select(s => s.SpecialistId).ToHashSet();
 

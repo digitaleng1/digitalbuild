@@ -14,6 +14,7 @@ public class BidService : IBidService
     private readonly ApplicationDbContext _context;
     private readonly ISpecialistService _specialistService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<BidService> _logger;
     private readonly IFileStorageService _fileStorageService;
 
@@ -21,12 +22,14 @@ public class BidService : IBidService
         ApplicationDbContext context,
         ISpecialistService specialistService,
         IEmailService emailService,
+        INotificationService notificationService,
         ILogger<BidService> logger,
         IFileStorageService fileStorageService)
     {
         _context = context;
         _specialistService = specialistService;
         _emailService = emailService;
+        _notificationService = notificationService;
         _logger = logger;
         _fileStorageService = fileStorageService;
     }
@@ -449,7 +452,7 @@ public class BidService : IBidService
         };
     }
 
-    public async Task AcceptBidResponseAsync(int id, decimal adminMarkupPercentage, string? adminComment, CancellationToken cancellationToken = default)
+    public async Task AcceptBidResponseAsync(int id, decimal adminMarkupPercentage, string? adminComment, string acceptedByUserId, CancellationToken cancellationToken = default)
     {
         var bidResponse = await _context.Set<BidResponse>()
             .Include(r => r.BidRequest)
@@ -494,19 +497,52 @@ public class BidService : IBidService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Send bid accepted email to specialist
+        // Determine who accepted the bid (Admin or Client)
+        var acceptedByUser = await _context.Users.FindAsync(acceptedByUserId);
+        var userRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == acceptedByUserId)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        var isClient = userRoles.Contains("Client");
+        var specialistUserId = bidResponse.Specialist.UserId;
         var specialistFullName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
+        var bidProjectName = bidResponse.BidRequest.Project.Name;
         var finalPrice = bidResponse.ProposedPrice * (1 + adminMarkupPercentage / 100);
         var projectUrl = $"https://localhost:5173/specialist/projects/{bidResponse.BidRequest.ProjectId}";
 
+        // Send Email notification to specialist
         await _emailService.SendBidAcceptedNotificationAsync(
             bidResponse.Specialist.User.Email!,
             specialistFullName,
-            bidResponse.BidRequest.Project.Name,
+            bidProjectName,
             finalPrice,
             adminComment,
             projectUrl,
             cancellationToken);
+
+        // Send Push notification to specialist (only if accepted by Client)
+        if (isClient)
+        {
+            var acceptedByName = acceptedByUser != null 
+                ? $"{acceptedByUser.FirstName} {acceptedByUser.LastName}" 
+                : "Client";
+
+            await _notificationService.SendPushNotificationAsync(
+                specialistUserId,
+                NotificationType.Bid,
+                NotificationSubType.Accepted,
+                "Bid Accepted",
+                $"Your bid for project '{bidProjectName}' has been accepted by {acceptedByName}!",
+                new Dictionary<string, string>
+                {
+                    { "projectId", bidResponse.BidRequest.ProjectId.ToString() },
+                    { "bidResponseId", id.ToString() },
+                    { "finalPrice", finalPrice.ToString("F2") },
+                    { "url", projectUrl }
+                },
+                cancellationToken);
+        }
     }
 
     public async Task RejectBidResponseAsync(int id, string? reason = null, CancellationToken cancellationToken = default)
@@ -767,11 +803,22 @@ public class BidService : IBidService
         });
     }
 
-    public async Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(
+        string? clientId = null, 
+        CancellationToken cancellationToken = default)
     {
-        var statistics = await _context.Projects
+        var query = _context.Projects
             .Include(p => p.BidRequests)
-            .Where(p => p.BidRequests.Any()) // ✅ Only projects with bid requests
+            .Where(p => p.BidRequests.Any()); // Only projects with bid requests
+
+        // If clientId is provided - filter by ClientManaged projects of that client
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            query = query.Where(p => p.ClientId == clientId 
+                && p.ManagementType == ProjectManagementType.ClientManaged);
+        }
+
+        var statistics = await query
             .Select(p => new ProjectBidStatisticsDto
             {
                 ProjectId = p.Id,

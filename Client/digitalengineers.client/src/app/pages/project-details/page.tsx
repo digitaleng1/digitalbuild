@@ -1,15 +1,15 @@
 import { Row, Col, Card, CardBody, Badge, Spinner, Alert, Form } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/common/context/useAuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Comments from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
 import Files from '@/app/client/projects/details/Files';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import CardTitle from '@/components/CardTitle';
 import { useProjectDetails } from '@/app/shared/hooks';
-import { getProjectScopeLabel, getStatusBadgeVariant, getManagementTypeLabel } from '@/utils/projectUtils';
-import { ProjectManagementType } from '@/types/project';
+import { getProjectScopeLabel, getStatusBadgeVariant, getManagementTypeLabel, canClientInviteSpecialists } from '@/utils/projectUtils';
+import { ProjectManagementType, ProjectStatus } from '@/types/project';
 import { TeamMembers } from '@/app/shared/components/common';
 import ProjectStatusModal from '@/app/admin/projects/details/ProjectStatusModal';
 import QuoteCreationCard from '@/app/admin/projects/details/QuoteCreationCard';
@@ -17,6 +17,7 @@ import QuoteReviewCard from '@/app/client/projects/details/QuoteReviewCard';
 import QuoteAcceptedAlert from '@/app/client/projects/details/QuoteAcceptedAlert';
 import QuoteSubmittedAlert from '@/app/client/projects/details/QuoteSubmittedAlert';
 import PendingAlert from '@/app/client/projects/details/PendingAlert';
+import ClientManagedAlert from '@/app/admin/projects/details/ClientManagedAlert';
 import { taskService } from '@/services/taskService';
 import projectService from '@/services/projectService';
 import { useToast } from '@/contexts';
@@ -38,6 +39,11 @@ const ProjectDetailsPage = () => {
 	const isClient = hasAnyRole(['Client']);
 	const isProvider = hasAnyRole(['Provider']);
 	const isSpecialist = hasAnyRole(['Specialist']);
+
+	const canInvite = useMemo(() => 
+		isClient && project ? canClientInviteSpecialists(project) : false,
+		[isClient, project]
+	);
 
 	const handleManagementTypeChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!project) return;
@@ -158,6 +164,13 @@ const ProjectDetailsPage = () => {
 				</>
 			)}
 
+			{/* Status Alerts for Admin */}
+			{isAdmin && (
+				<>
+					<ClientManagedAlert project={project} />
+				</>
+			)}
+
 			<Row>
 				<Col xl={8} lg={6}>
 					<Card className="d-block ribbon-box">
@@ -182,7 +195,21 @@ const ProjectDetailsPage = () => {
 							<CardTitle
 								containerClass="d-flex justify-content-between align-items-center mb-2"
 								icon="ri-more-fill"
-								title={<h3 className="mt-0">{project.name}</h3>}
+								title={
+									<div className="d-flex align-items-center gap-2">
+										<h3 className="mt-0 mb-0">{project.name}</h3>
+										{isClient && (
+											<Badge 
+												bg={project.managementType === ProjectManagementType.ClientManaged ? 'info' : 'success'}
+												className="fs-6"
+											>
+												{project.managementType === ProjectManagementType.ClientManaged 
+													? 'Client Managed' 
+													: 'DE Managed'}
+											</Badge>
+										)}
+									</div>
+								}
 								menuItems={menuItems}
 							/>
 							
@@ -338,7 +365,7 @@ const ProjectDetailsPage = () => {
 														<i className="mdi mdi-information-outline text-muted me-1"></i>
 														<span className="text-muted">Price not available</span>
 													</p>
-												) : project.status === 'QuoteSubmitted' ? (
+												) : project.status === ProjectStatus.QuoteSubmitted ? (
 													<p className="mb-0">
 														<i className="mdi mdi-clock-outline text-warning me-1"></i>
 														<span className="text-muted">Pending approval</span>
@@ -394,7 +421,8 @@ const ProjectDetailsPage = () => {
 
 							<TeamMembers 
 								projectId={project.id} 
-								isAdmin={isAdmin} 
+								isAdmin={isAdmin}
+								canInviteSpecialists={canInvite}
 								requiredLicenseTypes={project.licenseTypes || []} 
 							/>
 						</CardBody>
@@ -414,7 +442,7 @@ const ProjectDetailsPage = () => {
 					)}
 
 					{/* Client: Quote Review (when status = QuoteSubmitted) */}
-					{isClient && project.status === 'QuoteSubmitted' && (
+					{isClient && project.status === ProjectStatus.QuoteSubmitted && (
 						<QuoteReviewCard
 							project={project}
 							onQuoteAccepted={refetch}

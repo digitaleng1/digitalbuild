@@ -191,10 +191,15 @@ public class BidsController : ControllerBase
         [FromBody] AcceptBidResponseViewModel model, 
         CancellationToken cancellationToken)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
         await _bidService.AcceptBidResponseAsync(
             id, 
             model.AdminMarkupPercentage, 
-            model.AdminComment, 
+            model.AdminComment,
+            userId,
             cancellationToken);
         return NoContent();
     }
@@ -315,12 +320,23 @@ public class BidsController : ControllerBase
     }
 
     [HttpGet("admin/project-statistics")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(typeof(IEnumerable<ProjectBidStatisticsViewModel>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ProjectBidStatisticsViewModel>>> GetProjectBidStatistics(
         CancellationToken cancellationToken)
     {
-        var statistics = await _bidService.GetProjectBidStatisticsAsync(cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+
+        // Admin sees all projects, Client sees only their ClientManaged projects
+        var statistics = await _bidService.GetProjectBidStatisticsAsync(
+            clientId: isAdmin ? null : userId, 
+            cancellationToken);
+
         var viewModels = _mapper.Map<IEnumerable<ProjectBidStatisticsViewModel>>(statistics);
         return Ok(viewModels);
     }

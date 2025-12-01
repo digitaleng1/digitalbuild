@@ -1,27 +1,28 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Spinner, Alert, Button } from 'react-bootstrap';
+import { useState, useCallback } from 'react';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { useBidResponses } from '../hooks/useBidResponses';
+import { useBidResponses } from '@/app/admin/bids/hooks/useBidResponses';
 import { ResponsesGroup } from '@/app/shared/components/bids';
-import AcceptBidModal from '@/components/modals/AcceptBidModal';
+import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import RejectBidModal from '@/components/modals/RejectBidModal';
 import BidChat from '@/components/modals/BidChatModal';
+import bidService from '@/services/bidService';
+import { useToast } from '@/contexts';
+import { getErrorMessage, getErrorTitle } from '@/utils/errorHandler';
+import type { BidResponseDto } from '@/types/admin-bid';
 
-const BidResponsesByProjectPage = () => {
+const ClientBidResponsesByProjectPage = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const projectId = parseInt(id || '0', 10);
+	const { showSuccess, showError } = useToast();
 
 	const { 
 		groupedResponses, 
 		loading, 
 		error,
-		showApproveModal,
 		selectedResponse,
-		handleOpenApproveModal,
-		handleCloseApproveModal,
-		handleApprove,
-		approving,
 		showRejectModal,
 		handleOpenRejectModal,
 		handleCloseRejectModal,
@@ -29,8 +30,52 @@ const BidResponsesByProjectPage = () => {
 		rejecting,
 		showMessageModal,
 		handleOpenMessageModal,
-		handleCloseMessageModal
+		handleCloseMessageModal,
+		refetch
 	} = useBidResponses(projectId);
+
+	// Client-specific state for confirm dialog
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [confirmingResponse, setConfirmingResponse] = useState<BidResponseDto | null>(null);
+	const [confirming, setConfirming] = useState(false);
+
+	const handleOpenConfirmDialog = useCallback((response: BidResponseDto) => {
+		setConfirmingResponse(response);
+		setShowConfirmDialog(true);
+	}, []);
+
+	const handleCloseConfirmDialog = useCallback(() => {
+		if (!confirming) {
+			setShowConfirmDialog(false);
+			setConfirmingResponse(null);
+		}
+	}, [confirming]);
+
+	const handleConfirmAccept = useCallback(async () => {
+		if (!confirmingResponse || confirmingResponse.id === 0) {
+			showError('Error', 'Cannot approve bid without response');
+			return;
+		}
+
+		try {
+			setConfirming(true);
+			// Client accepts without markup or comment
+			await bidService.acceptBidResponse(confirmingResponse.id, {
+				adminMarkupPercentage: 0,
+				adminComment: undefined
+			});
+			showSuccess('Success', 'Bid response has been approved successfully. Specialist will be notified.');
+			await refetch();
+			handleCloseConfirmDialog();
+		} catch (err: any) {
+			const errorMessage = getErrorMessage(err);
+			const errorTitle = getErrorTitle(err);
+			console.error('❌ [ClientBidResponses] Error approving bid:', err);
+			showError(errorTitle, errorMessage);
+		} finally {
+			setConfirming(false);
+		}
+	}, [confirmingResponse, showError, showSuccess, refetch, handleCloseConfirmDialog]);
 
 	const formatDate = (dateString: string | null) => {
 		if (!dateString) return 'Not set';
@@ -44,7 +89,7 @@ const BidResponsesByProjectPage = () => {
 	if (loading) {
 		return (
 			<>
-				<PageBreadcrumb title="Bid Responses" subName="Admin / Bids" />
+				<PageBreadcrumb title="Bid Responses" subName="Client / Bids" />
 				<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
 					<Spinner animation="border" variant="primary" />
 				</div>
@@ -55,7 +100,7 @@ const BidResponsesByProjectPage = () => {
 	if (error) {
 		return (
 			<>
-				<PageBreadcrumb title="Bid Responses" subName="Admin / Bids" />
+				<PageBreadcrumb title="Bid Responses" subName="Client / Bids" />
 				<Alert variant="danger">
 					<strong>Error:</strong> {error}
 				</Alert>
@@ -67,7 +112,7 @@ const BidResponsesByProjectPage = () => {
 
 	return (
 		<>
-			<PageBreadcrumb title="Bid Responses" subName="Admin / Bids" />
+			<PageBreadcrumb title="Bid Responses" subName="Client / Bids" />
 
 			{projectInfo && (
 				<Row>
@@ -92,7 +137,7 @@ const BidResponsesByProjectPage = () => {
 													) : (
 														<div 
 															className="rounded-circle bg-light d-flex align-items-center justify-content-center me-2"
-																style={{ width: '32px', height: '32px' }}
+															style={{ width: '32px', height: '32px' }}
 														>
 															<i className="mdi mdi-image-off text-muted"></i>
 														</div>
@@ -116,7 +161,7 @@ const BidResponsesByProjectPage = () => {
 													) : (
 														<div 
 															className="rounded-circle bg-light d-flex align-items-center justify-content-center me-2"
-																style={{ width: '32px', height: '32px' }}
+															style={{ width: '32px', height: '32px' }}
 														>
 															<i className="mdi mdi-account text-muted"></i>
 														</div>
@@ -149,7 +194,7 @@ const BidResponsesByProjectPage = () => {
 
 									<Button 
 										variant="secondary" 
-										onClick={() => navigate('/admin/bids')}
+										onClick={() => navigate('/client/bids')}
 										className="ms-3"
 									>
 										<i className="mdi mdi-arrow-left me-1"></i>
@@ -178,7 +223,7 @@ const BidResponsesByProjectPage = () => {
 							<ResponsesGroup 
 								key={group.licenseTypeId} 
 								group={group}
-								onApprove={handleOpenApproveModal}
+								onApprove={handleOpenConfirmDialog}
 								onReject={handleOpenRejectModal}
 								onMessage={handleOpenMessageModal}
 							/>
@@ -187,15 +232,25 @@ const BidResponsesByProjectPage = () => {
 				</Row>
 			)}
 
+			{/* Client uses Confirm Dialog instead of AcceptBidModal */}
+			{confirmingResponse && (
+				<ConfirmDialog
+					show={showConfirmDialog}
+					onHide={handleCloseConfirmDialog}
+					onConfirm={handleConfirmAccept}
+					title="Accept Bid Response"
+					message={`Are you sure you want to accept the bid response from ${confirmingResponse.specialistName} for $${confirmingResponse.proposedPrice.toLocaleString()}?`}
+					confirmText="Yes, Accept Bid"
+					confirmVariant="success"
+					loading={confirming}
+					icon="mdi mdi-check-circle-outline"
+					alertVariant="info"
+					alertMessage="The specialist will be notified via email and push notification about your acceptance."
+				/>
+			)}
+
 			{selectedResponse && (
 				<>
-					<AcceptBidModal
-						show={showApproveModal}
-						onHide={handleCloseApproveModal}
-						onConfirm={handleApprove}
-						proposedPrice={selectedResponse.proposedPrice}
-						loading={approving}
-					/>
 					<RejectBidModal
 						show={showRejectModal}
 						onHide={handleCloseRejectModal}
@@ -217,4 +272,4 @@ const BidResponsesByProjectPage = () => {
 	);
 };
 
-export default BidResponsesByProjectPage;
+export default ClientBidResponsesByProjectPage;

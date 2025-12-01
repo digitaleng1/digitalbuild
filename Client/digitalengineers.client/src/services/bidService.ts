@@ -4,12 +4,10 @@ import type {
 	BidRequestDto, 
 	BidRequestDetailsDto, 
 	CreateBidResponseDto, 
-	BidResponseDto, 
 	AcceptBidResponseDto,
-	BidMessageDto,
-	CreateBidMessageDto 
+	BidMessageDto
 } from '@/types/bid';
-import type { AdminBidListItem } from '@/types/admin-bid';
+import type { AdminBidListItem, BidResponseDto as BidResponseByProjectDto } from '@/types/admin-bid';
 
 class BidService {
 	/**
@@ -57,8 +55,8 @@ class BidService {
 		await httpClient.post('/api/bids/send', data);
 	}
 
-	async getBidResponsesByProjectId(projectId: number): Promise<BidResponseDto[]> {
-		return await httpClient.get<BidResponseDto[]>(`/api/bids/projects/${projectId}/responses`);
+	async getBidResponsesByProjectId(projectId: number): Promise<BidResponseByProjectDto[]> {
+		return await httpClient.get<BidResponseByProjectDto[]>(`/api/bids/projects/${projectId}/responses`);
 	}
 
 	/**

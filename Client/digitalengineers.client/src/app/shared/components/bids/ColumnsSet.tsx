@@ -1,23 +1,32 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import type { AdminBidListItem } from '@/types/admin-bid';
 import ProjectStatusBadge from '@/components/badges/ProjectStatusBadge';
+
+// Determine path prefix based on current location
+const usePathPrefix = () => {
+    const location = useLocation();
+    return location.pathname.startsWith('/client') ? '/client' : '/admin';
+};
 
 const columns: ColumnDef<AdminBidListItem>[] = [
     {
         header: 'PROJECT',
         accessorKey: 'projectName',
         sortingFn: 'alphanumeric',
-        cell: ({ row }) => (
-            <div>
-                <Link to={`/admin/projects/details/${row.original.projectId}`} className="text-body fw-semibold">
-                    {row.original.projectName}
-                </Link>
-                <p className="mb-0 text-muted font-13">
-                    {row.original.projectId}
-                </p>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const pathPrefix = usePathPrefix();
+            return (
+                <div>
+                    <Link to={`${pathPrefix}/projects/details/${row.original.projectId}`} className="text-body fw-semibold">
+                        {row.original.projectName}
+                    </Link>
+                    <p className="mb-0 text-muted font-13">
+                        {row.original.projectId}
+                    </p>
+                </div>
+            );
+        },
     },
     {
         header: 'STATUS',
@@ -131,16 +140,19 @@ const columns: ColumnDef<AdminBidListItem>[] = [
         header: 'ACTIONS',
         id: 'actions',
         enableSorting: false,
-        cell: ({ row }) => (
-            <Link
-                to={`/admin/bids/responces/project/${row.original.projectId}`}
-                className="text-primary d-flex align-items-center gap-1"
-                style={{ textDecoration: 'none' }}
-            >
-                <i className="mdi mdi-eye"></i>
-                <span className="fw-bold">View Bids</span>
-            </Link>
-        ),
+        cell: ({ row }) => {
+            const pathPrefix = usePathPrefix();
+            return (
+                <Link
+                    to={`${pathPrefix}/bids/responces/project/${row.original.projectId}`}
+                    className="text-primary d-flex align-items-center gap-1"
+                    style={{ textDecoration: 'none' }}
+                >
+                    <i className="mdi mdi-eye"></i>
+                    <span className="fw-bold">View Bids</span>
+                </Link>
+            );
+        },
     },
 ];
 

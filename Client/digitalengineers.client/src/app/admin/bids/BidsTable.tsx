@@ -1,5 +1,5 @@
 import ReactTable from '@/components/table/ReactTable';
-import { columns, sizePerPageList } from './ColumnsSet';
+import { bidColumns, bidSizePerPageList } from '@/app/shared/components/bids';
 import type { AdminBidListItem } from '@/types/admin-bid';
 
 type BidsTableProps = {
@@ -9,11 +9,11 @@ type BidsTableProps = {
 const BidsTable = ({ data }: BidsTableProps) => {
     return (
         <ReactTable<AdminBidListItem>
-            columns={columns}
+            columns={bidColumns}
             data={data}
             pageSize={10}
             tableClass="table-sm"
-            rowsPerPageList={sizePerPageList}
+            rowsPerPageList={bidSizePerPageList}
             theadClass="bg-light bg-opacity-50"
             showPagination
             isSearchable

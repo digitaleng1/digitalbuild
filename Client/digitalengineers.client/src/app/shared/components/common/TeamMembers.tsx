@@ -9,10 +9,11 @@ import SendBidsModal from './SendBidsModal';
 type TeamMembersProps = {
 	projectId?: number;
 	isAdmin?: boolean;
+	canInviteSpecialists?: boolean;
 	requiredLicenseTypes?: LicenseType[];
 };
 
-const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: TeamMembersProps) => {
+const TeamMembers = ({ projectId, isAdmin = false, canInviteSpecialists = false, requiredLicenseTypes = [] }: TeamMembersProps) => {
 	const { teamMembers, loading, error, refetch } = useProjectTeamMembers(projectId);
 	const [showSendBidsModal, setShowSendBidsModal] = useState(false);
 
@@ -35,6 +36,21 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 	const handleBidsSentSuccess = useCallback(() => {
 		refetch();
 	}, [refetch]);
+
+	const shouldShowInviteButton = useMemo(() => 
+		isAdmin || canInviteSpecialists,
+		[isAdmin, canInviteSpecialists]
+	);
+
+	const buttonText = useMemo(() => 
+		isAdmin ? 'Send Bids' : 'Invite Specialist',
+		[isAdmin]
+	);
+
+	const buttonIcon = useMemo(() => 
+		isAdmin ? 'mdi-send' : 'mdi-account-plus',
+		[isAdmin]
+	);
 
 	if (loading) {
 		return (
@@ -64,20 +80,20 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 			<>
 				<div className="d-flex justify-content-between align-items-center mb-2">
 					<h5 className="mb-0">Team Members:</h5>
-					{isAdmin && projectId && (
+					{shouldShowInviteButton && projectId && (
 						<Button
 							variant="primary"
 							size="sm"
 							onClick={handleOpenSendBidsModal}
 						>
-							<i className="mdi mdi-send me-1"></i>
-							Send Bids
+							<i className={`mdi ${buttonIcon} me-1`}></i>
+							{buttonText}
 						</Button>
 					)}
 				</div>
 				<div className="text-muted">No specialists assigned yet</div>
 
-				{isAdmin && projectId && (
+				{shouldShowInviteButton && projectId && (
 					<SendBidsModal
 						show={showSendBidsModal}
 						onHide={handleCloseSendBidsModal}
@@ -214,14 +230,14 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 		<>
 			<div className="d-flex justify-content-between align-items-center mb-2">
 				<h5 className="mb-0">Team Members:</h5>
-				{isAdmin && projectId && (
+				{shouldShowInviteButton && projectId && (
 					<Button
 						variant="primary"
 						size="sm"
 						onClick={handleOpenSendBidsModal}
 					>
-						<i className="mdi mdi-send me-1"></i>
-						Send Bids
+						<i className={`mdi ${buttonIcon} me-1`}></i>
+						{buttonText}
 					</Button>
 				)}
 			</div>
@@ -262,7 +278,7 @@ const TeamMembers = ({ projectId, isAdmin = false, requiredLicenseTypes = [] }: 
 				</div>
 			)}
 
-			{isAdmin && projectId && (
+			{shouldShowInviteButton && projectId && (
 				<SendBidsModal
 					show={showSendBidsModal}
 					onHide={handleCloseSendBidsModal}
