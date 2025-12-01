@@ -371,3 +371,4 @@ FodyWeavers.xsd
 /Server/DigitalEngineers.API/appsettings.Development.json
 /ADMIN_PANEL_IMPLEMENTATION_PLAN.md
 *.md
+/Server/DigitalEngineers.API/firebase-notification.json
