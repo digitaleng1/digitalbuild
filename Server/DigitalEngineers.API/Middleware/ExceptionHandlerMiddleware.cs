@@ -48,7 +48,11 @@ namespace DigitalEngineers.API.Middleware
                 BidResponseNotFoundException => StatusCodes.Status404NotFound,
                 InvitationNotFoundException => StatusCodes.Status404NotFound,
 
+                // 403 - Forbidden (Email not confirmed)
+                EmailNotConfirmedException => StatusCodes.Status403Forbidden,
+
                 // 400 - Bad Request
+                EmailConfirmationFailedException => StatusCodes.Status400BadRequest,
                 InvalidProjectStatusException => StatusCodes.Status400BadRequest,
                 InvalidBidStatusException => StatusCodes.Status400BadRequest,
                 InvalidProjectStatusForQuoteException => StatusCodes.Status400BadRequest,

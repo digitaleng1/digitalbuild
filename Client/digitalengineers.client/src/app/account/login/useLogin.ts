@@ -60,7 +60,18 @@ export default function useLogin() {
 			}
 		} catch (error: any) {
 			const errorMessage = error.response?.data?.message || error.message || 'Login failed';
-			showNotification({ message: errorMessage, type: 'error' });
+			
+			// Check if email not confirmed
+			if (errorMessage.toLowerCase().includes('not confirmed')) {
+				showNotification({
+					message: 'Please confirm your email before logging in. Check your inbox.',
+					type: 'warning',
+				});
+				// Optionally: redirect to resend page
+				navigate(`/account/confirm-mail?email=${encodeURIComponent(values.email)}`);
+			} else {
+				showNotification({ message: errorMessage, type: 'error' });
+			}
 		} finally {
 			setLoading(false);
 		}

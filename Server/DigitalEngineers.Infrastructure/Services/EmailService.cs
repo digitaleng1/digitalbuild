@@ -138,6 +138,26 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendAccountActivationEmailAsync(
+        string toEmail,
+        string userName,
+        string activationUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "ActivationUrl", activationUrl },
+            { "ExpirationHours", "24" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.AccountActivation,
+            placeholders,
+            cancellationToken);
+    }
+
     public async Task SendSpecialistInvitationEmailAsync(
         string toEmail,
         string specialistName,

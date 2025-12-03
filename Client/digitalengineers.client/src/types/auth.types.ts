@@ -41,3 +41,12 @@ export interface ExternalLoginDto {
 export interface ApiErrorResponse {
     message: string;
 }
+
+export interface ConfirmEmailParams {
+    userId: string;
+    token: string;
+}
+
+export interface ResendEmailConfirmationDto {
+    email: string;
+}

@@ -5,6 +5,7 @@ import type {
     TokenResponse,
     ExternalLoginDto,
     RefreshTokenDto,
+    ResendEmailConfirmationDto,
 } from '@/types/auth.types';
 
 function AuthService() {
@@ -35,6 +36,17 @@ function AuthService() {
 
         getMyAvatarUrl: () => {
             return httpClient.get<{ profilePictureUrl: string | null }>('/api/auth/me/avatar');
+        },
+
+        confirmEmail: (userId: string, token: string) => {
+            return httpClient.get<TokenResponse>(
+                `/api/auth/confirm-email?userId=${userId}&token=${encodeURIComponent(token)}`
+            );
+        },
+
+        resendEmailConfirmation: (email: string) => {
+            const data: ResendEmailConfirmationDto = { email };
+            return httpClient.post('/api/auth/resend-email-confirmation', data);
         },
     };
 }

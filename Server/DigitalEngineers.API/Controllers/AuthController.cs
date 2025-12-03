@@ -142,4 +142,35 @@ public class AuthController : ControllerBase
         var viewModel = _mapper.Map<TokenResponseViewModel>(result);
         return Ok(viewModel);
     }
+
+    /// <summary>
+    /// Confirms email and performs auto-login
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("confirm-email")]
+    [ProducesResponseType(typeof(TokenResponseViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TokenResponseViewModel>> ConfirmEmail(
+        [FromQuery] string userId,
+        [FromQuery] string token,
+        CancellationToken cancellationToken)
+    {
+        var tokenData = await _authService.ConfirmEmailAsync(userId, token, cancellationToken);
+        var result = _mapper.Map<TokenResponseViewModel>(tokenData);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Resends email confirmation
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("resend-email-confirmation")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResendEmailConfirmation(
+        [FromBody] ResendEmailConfirmationViewModel viewModel,
+        CancellationToken cancellationToken)
+    {
+        await _authService.ResendEmailConfirmationAsync(viewModel.Email, cancellationToken);
+        return Ok(new { message = "Confirmation email sent. Please check your inbox." });
+    }
 }

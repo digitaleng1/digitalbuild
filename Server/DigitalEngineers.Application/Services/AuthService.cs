@@ -62,7 +62,7 @@ public class AuthService : IAuthService
             Email = dto.Email,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
-            EmailConfirmed = true
+            EmailConfirmed = false
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
@@ -92,14 +92,35 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-        // Send welcome email
-        await _emailService.SendWelcomeEmailAsync(
+        // Generate email confirmation token
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
+        var confirmationUrl = $"{frontendUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
+
+        // Send account activation email
+        await _emailService.SendAccountActivationEmailAsync(
             user.Email!,
             $"{user.FirstName} {user.LastName}",
-            dto.Role,
+            confirmationUrl,
             cancellationToken);
 
-        return await GenerateTokenResponse(user, cancellationToken);
+        // Return empty TokenData (no auto-login until email confirmed)
+        return new TokenData
+        {
+            AccessToken = string.Empty,
+            RefreshToken = string.Empty,
+            ExpiresAt = DateTime.UtcNow,
+            User = new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePictureUrl = null,
+                Roles = new[] { dto.Role }
+            }
+        };
     }
 
     public async Task<TokenData> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -108,6 +129,11 @@ public class AuthService : IAuthService
         if (user == null)
         {
             throw new UnauthorizedAccessException("Invalid email or password");
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.EmailNotConfirmedException(email);
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
@@ -194,6 +220,66 @@ public class AuthService : IAuthService
             ProfilePictureUrl = user.ProfilePictureUrl,
             Roles = roles
         };
+    }
+
+    public async Task<TokenData> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.EmailConfirmationFailedException("Invalid confirmation link");
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.EmailConfirmationFailedException(
+                "Email confirmation failed. The token may be expired or invalid.");
+        }
+
+        // Send welcome email after successful confirmation
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "Client";
+        
+        await _emailService.SendWelcomeEmailAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            role,
+            cancellationToken);
+
+        // Auto-login: generate JWT tokens
+        return await GenerateTokenResponse(user, cancellationToken);
+    }
+
+    public async Task<bool> ResendEmailConfirmationAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            // Don't reveal if email exists
+            return true;
+        }
+
+        if (user.EmailConfirmed)
+        {
+            // Already confirmed
+            return true;
+        }
+
+        // Generate new token
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
+        var confirmationUrl = $"{frontendUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
+
+        // Send email
+        await _emailService.SendAccountActivationEmailAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            confirmationUrl,
+            cancellationToken);
+
+        return true;
     }
 
     private async Task<TokenData> HandleGoogleLogin(string idToken, CancellationToken cancellationToken)

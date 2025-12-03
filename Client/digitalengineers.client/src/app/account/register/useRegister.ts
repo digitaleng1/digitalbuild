@@ -1,7 +1,6 @@
 import { authApi } from '@/common/api';
 import { useNotificationContext } from '@/common/context';
-import { useAuthContext } from '@/common/context/useAuthContext';
-import type { RegisterDto, TokenResponse } from '@/types/auth.types';
+import type { RegisterDto } from '@/types/auth.types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -12,7 +11,6 @@ export default function useRegister() {
 	const navigate = useNavigate();
 	const { t } = useTranslation();
 
-	const { saveSession } = useAuthContext();
 	const { showNotification } = useNotificationContext();
 
 	const schema = yup.object().shape({
@@ -45,22 +43,16 @@ export default function useRegister() {
 				role,
 			};
 
-			const tokenResponse: TokenResponse = await authApi.register(payload);
+			await authApi.register(payload);
 
-			saveSession(
-				tokenResponse.user,
-				tokenResponse.accessToken,
-				tokenResponse.refreshToken,
-				tokenResponse.expiresAt
-			);
-
+			// NO auto-login (email not confirmed yet)
 			showNotification({
-				message: 'Registration successful. Welcome aboard!',
+				message: 'Registration successful! Please check your email to confirm your account.',
 				type: 'success',
 			});
 
-			const redirectPath = role === 'Provider' ? '/specialist/dashboard' : '/client/dashboard';
-			navigate(redirectPath);
+			// Redirect to "Check your email" page
+			navigate(`/account/confirm-mail?email=${encodeURIComponent(data.email)}`);
 		} catch (e: any) {
 			const errorMessage = e.response?.data?.message || e.message || 'Registration failed';
 			showNotification({ message: errorMessage, type: 'error' });
