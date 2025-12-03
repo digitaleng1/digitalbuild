@@ -16,6 +16,7 @@ const ConfirmEmail = lazy(() => import('./confirm-email/page'));
 const LockScreen = lazy(() => import('./lock-screen/page'));
 const LockScreen2 = lazy(() => import('./lock-screen2/page'));
 const InvitationAccept = lazy(() => import('./invite/InvitationAcceptPage'));
+const ResetPassword = lazy(() => import('./reset-password/page'));
 
 export default function Account() {
     return (
@@ -36,6 +37,7 @@ export default function Account() {
                 <Route path="lock-screen" element={<LockScreen />} />
                 <Route path="lock-screen2" element={<LockScreen2 />} />
                 <Route path="invite/:token" element={<InvitationAccept />} />
+                <Route path="reset-password" element={<ResetPassword />} />
             </Route>
         </Routes>
     );

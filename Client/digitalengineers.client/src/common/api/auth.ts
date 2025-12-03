@@ -6,6 +6,7 @@ import type {
     ExternalLoginDto,
     RefreshTokenDto,
     ResendEmailConfirmationDto,
+    ResetPasswordDto,
 } from '@/types/auth.types';
 
 function AuthService() {
@@ -47,6 +48,14 @@ function AuthService() {
         resendEmailConfirmation: (email: string) => {
             const data: ResendEmailConfirmationDto = { email };
             return httpClient.post('/api/auth/resend-email-confirmation', data);
+        },
+
+        initiatePasswordReset: () => {
+            return httpClient.post<{ message: string }>('/api/auth/initiate-password-reset', {});
+        },
+
+        resetPassword: (dto: ResetPasswordDto) => {
+            return httpClient.post<TokenResponse>('/api/auth/reset-password', dto);
         },
     };
 }

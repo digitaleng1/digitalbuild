@@ -8,6 +8,7 @@ public enum EmailTemplateType
     // Auth
     WelcomeEmail,
     PasswordReset,
+    PasswordChanged,
     AccountActivation,
     SpecialistInvitation,
     

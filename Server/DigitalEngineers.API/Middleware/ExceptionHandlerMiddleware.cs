@@ -59,6 +59,7 @@ namespace DigitalEngineers.API.Middleware
                 InvitationExpiredException => StatusCodes.Status400BadRequest,
                 InvitationAlreadyUsedException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status400BadRequest,
+                InvalidPasswordResetTokenException => StatusCodes.Status400BadRequest,
 
                 // 401 - Unauthorized
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,

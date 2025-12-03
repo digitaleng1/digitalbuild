@@ -282,6 +282,60 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<bool> InitiatePasswordResetAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException($"User with ID {userId} not found");
+        }
+
+        // Generate password reset token
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
+        var resetUrl = $"{frontendUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
+
+        // Send password reset email
+        await _emailService.SendPasswordResetEmailAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            resetUrl,
+            cancellationToken);
+
+        return true;
+    }
+
+    public async Task<TokenData> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.InvalidPasswordResetTokenException();
+        }
+
+        // Reset password using token
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.InvalidPasswordResetTokenException();
+        }
+
+        // Invalidate all refresh tokens
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+        await _userManager.UpdateAsync(user);
+
+        // Send password changed notification
+        await _emailService.SendPasswordChangedNotificationAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            cancellationToken);
+
+        // Auto-login: generate new JWT tokens
+        return await GenerateTokenResponse(user, cancellationToken);
+    }
+
     private async Task<TokenData> HandleGoogleLogin(string idToken, CancellationToken cancellationToken)
     {
         try

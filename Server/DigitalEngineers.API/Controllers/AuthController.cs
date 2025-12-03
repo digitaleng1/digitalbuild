@@ -173,4 +173,45 @@ public class AuthController : ControllerBase
         await _authService.ResendEmailConfirmationAsync(viewModel.Email, cancellationToken);
         return Ok(new { message = "Confirmation email sent. Please check your inbox." });
     }
+
+    /// <summary>
+    /// Initiates password reset process (sends email with reset link)
+    /// Accessible only to authenticated users
+    /// </summary>
+    [Authorize]
+    [HttpPost("initiate-password-reset")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> InitiatePasswordReset(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+
+        await _authService.InitiatePasswordResetAsync(userId, cancellationToken);
+        return Ok(new { message = "Password reset email has been sent. Please check your inbox." });
+    }
+
+    /// <summary>
+    /// Resets password and performs auto-login
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    [ProducesResponseType(typeof(TokenResponseViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TokenResponseViewModel>> ResetPassword(
+        [FromBody] ResetPasswordViewModel viewModel,
+        CancellationToken cancellationToken)
+    {
+        var tokenData = await _authService.ResetPasswordAsync(
+            viewModel.UserId,
+            viewModel.Token,
+            viewModel.NewPassword,
+            cancellationToken);
+
+        var result = _mapper.Map<TokenResponseViewModel>(tokenData);
+        return Ok(result);
+    }
 }

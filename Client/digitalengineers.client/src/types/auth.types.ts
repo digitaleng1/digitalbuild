@@ -50,3 +50,10 @@ export interface ConfirmEmailParams {
 export interface ResendEmailConfirmationDto {
     email: string;
 }
+
+export interface ResetPasswordDto {
+    userId: string;
+    token: string;
+    newPassword: string;
+    confirmNewPassword: string;
+}

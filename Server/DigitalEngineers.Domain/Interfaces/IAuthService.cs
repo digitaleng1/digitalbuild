@@ -21,4 +21,15 @@ public interface IAuthService
     /// Resends email confirmation
     /// </summary>
     Task<bool> ResendEmailConfirmationAsync(string email, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Initiates password reset process (sends email with reset link)
+    /// </summary>
+    Task<bool> InitiatePasswordResetAsync(string userId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Resets password and performs auto-login
+    /// </summary>
+    /// <returns>TokenData with JWT tokens for automatic login</returns>
+    Task<TokenData> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken cancellationToken = default);
 }

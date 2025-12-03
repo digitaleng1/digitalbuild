@@ -35,6 +35,17 @@ public interface IEmailService
         string activationUrl,
         CancellationToken cancellationToken = default);
 
+    Task SendPasswordResetEmailAsync(
+        string toEmail,
+        string userName,
+        string resetUrl,
+        CancellationToken cancellationToken = default);
+
+    Task SendPasswordChangedNotificationAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default);
+
     // Specialist Invitation
     Task SendSpecialistInvitationEmailAsync(
         string toEmail,

@@ -8,6 +8,7 @@ import LicensesCard from './components/LicensesCard';
 import PortfolioSection from './components/PortfolioSection';
 import ProjectsList from './components/ProjectsList';
 import ReviewsSection from './components/ReviewsSection';
+import SecuritySettings from '@/app/shared/components/SecuritySettings';
 
 const SpecialistProfilePage = () => {
 	const { profile, loading, error, refetch } = useSpecialistProfile();
@@ -61,6 +62,7 @@ const SpecialistProfilePage = () => {
 						isOwnProfile={true}
 						onRefresh={refetch}
 					/>
+					<SecuritySettings />
 				</Col>
 
 				<Col lg={8}>

@@ -158,6 +158,44 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendPasswordResetEmailAsync(
+        string toEmail,
+        string userName,
+        string resetUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "ResetUrl", resetUrl },
+            { "ExpirationHours", "1" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.PasswordReset,
+            placeholders,
+            cancellationToken);
+    }
+
+    public async Task SendPasswordChangedNotificationAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "ChangeDate", DateTime.UtcNow.ToString("MMMM dd, yyyy HH:mm:ss UTC") }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.PasswordChanged,
+            placeholders,
+            cancellationToken);
+    }
+
     public async Task SendSpecialistInvitationEmailAsync(
         string toEmail,
         string specialistName,
@@ -517,6 +555,7 @@ public class EmailService : IEmailService
             // Auth
             EmailTemplateType.WelcomeEmail => "Welcome to Digital Engineers!",
             EmailTemplateType.PasswordReset => "Password Reset Request - Digital Engineers",
+            EmailTemplateType.PasswordChanged => "Your Password Has Been Changed - Digital Engineers",
             EmailTemplateType.AccountActivation => "Activate Your Account - Digital Engineers",
             EmailTemplateType.SpecialistInvitation => "You're Invited to Digital Engineers!",
 

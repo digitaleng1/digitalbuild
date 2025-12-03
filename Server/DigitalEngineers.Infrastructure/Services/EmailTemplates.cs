@@ -22,6 +22,7 @@ public class EmailTemplates
             // Auth
             EmailTemplateType.WelcomeEmail => GetWelcomeEmailTemplate(),
             EmailTemplateType.PasswordReset => GetPasswordResetTemplate(),
+            EmailTemplateType.PasswordChanged => GetPasswordChangedTemplate(),
             EmailTemplateType.AccountActivation => GetAccountActivationTemplate(),
             EmailTemplateType.SpecialistInvitation => GetSpecialistInvitationTemplate(),
             
@@ -208,6 +209,18 @@ public class EmailTemplates
             <p>If you didn't request this password reset, please ignore this email.</p>
         ";
         return GetEmailLayout("Password Reset", content);
+    }
+
+    private string GetPasswordChangedTemplate()
+    {
+        var content = @"
+            <h2>Password Changed Successfully</h2>
+            <p>Hello {{UserName}},</p>
+            <p>Your password has been successfully changed on {{ChangeDate}}.</p>
+            <p>If you did not make this change, please contact our support team immediately.</p>
+            <p>For security reasons, you have been logged out from all devices.</p>
+        ";
+        return GetEmailLayout("Password Changed", content);
     }
 
     private string GetAccountActivationTemplate()
