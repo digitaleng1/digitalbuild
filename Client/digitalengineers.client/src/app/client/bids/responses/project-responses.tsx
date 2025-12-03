@@ -7,6 +7,7 @@ import { ResponsesGroup } from '@/app/shared/components/bids';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import RejectBidModal from '@/components/modals/RejectBidModal';
 import BidChat from '@/components/modals/BidChatModal';
+import ViewBidProposalModal from '@/components/modals/ViewBidProposalModal';
 import bidService from '@/services/bidService';
 import { useToast } from '@/contexts';
 import { getErrorMessage, getErrorTitle } from '@/utils/errorHandler';
@@ -31,6 +32,9 @@ const ClientBidResponsesByProjectPage = () => {
 		showMessageModal,
 		handleOpenMessageModal,
 		handleCloseMessageModal,
+		showProposalModal,
+		handleOpenProposalModal,
+		handleCloseProposalModal,
 		refetch
 	} = useBidResponses(projectId);
 
@@ -226,6 +230,7 @@ const ClientBidResponsesByProjectPage = () => {
 								onApprove={handleOpenConfirmDialog}
 								onReject={handleOpenRejectModal}
 								onMessage={handleOpenMessageModal}
+								onViewProposal={handleOpenProposalModal}
 							/>
 						))}
 					</Col>
@@ -265,6 +270,13 @@ const ClientBidResponsesByProjectPage = () => {
 						bidRequestId={selectedResponse.bidRequestId}
 						recipientName={selectedResponse.specialistName}
 						recipientAvatar={selectedResponse.specialistProfilePicture}
+					/>
+					<ViewBidProposalModal
+						show={showProposalModal}
+						onHide={handleCloseProposalModal}
+						response={selectedResponse}
+						onApprove={handleOpenConfirmDialog}
+						onReject={handleOpenRejectModal}
 					/>
 				</>
 			)}

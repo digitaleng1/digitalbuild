@@ -10,13 +10,15 @@ interface ResponsesGroupProps {
 	onApprove: (response: BidResponseDto) => void;
 	onReject: (response: BidResponseDto) => void;
 	onMessage: (response: BidResponseDto) => void;
+	onViewProposal: (response: BidResponseDto) => void;
 }
 
 const ResponsesGroup = ({ 
 	group, 
 	onApprove, 
 	onReject, 
-	onMessage
+	onMessage,
+	onViewProposal
 }: ResponsesGroupProps) => {
 	const [selectedBidRequestIds, setSelectedBidRequestIds] = useState<number[]>([]);
 	const [showCompareModal, setShowCompareModal] = useState(false);
@@ -65,6 +67,7 @@ const ResponsesGroup = ({
 						onApprove={onApprove}
 						onReject={onReject}
 						onMessage={onMessage}
+						onViewProposal={onViewProposal}
 						selectedBidRequestIds={selectedBidRequestIds}
 						onToggleSelect={handleToggleSelect}
 					/>

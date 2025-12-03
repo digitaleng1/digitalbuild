@@ -6,6 +6,7 @@ import { ResponsesGroup } from '@/app/shared/components/bids';
 import AcceptBidModal from '@/components/modals/AcceptBidModal';
 import RejectBidModal from '@/components/modals/RejectBidModal';
 import BidChat from '@/components/modals/BidChatModal';
+import ViewBidProposalModal from '@/components/modals/ViewBidProposalModal';
 
 const BidResponsesByProjectPage = () => {
 	const { id } = useParams<{ id: string }>();
@@ -29,7 +30,10 @@ const BidResponsesByProjectPage = () => {
 		rejecting,
 		showMessageModal,
 		handleOpenMessageModal,
-		handleCloseMessageModal
+		handleCloseMessageModal,
+		showProposalModal,
+		handleOpenProposalModal,
+		handleCloseProposalModal
 	} = useBidResponses(projectId);
 
 	const formatDate = (dateString: string | null) => {
@@ -181,6 +185,7 @@ const BidResponsesByProjectPage = () => {
 								onApprove={handleOpenApproveModal}
 								onReject={handleOpenRejectModal}
 								onMessage={handleOpenMessageModal}
+								onViewProposal={handleOpenProposalModal}
 							/>
 						))}
 					</Col>
@@ -210,6 +215,13 @@ const BidResponsesByProjectPage = () => {
 						bidRequestId={selectedResponse.bidRequestId}
 						recipientName={selectedResponse.specialistName}
 						recipientAvatar={selectedResponse.specialistProfilePicture}
+					/>
+					<ViewBidProposalModal
+						show={showProposalModal}
+						onHide={handleCloseProposalModal}
+						response={selectedResponse}
+						onApprove={handleOpenApproveModal}
+						onReject={handleOpenRejectModal}
 					/>
 				</>
 			)}

@@ -8,6 +8,7 @@ interface BidResponsesTableProps {
 	onApprove: (response: BidResponseDto) => void;
 	onReject: (response: BidResponseDto) => void;
 	onMessage: (response: BidResponseDto) => void;
+	onViewProposal: (response: BidResponseDto) => void;
 	selectedBidRequestIds: number[];
 	onToggleSelect: (bidRequestId: number) => void;
 }
@@ -17,6 +18,7 @@ const BidResponsesTable = ({
 	onApprove, 
 	onReject, 
 	onMessage,
+	onViewProposal,
 	selectedBidRequestIds,
 	onToggleSelect
 }: BidResponsesTableProps) => {
@@ -91,9 +93,22 @@ const BidResponsesTable = ({
 								{response.status.toLowerCase() === 'pending' ? (
 									<span className="text-muted small">Awaiting response</span>
 								) : (
-									<div>
-										<div className="fw-semibold">${response.proposedPrice.toLocaleString()}</div>
-										<div className="text-muted small">{response.estimatedDays} days</div>
+									<div className="d-flex align-items-center">
+										<div>
+											<div className="fw-semibold">${response.proposedPrice.toLocaleString()}</div>
+											<div className="text-muted small">{response.estimatedDays} days</div>
+										</div>
+										<Link
+											to="#"
+											className="action-icon ms-2"
+											onClick={(e) => {
+												e.preventDefault();
+												onViewProposal(response);
+											}}
+											title="View Full Proposal"
+										>
+											<Icon icon="mdi:eye" width={18} />
+										</Link>
 									</div>
 								)}
 							</td>
