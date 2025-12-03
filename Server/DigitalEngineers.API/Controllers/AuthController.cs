@@ -195,6 +195,20 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Forgot password - public endpoint (no authentication required)
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordViewModel viewModel,
+        CancellationToken cancellationToken)
+    {
+        await _authService.ForgotPasswordAsync(viewModel.Email, cancellationToken);
+        return Ok(new { message = "If your email is registered, you will receive a password reset link." });
+    }
+
+    /// <summary>
     /// Resets password and performs auto-login
     /// </summary>
     [AllowAnonymous]

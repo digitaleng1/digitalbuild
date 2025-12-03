@@ -1,7 +1,6 @@
-
 import { useTranslation } from 'react-i18next';
 import AccountWrapper from '../AccountWrapper';
-import { Button, Col, Row } from 'react-bootstrap';
+import { Alert, Button, Col, Row } from 'react-bootstrap';
 import useRecoverPassword from './useRecoverPassword';
 import {Link} from "react-router";
 import { Form, TextInput } from '@/components/Form';
@@ -29,21 +28,32 @@ const BottomLink = () => {
 
 const RecoverPassForm = () => {
 	const { t } = useTranslation();
-	const { loading, onSubmit, schema } = useRecoverPassword();
+	const { loading, success, onSubmit, schema } = useRecoverPassword();
+
+	if (success) {
+		return (
+			<AccountWrapper bottomLinks={<BottomLink />}>
+				<Alert variant="success">
+					<h4>{t('Check Your Email')}</h4>
+					<p>{t('If your email is registered, you will receive a password reset link.')}</p>
+				</Alert>
+			</AccountWrapper>
+		);
+	}
 
 	return (
 		<AccountWrapper bottomLinks={<BottomLink />}>
 			<div className="text-center w-75 m-auto">
-				<h4 className="text-dark-50 text-center mt-0 fw-bold">{t('Reset Password')}</h4>
-				<p className="text-muted mb-4">{t("Enter your email address and we'll send you an email with instructions to reset your password.")}</p>
+				<h4 className="text-dark-50 text-center mt-0 fw-bold">{t('Forgot Your Password?')}</h4>
+				<p className="text-muted mb-4">{t("Enter your email address and we'll send you a link to reset your password.")}</p>
 			</div>
 
 			<Form onSubmit={onSubmit} schema={schema}>
-				<TextInput label={t('Email address')} type="email" name="email" placeholder={t('Enter your Email')} containerClass={'mb-3'} />
+				<TextInput label={t('Email Address')} type="email" name="email" placeholder={t('Enter your email')} containerClass={'mb-3'} />
 
 				<div className="mb-0 text-center">
 					<Button variant="primary" type="submit" disabled={loading}>
-						{t('Reset Password')}
+						{loading ? t('Sending...') : t('Send Reset Link')}
 					</Button>
 				</div>
 			</Form>

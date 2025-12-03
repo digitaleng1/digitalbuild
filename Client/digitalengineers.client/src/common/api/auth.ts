@@ -54,6 +54,10 @@ function AuthService() {
             return httpClient.post<{ message: string }>('/api/auth/initiate-password-reset', {});
         },
 
+        forgotPassword: (email: string) => {
+            return httpClient.post<{ message: string }>('/api/auth/forgot-password', { email });
+        },
+
         resetPassword: (dto: ResetPasswordDto) => {
             return httpClient.post<TokenResponse>('/api/auth/reset-password', dto);
         },

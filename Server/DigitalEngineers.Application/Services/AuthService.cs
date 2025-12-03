@@ -306,6 +306,31 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<bool> ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            // Don't reveal if email exists (security best practice)
+            return true;
+        }
+
+        // Generate password reset token
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
+        var resetUrl = $"{frontendUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
+
+        // Send password reset email
+        await _emailService.SendPasswordResetEmailAsync(
+            user.Email!,
+            $"{user.FirstName} {user.LastName}",
+            resetUrl,
+            cancellationToken);
+
+        return true;
+    }
+
     public async Task<TokenData> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken cancellationToken = default)
     {
         var user = await _userManager.FindByIdAsync(userId);

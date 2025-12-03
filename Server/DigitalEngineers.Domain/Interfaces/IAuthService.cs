@@ -32,4 +32,9 @@ public interface IAuthService
     /// </summary>
     /// <returns>TokenData with JWT tokens for automatic login</returns>
     Task<TokenData> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Initiates password reset process by email (public, unauthenticated)
+    /// </summary>
+    Task<bool> ForgotPasswordAsync(string email, CancellationToken cancellationToken = default);
 }
