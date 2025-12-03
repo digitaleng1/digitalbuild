@@ -59,6 +59,10 @@ builder.Services.AddSwaggerGen(options =>
 // Configure AWS S3 Settings
 builder.Services.Configure<AwsS3Settings>(builder.Configuration.GetSection("AwsS3"));
 
+// Configure WebApp Settings
+builder.Services.Configure<DigitalEngineers.Infrastructure.Configuration.WebAppConfig>(
+    builder.Configuration.GetSection("WebAppConfig"));
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add AutoMapper

@@ -13,15 +13,18 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ISpecialistInvitationService _specialistInvitationService;
     private readonly IMapper _mapper;
 
     public AuthController(
         IAuthService authService,
         IFileStorageService fileStorageService,
+        ISpecialistInvitationService specialistInvitationService,
         IMapper mapper)
     {
         _authService = authService;
         _fileStorageService = fileStorageService;
+        _specialistInvitationService = specialistInvitationService;
         _mapper = mapper;
     }
 
@@ -107,5 +110,36 @@ public class AuthController : ControllerBase
         {
             ProfilePictureUrl = avatarUrl
         });
+    }
+
+    /// <summary>
+    /// Validate invitation token
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("invite/validate/{token}")]
+    [ProducesResponseType(typeof(ValidateInvitationResultViewModel), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ValidateInvitationResultViewModel>> ValidateInvitation(
+        string token,
+        CancellationToken cancellationToken)
+    {
+        var result = await _specialistInvitationService.ValidateInvitationTokenAsync(token, cancellationToken);
+        var viewModel = _mapper.Map<ValidateInvitationResultViewModel>(result);
+        return Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Accept invitation and auto-login
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("invite/accept")]
+    [ProducesResponseType(typeof(TokenResponseViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TokenResponseViewModel>> AcceptInvitation(
+        [FromBody] AcceptInvitationViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var result = await _specialistInvitationService.AcceptInvitationAsync(model.Token, cancellationToken);
+        var viewModel = _mapper.Map<TokenResponseViewModel>(result);
+        return Ok(viewModel);
     }
 }

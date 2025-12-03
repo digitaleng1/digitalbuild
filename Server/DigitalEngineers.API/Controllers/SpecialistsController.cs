@@ -17,17 +17,20 @@ public class SpecialistsController : ControllerBase
     private readonly ISpecialistService _specialistService;
     private readonly IProjectService _projectService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ISpecialistInvitationService _specialistInvitationService;
     private readonly IMapper _mapper;
 
     public SpecialistsController(
         ISpecialistService specialistService, 
         IProjectService projectService,
         IFileStorageService fileStorageService,
+        ISpecialistInvitationService specialistInvitationService,
         IMapper mapper)
     {
         _specialistService = specialistService;
         _projectService = projectService;
         _fileStorageService = fileStorageService;
+        _specialistInvitationService = specialistInvitationService;
         _mapper = mapper;
     }
 
@@ -302,5 +305,28 @@ public class SpecialistsController : ControllerBase
         var updatedSpecialist = await _specialistService.GetSpecialistByIdAsync(specialist.Id, cancellationToken);
         var viewModel = _mapper.Map<SpecialistDetailsViewModel>(updatedSpecialist);
         return Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Invite a new specialist (Client, Admin, SuperAdmin)
+    /// </summary>
+    [HttpPost("invite")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(InviteSpecialistResultViewModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<InviteSpecialistResultViewModel>> InviteSpecialist(
+        [FromBody] InviteSpecialistViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var invitedByUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(invitedByUserId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        var dto = _mapper.Map<InviteSpecialistDto>(model);
+        var result = await _specialistInvitationService.InviteSpecialistAsync(dto, invitedByUserId, cancellationToken);
+        var viewModel = _mapper.Map<InviteSpecialistResultViewModel>(result);
+        
+        return CreatedAtAction(nameof(GetSpecialistById), new { id = viewModel.SpecialistId }, viewModel);
     }
 }

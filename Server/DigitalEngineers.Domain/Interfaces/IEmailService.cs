@@ -29,6 +29,17 @@ public interface IEmailService
         string userRole,
         CancellationToken cancellationToken = default);
 
+    // Specialist Invitation
+    Task SendSpecialistInvitationEmailAsync(
+        string toEmail,
+        string specialistName,
+        string email,
+        string password,
+        string invitationUrl,
+        string licenseTypeName,
+        string? customMessage,
+        CancellationToken cancellationToken = default);
+
     // Project notifications
     Task SendProjectCreatedNotificationAsync(
         string toEmail,

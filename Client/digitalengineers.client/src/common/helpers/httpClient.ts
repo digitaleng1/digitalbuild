@@ -4,7 +4,7 @@ const ErrorCodeMessages: { [key: number]: string } = {
 	401: 'Invalid credentials',
 	403: 'Access Forbidden',
 	404: 'Resource or page not found',
-};
+	};
 
 function HttpClient() {
 	const _errorHandler = (error: any) =>

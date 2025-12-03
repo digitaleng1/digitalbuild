@@ -1,4 +1,4 @@
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Alert } from 'react-bootstrap';
 import Statistics from './Statistics';
 import PerformanceChart from './PerformanceChart';
 import RevenueChart from './RevenueChart';
@@ -9,61 +9,65 @@ import Products from './Products';
 import {Link} from "react-router";
 import DatePicker from './DatePicker';
 
-
-
-
 const EcommerceDashboard = () => {
 	return (
 		<>
-			<Row>
-				<Col xs={12}>
-					<div className="page-title-box">
-						<div className="page-title-right">
-							<form className="d-flex">
-								<DatePicker />
-								<Link to="" className="btn btn-primary ms-2">
-									<i className="mdi mdi-autorenew"></i>
-								</Link>
-								<Link to="" className="btn btn-primary ms-1">
-									<i className="mdi mdi-filter-variant"></i>
-								</Link>
-							</form>
+			<Alert variant="info" className="mb-3">
+				<i className="mdi mdi-tools me-2"></i>
+				<strong>Under Construction</strong> - This dashboard is currently being developed and may not display accurate data.
+			</Alert>
+
+			<div style={{ opacity: 0.5, pointerEvents: 'none' }}>
+				<Row>
+					<Col xs={12}>
+						<div className="page-title-box">
+							<div className="page-title-right">
+								<form className="d-flex">
+									<DatePicker />
+									<Link to="" className="btn btn-primary ms-2">
+										<i className="mdi mdi-autorenew"></i>
+									</Link>
+									<Link to="" className="btn btn-primary ms-1">
+										<i className="mdi mdi-filter-variant"></i>
+									</Link>
+								</form>
+							</div>
+							<h4 className="page-title">Dashboard</h4>
 						</div>
-						<h4 className="page-title">Dashboard</h4>
-					</div>
-				</Col>
-			</Row>
+					</Col>
+				</Row>
 
-			<Row>
-				<Col xl={5} lg={6}>
-					<Statistics />
-				</Col>
+				<Row>
+					<Col xl={5} lg={6}>
+						<Statistics />
+					</Col>
 
-				<Col xl={7} lg={6}>
-					<PerformanceChart />
-				</Col>
-			</Row>
+					<Col xl={7} lg={6}>
+						<PerformanceChart />
+					</Col>
+				</Row>
 
-			<Row>
-				<Col lg={8}>
-					<RevenueChart />
-				</Col>
-				<Col lg={4}>
-					<RevenueByLocationChart />
-				</Col>
-			</Row>
+				<Row>
+					<Col lg={8}>
+						<RevenueChart />
+					</Col>
+					<Col lg={4}>
+						<RevenueByLocationChart />
+					</Col>
+				</Row>
 
-			<Row>
-				<Col xl={{ span: 6, order: 1 }} lg={{ span: 12, order: 2 }}>
-					<Products />
-				</Col>
-				<Col xl={3} lg={{ span: 6, order: 1 }}>
-					<SalesChart />
-				</Col>
-				<Col xl={3} lg={{ span: 6, order: 1 }}>
-					<Activity />
-				</Col>
-			</Row>
+				<Row>
+					<Col xl={{ span: 6, order: 1 }} lg={{ span: 12, order: 2 }}>
+						<Products />
+					</Col>
+					<Col xl={3} lg={{ span: 6, order: 1 }}>
+						<SalesChart />
+					</Col>
+					<Col xl={3} lg={{ span: 6, order: 1 }}>
+						<Activity />
+					</Col>
+				</Row>
+			</div>
 		</>
 	);
 };

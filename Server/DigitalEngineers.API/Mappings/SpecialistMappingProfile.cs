@@ -14,6 +14,7 @@ public class SpecialistMappingProfile : Profile
         CreateMap<CreateSpecialistViewModel, CreateSpecialistDto>();
         CreateMap<UpdateSpecialistViewModel, UpdateSpecialistDto>();
         CreateMap<CreatePortfolioItemViewModel, CreatePortfolioItemDto>();
+        CreateMap<InviteSpecialistViewModel, InviteSpecialistDto>();
         
         // DTO to ViewModel
         CreateMap<SpecialistDto, SpecialistViewModel>();
@@ -24,5 +25,6 @@ public class SpecialistMappingProfile : Profile
         CreateMap<LicenseTypeDto, LicenseTypeViewModel>();
         CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
         CreateMap<ReviewDto, ReviewViewModel>();
+        CreateMap<InviteSpecialistResultDto, InviteSpecialistResultViewModel>();
     }
 }

@@ -43,6 +43,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // Notifications
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
+    public DbSet<SpecialistInvitation> SpecialistInvitations => Set<SpecialistInvitation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -18,13 +18,16 @@ public class EmailService : IEmailService
     private readonly ILogger<EmailService> _logger;
     private readonly EmailSettings _emailSettings;
     private readonly EmailTemplates _emailTemplates;
+    private readonly WebAppConfig _webAppConfig;
 
     public EmailService(
         ILogger<EmailService> logger,
-        IOptions<EmailSettings> emailSettings)
+        IOptions<EmailSettings> emailSettings,
+        IOptions<WebAppConfig> webAppConfig)
     {
         _logger = logger;
         _emailSettings = emailSettings.Value;
+        _webAppConfig = webAppConfig.Value;
         _emailTemplates = new EmailTemplates(_emailSettings);
     }
 
@@ -131,6 +134,33 @@ public class EmailService : IEmailService
         await SendTemplatedEmailAsync(
             toEmail,
             EmailTemplateType.WelcomeEmail,
+            placeholders,
+            cancellationToken);
+    }
+
+    public async Task SendSpecialistInvitationEmailAsync(
+        string toEmail,
+        string specialistName,
+        string email,
+        string password,
+        string invitationUrl,
+        string licenseTypeName,
+        string? customMessage,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "SpecialistName", specialistName },
+            { "Email", email },
+            { "Password", password },
+            { "InvitationUrl", invitationUrl },
+            { "LicenseTypeName", licenseTypeName },
+            { "CustomMessage", customMessage ?? string.Empty }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.SpecialistInvitation,
             placeholders,
             cancellationToken);
     }
@@ -295,7 +325,7 @@ public class EmailService : IEmailService
             { "SpecialistName", specialistName },
             { "ProjectName", projectName },
             { "Description", description },
-            { "ProjectUrl", $"{GetBaseUrl()}/projects" }
+            { "ProjectUrl", $"{GetBaseUrl()}/specialist/bids" }
         };
 
         await SendTemplatedEmailAsync(
@@ -468,6 +498,7 @@ public class EmailService : IEmailService
             EmailTemplateType.WelcomeEmail => "Welcome to Digital Engineers!",
             EmailTemplateType.PasswordReset => "Password Reset Request - Digital Engineers",
             EmailTemplateType.AccountActivation => "Activate Your Account - Digital Engineers",
+            EmailTemplateType.SpecialistInvitation => "You're Invited to Digital Engineers!",
 
             // Project
             EmailTemplateType.ProjectCreated => "Project Created Successfully - Digital Engineers",
@@ -496,7 +527,7 @@ public class EmailService : IEmailService
 
     private string GetBaseUrl()
     {
-        return "https://localhost:5173";
+        return _webAppConfig.BaseUrl;
     }
 
     private string StripHtml(string html)

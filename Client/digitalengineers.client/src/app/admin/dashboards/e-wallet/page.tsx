@@ -1,6 +1,6 @@
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 
-import { Col, Row } from 'react-bootstrap';
+import { Col, Row, Alert } from 'react-bootstrap';
 import BalanceStatus from './BalanceStatus';
 import MerchantList from './MerchantList';
 import MoneyHistory from './MoneyHistory';
@@ -17,38 +17,45 @@ const EWalletDashboard = () => {
 		<>
 			<PageBreadcrumb title="E Wallet" subName="Dashboard" />
 
-			<Row>
-				<Col xxl={9}>
-					<Statistics />
-					<Row>
-						<Col xs={12}>
-							<BalanceStatus />
-						</Col>
-					</Row>
-				</Col>
-				<Col xxl={3}>
-					<Row>
-						<Col xxl={12} md={6}>
-							<WalletCard />
-						</Col>
-						<Col xxl={12} md={6}>
-							<WatchList watchList={watchList} />
-						</Col>
-					</Row>
-				</Col>
-			</Row>
+			<Alert variant="info" className="mb-3">
+				<i className="mdi mdi-tools me-2"></i>
+				<strong>Under Construction</strong> - This dashboard is currently being developed and may not display accurate data.
+			</Alert>
 
-			<Row>
-				<Col xxl={3} md={6}>
-					<MoneyHistory moneyHistory={moneyHistory} />
-				</Col>
-				<Col xxl={3} md={6}>
-					<MerchantList merchantList={merchantList} />
-				</Col>
-				<Col xxl={6}>
-					<TransactionList transactionList={transactionList} />
-				</Col>
-			</Row>
+			<div style={{ opacity: 0.5, pointerEvents: 'none' }}>
+				<Row>
+					<Col xxl={9}>
+						<Statistics />
+						<Row>
+							<Col xs={12}>
+								<BalanceStatus />
+							</Col>
+						</Row>
+					</Col>
+					<Col xxl={3}>
+						<Row>
+							<Col xxl={12} md={6}>
+								<WalletCard />
+							</Col>
+							<Col xxl={12} md={6}>
+								<WatchList watchList={watchList} />
+							</Col>
+						</Row>
+					</Col>
+				</Row>
+
+				<Row>
+					<Col xxl={3} md={6}>
+						<MoneyHistory moneyHistory={moneyHistory} />
+					</Col>
+					<Col xxl={3} md={6}>
+						<MerchantList merchantList={merchantList} />
+					</Col>
+					<Col xxl={6}>
+						<TransactionList transactionList={transactionList} />
+					</Col>
+				</Row>
+			</div>
 		</>
 	);
 };

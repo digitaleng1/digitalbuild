@@ -46,11 +46,14 @@ namespace DigitalEngineers.API.Middleware
                 PortfolioItemNotFoundException => StatusCodes.Status404NotFound,
                 BidRequestNotFoundException => StatusCodes.Status404NotFound,
                 BidResponseNotFoundException => StatusCodes.Status404NotFound,
+                InvitationNotFoundException => StatusCodes.Status404NotFound,
 
                 // 400 - Bad Request
                 InvalidProjectStatusException => StatusCodes.Status400BadRequest,
                 InvalidBidStatusException => StatusCodes.Status400BadRequest,
                 InvalidProjectStatusForQuoteException => StatusCodes.Status400BadRequest,
+                InvitationExpiredException => StatusCodes.Status400BadRequest,
+                InvitationAlreadyUsedException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status400BadRequest,
 
                 // 401 - Unauthorized
@@ -61,6 +64,7 @@ namespace DigitalEngineers.API.Middleware
                 SpecialistAlreadyAssignedException => StatusCodes.Status409Conflict,
                 QuoteAlreadySubmittedException => StatusCodes.Status409Conflict,
                 BidRequestAlreadyExistsException => StatusCodes.Status409Conflict,
+                UserAlreadyExistsException => StatusCodes.Status409Conflict,
 
                 // 500 - Internal Server Error
                 _ => StatusCodes.Status500InternalServerError

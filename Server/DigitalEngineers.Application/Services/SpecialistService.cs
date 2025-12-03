@@ -4,8 +4,10 @@ using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Data;
 using DigitalEngineers.Infrastructure.Entities;
+using DigitalEngineers.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DigitalEngineers.Application.Services;
 
@@ -15,17 +17,20 @@ public class SpecialistService : ISpecialistService
     private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<SpecialistService> _logger;
     private readonly IEmailService _emailService;
+    private readonly WebAppConfig _webAppConfig;
 
     public SpecialistService(
         ApplicationDbContext context,
         IFileStorageService fileStorageService,
         ILogger<SpecialistService> logger,
-        IEmailService emailService)
+        IEmailService emailService,
+        IOptions<WebAppConfig> webAppConfig)
     {
         _context = context;
         _fileStorageService = fileStorageService;
         _logger = logger;
         _emailService = emailService;
+        _webAppConfig = webAppConfig.Value;
     }
 
     public async Task<SpecialistDto> CreateSpecialistAsync(CreateSpecialistDto dto, CancellationToken cancellationToken = default)
@@ -319,7 +324,7 @@ public class SpecialistService : ISpecialistService
         // Send project assigned email to specialist
         var specialistName = $"{specialist.User.FirstName} {specialist.User.LastName}";
         var address = $"{project.StreetAddress}, {project.City}, {project.State}";
-        var projectUrl = $"https://localhost:5173/specialist/projects/{projectId}";
+        var projectUrl = $"{_webAppConfig.BaseUrl}/specialist/projects/{projectId}";
 
         await _emailService.SendProjectAssignedNotificationAsync(
             specialist.User.Email!,

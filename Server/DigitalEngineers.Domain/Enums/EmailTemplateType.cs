@@ -9,6 +9,7 @@ public enum EmailTemplateType
     WelcomeEmail,
     PasswordReset,
     AccountActivation,
+    SpecialistInvitation,
     
     // Project
     ProjectCreated,

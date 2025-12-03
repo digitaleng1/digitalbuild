@@ -23,6 +23,7 @@ public class EmailTemplates
             EmailTemplateType.WelcomeEmail => GetWelcomeEmailTemplate(),
             EmailTemplateType.PasswordReset => GetPasswordResetTemplate(),
             EmailTemplateType.AccountActivation => GetAccountActivationTemplate(),
+            EmailTemplateType.SpecialistInvitation => GetSpecialistInvitationTemplate(),
             
             // Project
             EmailTemplateType.ProjectCreated => GetProjectCreatedTemplate(),
@@ -54,10 +55,43 @@ public class EmailTemplates
     private string ReplacePlaceholders(string template, Dictionary<string, string> placeholders)
     {
         var result = template;
+        
+        // Handle conditional sections {{#Key}}...{{/Key}}
         foreach (var placeholder in placeholders)
         {
-            result = result.Replace($"{{{{{placeholder.Key}}}}}", placeholder.Value);
+            var conditionalStart = "{{#" + placeholder.Key + "}}";
+            var conditionalEnd = "{{/" + placeholder.Key + "}}";
+            
+            if (result.Contains(conditionalStart))
+            {
+                var startIndex = result.IndexOf(conditionalStart);
+                var endIndex = result.IndexOf(conditionalEnd);
+                
+                if (startIndex >= 0 && endIndex > startIndex)
+                {
+                    var sectionLength = endIndex + conditionalEnd.Length - startIndex;
+                    
+                    if (string.IsNullOrWhiteSpace(placeholder.Value))
+                    {
+                        // Remove the entire conditional section
+                        result = result.Remove(startIndex, sectionLength);
+                    }
+                    else
+                    {
+                        // Remove conditional markers and keep content
+                        result = result.Remove(endIndex, conditionalEnd.Length);
+                        result = result.Remove(startIndex, conditionalStart.Length);
+                    }
+                }
+            }
         }
+        
+        // Replace all {{Key}} placeholders
+        foreach (var placeholder in placeholders)
+        {
+            result = result.Replace("{{" + placeholder.Key + "}}", placeholder.Value);
+        }
+        
         return result;
     }
 
@@ -187,6 +221,30 @@ public class EmailTemplates
             <p>This link will expire in {{ExpirationHours}} hours.</p>
         ";
         return GetEmailLayout("Account Activation", content);
+    }
+
+    private string GetSpecialistInvitationTemplate()
+    {
+        var content = @"
+            <h2>You've Been Invited to Digital Engineers!</h2>
+            <p>Hello {{SpecialistName}},</p>
+            <p>You have been invited to join Digital Engineers as a specialist with <strong>{{LicenseTypeName}}</strong> license.</p>
+            {{#CustomMessage}}
+            <div style=""background-color: #f8f9fa; padding: 15px; border-left: 4px solid #727cf5; margin: 20px 0;"">
+                <p style=""margin: 0;"">{{CustomMessage}}</p>
+            </div>
+            {{/CustomMessage}}
+            <p><strong>Your Login Credentials:</strong></p>
+            <ul>
+                <li><strong>Email:</strong> {{Email}}</li>
+                <li><strong>Password:</strong> {{Password}}</li>
+            </ul>
+            <p>Click the button below to automatically log in and get started:</p>
+            <a href=""{{InvitationUrl}}"" class=""button"">Accept Invitation & Login</a>
+            <p style=""color: #6c757d; font-size: 14px;"">This invitation link will expire in 7 days.</p>
+            <p>We recommend changing your password after your first login for security reasons.</p>
+        ";
+        return GetEmailLayout("Specialist Invitation", content);
     }
 
     // Project Templates

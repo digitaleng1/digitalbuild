@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\app\admin\bids\responses\components\" />
+    <Folder Include="src\app\auth\invite\" />
     <Folder Include="src\app\client\bids\responses\components\" />
     <Folder Include="src\app\client\projects\hooks\" />
     <Folder Include="src\components\task\details\" />
