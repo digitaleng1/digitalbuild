@@ -14,6 +14,10 @@ public class Project
     public string ClientId { get; set; } = string.Empty;
     public ApplicationUser Client { get; set; } = null!;
     
+    // NEW: Direct relationship to Client entity
+    public int? ClientEntityId { get; set; }
+    public Client? ClientEntity { get; set; }
+    
     // Location
     public string StreetAddress { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;

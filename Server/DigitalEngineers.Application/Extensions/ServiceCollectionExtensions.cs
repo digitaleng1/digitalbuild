@@ -46,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddScoped<ISpecialistService, SpecialistService>();
+        services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IPortfolioService, PortfolioService>();
         services.AddScoped<IBidService, BidService>();
         services.AddScoped<IEmailService, EmailService>();

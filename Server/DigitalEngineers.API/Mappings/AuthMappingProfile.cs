@@ -1,5 +1,6 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.Auth;
+using DigitalEngineers.API.ViewModels.Client;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.Auth;
 
@@ -11,6 +12,7 @@ public class AuthMappingProfile : Profile
     {
         // ViewModel to DTO (Request) - only for RegisterDto (6 fields)
         CreateMap<RegisterViewModel, RegisterDto>();
+        CreateMap<UpdateClientProfileViewModel, UpdateClientProfileDto>();
 
         // DTO to ViewModel (Response)
         CreateMap<UserDto, UserViewModel>();

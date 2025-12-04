@@ -220,8 +220,8 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		isTitle: true,
 	},
 	{
-		key: 'profile',
-		label: 'Profile',
+		key: 'client-profile',
+		label: 'My Profile',
 		isTitle: false,
 		icon: 'uil-user',
 		url: '/profile',

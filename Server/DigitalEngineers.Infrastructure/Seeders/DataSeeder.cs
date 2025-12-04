@@ -27,6 +27,8 @@ public static class DataSeeder
 
             var seededLookups = await LookupSeeder.SeedAsync(context, logger);
 
+            await ClientSeeder.SeedAsync(context, seededUsers.Clients, logger);
+
 #if DEBUG
             var specialists = await SpecialistSeeder.SeedAsync(
                 context,

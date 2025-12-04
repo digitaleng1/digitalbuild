@@ -10,3 +10,5 @@ export { useReviews } from './useReviews';
 export { useUpdateSpecialist } from './useUpdateSpecialist';
 export { useLicenseTypes } from './useLicenseTypes';
 export { useUserManagement } from './useUserManagement';
+export { useClientProfile } from './useClientProfile';
+export { useUpdateClient } from './useUpdateClient';

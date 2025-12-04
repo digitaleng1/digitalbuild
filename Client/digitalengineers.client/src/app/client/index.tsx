@@ -5,6 +5,7 @@ const Dashboards = lazy(() => import('./dashboards'));
 const Projects = lazy(() => import('./projects'));
 const Tasks = lazy(() => import('./tasks'));
 const Bids = lazy(() => import('./bids'));
+const Profile = lazy(() => import('./profile/page'));
 const Error404Alt = lazy(() => import('../error/404-alt/page'));
 
 
@@ -16,6 +17,7 @@ export default function Client() {
                 <Route path="projects/*" element={<Projects />} />
                 <Route path="tasks/*" element={<Tasks />} />
                 <Route path="bids/*" element={<Bids />} />
+                <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Error404Alt />} />
             </Route>
         </Routes>

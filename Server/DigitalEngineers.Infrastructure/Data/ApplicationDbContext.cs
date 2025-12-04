@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProjectLicenseType> ProjectLicenseTypes => Set<ProjectLicenseType>();
     public DbSet<ProjectFile> ProjectFiles => Set<ProjectFile>();
     public DbSet<Specialist> Specialists => Set<Specialist>();
+    public DbSet<Client> Clients => Set<Client>();
     public DbSet<SpecialistLicenseType> SpecialistLicenseTypes => Set<SpecialistLicenseType>();
     public DbSet<ProjectSpecialist> ProjectSpecialists => Set<ProjectSpecialist>();
     public DbSet<PortfolioItem> PortfolioItems => Set<PortfolioItem>();
