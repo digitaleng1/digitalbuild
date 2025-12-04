@@ -75,6 +75,13 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		],
 	},
 	{
+		key: 'licenses',
+		label: 'Licenses',
+		isTitle: false,
+		icon: 'uil-shield-check',
+		url: '/licenses',
+	},
+	{
 		key: 'projects-tasks',
 		label: 'Tasks',
 		isTitle: false,
@@ -225,7 +232,7 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		isTitle: false,
 		icon: 'uil-user',
 		url: '/profile',
-	},
+	}
 ];
 
 // Provider - Manage Projects & Orders

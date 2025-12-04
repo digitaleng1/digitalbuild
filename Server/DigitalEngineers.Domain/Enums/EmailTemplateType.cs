@@ -34,5 +34,9 @@ public enum EmailTemplateType
     TaskCompleted,
     TaskCommentAdded,
     TaskAttachmentAdded,
-    TaskDeadlineApproaching
+    TaskDeadlineApproaching,
+    
+    // License
+    LicenseRequestApproved,
+    LicenseRequestRejected
 }

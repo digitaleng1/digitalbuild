@@ -13,15 +13,18 @@ public class LicensesService : ILicensesService
 {
     private readonly ApplicationDbContext _context;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<LicensesService> _logger;
 
     public LicensesService(
         ApplicationDbContext context,
         IFileStorageService fileStorageService,
+        IEmailService emailService,
         ILogger<LicensesService> logger)
     {
         _context = context;
         _fileStorageService = fileStorageService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -154,6 +157,23 @@ public class LicensesService : ILicensesService
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        // Send approval email
+        try
+        {
+            var specialistName = $"{request.Specialist.User.FirstName} {request.Specialist.User.LastName}";
+            await _emailService.SendLicenseRequestApprovedNotificationAsync(
+                request.Specialist.User.Email!,
+                specialistName,
+                request.LicenseType.Name,
+                request.State ?? string.Empty,
+                request.AdminComment,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send license approval email to {Email}", request.Specialist.User.Email);
+        }
+
         return MapToDto(request, request.Specialist, request.LicenseType);
     }
 
@@ -176,6 +196,9 @@ public class LicensesService : ILicensesService
         if (request.Status != LicenseRequestStatus.Pending)
             throw new InvalidOperationException($"License request is already {request.Status}");
 
+        if (string.IsNullOrWhiteSpace(dto.AdminComment))
+            throw new ArgumentException("Admin comment (reason) is required when rejecting a license request", nameof(dto.AdminComment));
+
         request.Status = LicenseRequestStatus.Rejected;
         request.AdminComment = dto.AdminComment;
         request.IsVerified = false;
@@ -184,6 +207,23 @@ public class LicensesService : ILicensesService
         request.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send rejection email
+        try
+        {
+            var specialistName = $"{request.Specialist.User.FirstName} {request.Specialist.User.LastName}";
+            await _emailService.SendLicenseRequestRejectedNotificationAsync(
+                request.Specialist.User.Email!,
+                specialistName,
+                request.LicenseType.Name,
+                request.State ?? string.Empty,
+                request.AdminComment,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send license rejection email to {Email}", request.Specialist.User.Email);
+        }
 
         return MapToDto(request, request.Specialist, request.LicenseType);
     }

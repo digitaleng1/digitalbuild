@@ -8,6 +8,7 @@ const Bids = lazy(() => import('./bids'));
 const Tasks = lazy(() => import('./tasks'));
 const ProvidersPage = lazy(() => import('./providers/page'));
 const ClientsPage = lazy(() => import('./clients/page'));
+const Licenses = lazy(() => import('./licenses'));
 
 export default function Admin() {
     return (
@@ -19,6 +20,7 @@ export default function Admin() {
                 <Route path="tasks/*" element={<Tasks />} />
                 <Route path="providers" element={<ProvidersPage />} />
                 <Route path="clients" element={<ClientsPage />} />
+                <Route path="licenses/*" element={<Licenses />} />
                 <Route path="*" element={<Error404Alt />} />
             </Route>
         </Routes>

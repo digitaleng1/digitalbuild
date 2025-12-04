@@ -175,4 +175,21 @@ public interface IEmailService
         string completedBy,
         string taskUrl,
         CancellationToken cancellationToken = default);
+
+    // License notifications
+    Task SendLicenseRequestApprovedNotificationAsync(
+        string toEmail,
+        string specialistName,
+        string licenseTypeName,
+        string state,
+        string? adminComment,
+        CancellationToken cancellationToken = default);
+
+    Task SendLicenseRequestRejectedNotificationAsync(
+        string toEmail,
+        string specialistName,
+        string licenseTypeName,
+        string state,
+        string reason,
+        CancellationToken cancellationToken = default);
 }

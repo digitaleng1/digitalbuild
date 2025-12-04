@@ -548,6 +548,54 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendLicenseRequestApprovedNotificationAsync(
+        string toEmail,
+        string specialistName,
+        string licenseTypeName,
+        string state,
+        string? adminComment,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "SpecialistName", specialistName },
+            { "LicenseTypeName", licenseTypeName },
+            { "State", state },
+            { "AdminComment", adminComment ?? "No additional comments" },
+            { "ProfileUrl", $"{GetBaseUrl()}/specialist/profile" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.LicenseRequestApproved,
+            placeholders,
+            cancellationToken);
+    }
+
+    public async Task SendLicenseRequestRejectedNotificationAsync(
+        string toEmail,
+        string specialistName,
+        string licenseTypeName,
+        string state,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "SpecialistName", specialistName },
+            { "LicenseTypeName", licenseTypeName },
+            { "State", state },
+            { "Reason", reason },
+            { "ProfileUrl", $"{GetBaseUrl()}/specialist/profile" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.LicenseRequestRejected,
+            placeholders,
+            cancellationToken);
+    }
+
     private string GetSubjectForTemplate(EmailTemplateType templateType)
     {
         return templateType switch
@@ -579,6 +627,10 @@ public class EmailService : IEmailService
             EmailTemplateType.TaskCreated => "New Task Created - Digital Engineers",
             EmailTemplateType.TaskAssigned => "New Task Assignment - Digital Engineers",
             EmailTemplateType.TaskCompleted => "Task Completed - Digital Engineers",
+            
+            // License
+            EmailTemplateType.LicenseRequestApproved => "License Request Approved - Digital Engineers",
+            EmailTemplateType.LicenseRequestRejected => "License Request Decision - Digital Engineers",
 
             _ => "Notification - Digital Engineers"
         };
