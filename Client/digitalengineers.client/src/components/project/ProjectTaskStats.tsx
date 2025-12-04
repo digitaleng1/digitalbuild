@@ -3,6 +3,7 @@ import { Card, Row, Col } from 'react-bootstrap';
 import { taskService } from '@/services/taskService';
 import type { TaskViewModel } from '@/types/task';
 import type { ProjectDto } from '@/types/project';
+import { getStatusBadgeVariant } from '@/utils/projectUtils';
 
 interface ProjectTaskStatsProps {
 	projectId: number;
@@ -61,31 +62,12 @@ const ProjectTaskStats = ({ projectId, project }: ProjectTaskStatsProps) => {
 		? Math.round((stats.completedTasks / stats.totalTasks) * 100) 
 		: 0;
 
-	const defaultThumbnail = 'https://via.placeholder.com/80';
-	const defaultAvatar = 'https://via.placeholder.com/80';
-
-	const getStatusBadgeClass = (status: string): string => {
-		switch (status) {
-			case 'InProgress':
-				return 'bg-primary';
-			case 'Completed':
-				return 'bg-success';
-			case 'QuoteAccepted':
-				return 'bg-info';
-			case 'Cancelled':
-			case 'QuoteRejected':
-				return 'bg-danger';
-			default:
-				return 'bg-secondary';
-		}
-	};
-
 	return (
 		<>
 			<div className="d-flex justify-content-between align-items-center mb-3">
 				<h4 className="mb-0">{project.name}</h4>
 				<div className="d-flex align-items-center">
-					<span className={`badge ${getStatusBadgeClass(project.status)} me-2`} style={{ textTransform: 'capitalize' }}>
+					<span className={`badge bg-${getStatusBadgeVariant(project.status)} me-2`} style={{ textTransform: 'capitalize' }}>
 						{project.status}
 					</span>
 					{project.clientName && (
@@ -113,12 +95,21 @@ const ProjectTaskStats = ({ projectId, project }: ProjectTaskStatsProps) => {
 						<Col sm={6} lg={3}>
 							<Card className="rounded-0 shadow-none m-0 border-end border-light">
 								<Card.Body className="text-center">
-									<img 
-										src={project.thumbnailUrl || defaultThumbnail} 
-										style={{ width: '3rem', height: '3rem', objectFit: 'cover' }} 
-										alt={project.name}
-										className="rounded-circle img-thumbnail mb-2"
-									/>
+									{project.thumbnailUrl ? (
+										<img 
+											src={project.thumbnailUrl} 
+											style={{ width: '3rem', height: '3rem', objectFit: 'cover' }} 
+											alt={project.name}
+											className="rounded-circle img-thumbnail mb-2"
+										/>
+									) : (
+										<div 
+											className="d-flex align-items-center justify-content-center rounded-circle bg-light mb-2"
+											style={{ width: '3rem', height: '3rem', margin: '0 auto' }}
+										>
+											<i className="ri-image-line text-muted" style={{ fontSize: '1.5rem' }}></i>
+										</div>
+									)}
 									<p className="font-13 mb-1">
 										<i className="ri-calendar-line me-1"></i>
 										{new Date(project.createdAt).toLocaleDateString()}

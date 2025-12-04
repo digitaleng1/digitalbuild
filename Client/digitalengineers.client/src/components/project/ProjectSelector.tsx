@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Row, Col, Button, Spinner, Form, Alert } from 'react-bootstrap';
 import projectService from '@/services/projectService';
 import type { ProjectDto } from '@/types/project';
+import { ProjectStatus } from '@/types/project';
 
-const ACTIVE_STATUSES = ['QuotePending', 'QuoteSubmitted', 'QuoteAccepted', 'InProgress'];
 const DEBOUNCE_DELAY = 500;
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -22,6 +22,35 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+// Helper function to get human-readable status
+const getStatusLabel = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'QuotePending': 'Quote Pending',
+    'Draft': 'Draft',
+    'QuoteSubmitted': 'Quote Submitted',
+    'QuoteAccepted': 'Quote Accepted',
+    'QuoteRejected': 'Quote Rejected',
+    'InitialPaymentPending': 'Initial Payment Pending',
+    'InitialPaymentComplete': 'Initial Payment Complete',
+    'InProgress': 'In Progress',
+    'Completed': 'Completed',
+    'Cancelled': 'Cancelled'
+  };
+  return statusMap[status] || status;
+};
+
+// Helper function to get human-readable management type
+const getManagementTypeLabel = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'ClientManaged': 'Client Managed',
+    'DigitalEngineersManaged': 'DE Managed'
+  };
+  return typeMap[type] || type;
+};
+
+// All available project statuses
+const ALL_PROJECT_STATUSES = Object.values(ProjectStatus);
+
 interface ProjectSelectorProps {
   onProjectSelect: (project: ProjectDto | null) => void;
 }
@@ -32,6 +61,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   
   const isFirstLoad = useRef(true);
   const isLoadingData = useRef(false);
@@ -57,14 +87,23 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
         setError(null);
         
         const data = await projectService.getProjects({
-          statuses: ACTIVE_STATUSES,
+          statuses: selectedStatuses.length > 0 ? selectedStatuses : undefined,
           dateFrom: dateFrom,
           dateTo: dateTo,
           search: debouncedSearch || undefined
         });
         
         const projectList = Array.isArray(data) ? data : [];
-        setProjects(projectList);
+        
+        // Remove duplicates by ID
+        const uniqueProjects = projectList.reduce((acc, project) => {
+          if (!acc.find(p => p.id === project.id)) {
+            acc.push(project);
+          }
+          return acc;
+        }, [] as ProjectDto[]);
+        
+        setProjects(uniqueProjects);
       } catch (err) {
         console.error('Failed to load projects:', err);
         setError('Failed to load projects. Please try again.');
@@ -77,7 +116,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
     };
 
     loadProjects();
-  }, [dateFrom, dateTo, debouncedSearch]);
+  }, [dateFrom, dateTo, debouncedSearch, selectedStatuses]);
 
   useEffect(() => {
     if (projects.length > 0) {
@@ -104,12 +143,42 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
     setSelectedProjectId(value ? Number(value) : null);
   }, []);
 
+  const handleStatusChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses([value]);
+    }
+  }, []);
+
   const handleClearFilters = useCallback(() => {
     setSearchTerm('');
+    setSelectedStatuses([]);
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
     setDateFrom(twoMonthsAgo.toISOString().split('T')[0]);
     setDateTo(new Date().toISOString().split('T')[0]);
+  }, []);
+
+  // Format project option text with status and management type
+  const formatProjectOption = useCallback((project: ProjectDto): string => {
+    const parts: string[] = [project.name];
+    
+    if (project.clientName) {
+      parts.push(` - ${project.clientName}`);
+    }
+    
+    // Add status in brackets
+    parts.push(` [${getStatusLabel(project.status)}]`);
+    
+    // Add management type
+    parts.push(` - ${getManagementTypeLabel(project.managementType)}`);
+    
+    // Add date
+    parts.push(` (${new Date(project.createdAt).toLocaleDateString()})`);
+    
+    return parts.join('');
   }, []);
 
   if (isFirstLoad.current) {
@@ -125,7 +194,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
   return (
     <>
       <Row className="">
-        <Col md={4}>
+        <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>
               <i className="ri-search-line me-1" style={{ fontSize: '18px' }}></i>
@@ -160,6 +229,26 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
         <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>
+              <i className="ri-filter-line me-1" style={{ fontSize: '18px' }}></i>
+              Project Status
+            </Form.Label>
+            <Form.Select
+              value={selectedStatuses.length > 0 ? selectedStatuses[0] : ''}
+              onChange={handleStatusChange}
+            >
+              <option value="">All Statuses</option>
+              {ALL_PROJECT_STATUSES.map(status => (
+                <option key={status} value={status}>
+                  {getStatusLabel(status)}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Col>
+
+        <Col md={2}>
+          <Form.Group className="mb-3">
+            <Form.Label>
               <i className="ri-calendar-line me-1" style={{ fontSize: '18px' }}></i>
               From Date
             </Form.Label>
@@ -171,7 +260,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
           </Form.Group>
         </Col>
 
-        <Col md={3}>
+        <Col md={2}>
           <Form.Group className="mb-3">
             <Form.Label>
               <i className="ri-calendar-line me-1" style={{ fontSize: '18px' }}></i>
@@ -216,9 +305,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
                   <option value="">-- Select a project --</option>
                   {projects.map(project => (
                     <option key={project.id} value={project.id}>
-                      {project.name} 
-                      {project.clientName && ` - ${project.clientName}`}
-                      {' '}({new Date(project.createdAt).toLocaleDateString()})
+                      {formatProjectOption(project)}
                     </option>
                   ))}
                 </>
@@ -227,6 +314,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
             <Form.Text className="text-muted">
               Showing {projects.length} project(s)
               {searchTerm && ` matching "${searchTerm}"`}
+              {selectedStatuses.length > 0 && ` with status "${getStatusLabel(selectedStatuses[0])}"`}
             </Form.Text>
           </Form.Group>
         </Col>
@@ -246,7 +334,7 @@ const ProjectSelector = ({ onProjectSelect }: ProjectSelectorProps) => {
             {projects.length === 0 
               ? searchTerm 
                 ? `No projects found matching "${searchTerm}". Try different search terms.`
-                : 'No active projects found. Try adjusting the date filters.'
+                : 'No projects found. Try adjusting the filters.'
               : 'Please select a project to view tasks.'}
           </span>
         </Alert>

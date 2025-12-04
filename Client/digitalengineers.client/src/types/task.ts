@@ -113,7 +113,7 @@ export interface CreateTaskViewModel {
   title: string;
   description?: string;
   priority: TaskPriority;
-  deadline?: string;
+  deadline?: Date | string; // Allow both Date and string
   isMilestone: boolean;
   assignedToUserId?: string;
   projectId: number;
@@ -126,7 +126,7 @@ export interface UpdateTaskViewModel {
   title: string;
   description?: string;
   priority: TaskPriority;
-  deadline?: string;
+  deadline?: Date | string; // Allow both Date and string
   isMilestone: boolean;
   assignedToUserId?: string;
   parentTaskId?: number;

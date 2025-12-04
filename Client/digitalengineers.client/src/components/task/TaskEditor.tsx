@@ -34,11 +34,20 @@ interface TaskEditorProps {
 }
 
 const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: TaskEditorProps) => {
+  // Initialize form with proper default statusId
+  const getInitialStatusId = () => {
+    if (statuses && statuses.length > 0) {
+      const defaultStatus = statuses.find(s => s.isDefault);
+      return defaultStatus?.id || statuses[0].id;
+    }
+    return 0;
+  };
+
   const [formData, setFormData] = useState<CreateTaskViewModel>({
     title: '',
     description: '',
     priority: 1 as TaskPriority,
-    statusId: statuses[0]?.id || 0,
+    statusId: getInitialStatusId(),
     deadline: '',
     isMilestone: false,
     assignedToUserId: undefined,
@@ -60,6 +69,19 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
 
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
+
+  // Update statusId when statuses change (only for create mode)
+  useEffect(() => {
+    if (mode === 'create' && statuses && statuses.length > 0) {
+      const defaultStatus = statuses.find(s => s.isDefault);
+      const newStatusId = defaultStatus?.id || statuses[0].id;
+      
+      setFormData(prev => ({
+        ...prev,
+        statusId: newStatusId
+      }));
+    }
+  }, [statuses, mode]);
 
   useEffect(() => {
     loadData();
@@ -181,10 +203,18 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       setError(null);
 
       if (mode === 'create') {
-        await taskService.createTask({
+        // Convert deadline string to Date object or undefined
+        const createData: CreateTaskViewModel = {
           ...formData,
-          deadline: formData.deadline || undefined,
-        }, attachments);
+          deadline: formData.deadline ? formData.deadline : undefined,
+        };
+        
+        console.log('Creating task with data:', createData);
+        console.log('Attachments:', attachments);
+        
+        const result = await taskService.createTask(createData, attachments);
+        console.log('Task created successfully:', result);
+        
         showSuccess('Task Created', 'Task has been created successfully');
       } else if (mode === 'edit' && taskId) {
         const updateData: UpdateTaskViewModel = {
@@ -198,13 +228,20 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
           parentTaskId: formData.parentTaskId,
           labelIds: formData.labelIds
         };
+        
+        console.log('Updating task with data:', updateData);
+        
         await taskService.updateTask(taskId, updateData);
         showSuccess('Task Updated', 'Task has been updated successfully');
       }
 
       onSuccess();
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || `Failed to ${mode} task`;
+      console.error(`Failed to ${mode} task:`, err);
+      console.error('Error response:', err.response);
+      console.error('Error message:', err.message);
+      
+      const errorMessage = err.response?.data?.message || err.message || `Failed to ${mode} task`;
       setError(errorMessage);
       showError(`${mode === 'create' ? 'Creation' : 'Update'} Failed`, errorMessage);
     } finally {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import { Card, Badge, Spinner, Button } from 'react-bootstrap';
+import { Card, Badge, Spinner, Button, Form, Row, Col } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import type { TaskViewModel, ProjectTaskStatusViewModel } from '@/types/task';
 import type { ProjectDto } from '@/types/project';
@@ -37,6 +37,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
     const [showCreateStatusModal, setShowCreateStatusModal] = useState(false);
     const [showEditStatusModal, setShowEditStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState<ProjectTaskStatusViewModel | null>(null);
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState<number | null>(null);
     const { showSuccess, showError } = useToast();
 
     const loadData = useCallback(async () => {
@@ -48,7 +49,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
             const statusList = await taskService.getStatusesByProject(projectId);
             setStatuses(statusList);
 
-            // Load tasks for the project
+            // Load ALL tasks for the project
             let tasks: TaskViewModel[] = [];
 
             try {
@@ -75,6 +76,29 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    // Filter columns based on selected status
+    const filteredColumns = useMemo(() => {
+        if (selectedStatusFilter === null) {
+            return columns;
+        }
+        return columns.filter(col => col.status.id === selectedStatusFilter);
+    }, [columns, selectedStatusFilter]);
+
+    const totalTasksCount = useMemo(() => 
+        columns.reduce((sum, col) => sum + col.tasks.length, 0),
+        [columns]
+    );
+
+    const filteredTasksCount = useMemo(() =>
+        filteredColumns.reduce((sum, col) => sum + col.tasks.length, 0),
+        [filteredColumns]
+    );
+
+    const handleStatusFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setSelectedStatusFilter(value ? Number(value) : null);
+    }, []);
 
     const handleEditStatus = useCallback((status: ProjectTaskStatusViewModel) => {
         setSelectedStatus(status);
@@ -247,13 +271,47 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
 
             <div className="d-flex justify-content-between align-items-center mb-3 mt-3">
                 <h5 className="mb-0">Tasks</h5>
-                {canEdit && (
-                    <Button variant="success" size="sm" onClick={handleCreateTask}>
-                        <Icon icon="mdi:plus" width={18} className="me-1" />
-                        Add New Task
-                    </Button>
-                )}
+                <div className="d-flex align-items-center gap-3">
+                    <Row className="g-2 align-items-center">
+                        <Col xs="auto">
+                            <Form.Group className="mb-0">
+                                <Form.Label className="mb-0 me-2 small">
+                                    <Icon icon="mdi:filter-outline" width={16} className="me-1" />
+                                    Filter by Status:
+                                </Form.Label>
+                            </Form.Group>
+                        </Col>
+                        <Col xs="auto">
+                            <Form.Select
+                                size="sm"
+                                value={selectedStatusFilter ?? ''}
+                                onChange={handleStatusFilterChange}
+                                style={{ minWidth: '200px' }}
+                            >
+                                <option value="">All Statuses ({totalTasksCount})</option>
+                                {statuses.map(status => (
+                                    <option key={status.id} value={status.id}>
+                                        {status.name} ({columns.find(col => col.status.id === status.id)?.tasks.length || 0})
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </Col>
+                    </Row>
+                    {canEdit && (
+                        <Button variant="success" size="sm" onClick={handleCreateTask}>
+                            <Icon icon="mdi:plus" width={18} className="me-1" />
+                            Add New Task
+                        </Button>
+                    )}
+                </div>
             </div>
+
+            {selectedStatusFilter !== null && filteredTasksCount === 0 && (
+                <div className="alert alert-info d-flex align-items-center mb-3" role="alert">
+                    <Icon icon="mdi:information-outline" width={24} className="me-2" />
+                    <span>No tasks with the selected status.</span>
+                </div>
+            )}
 
             {columns.length === 0 ? (
                 <div className="alert alert-info d-flex align-items-center justify-content-between" role="alert">
@@ -271,12 +329,12 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                             >
-                                {columns.map((column, index) => (
+                                {filteredColumns.map((column, index) => (
                                     <Draggable
                                         key={column.status.id}
                                         draggableId={`column-${column.status.id}`}
                                         index={index}
-                                        isDragDisabled={!canEdit || updating}
+                                        isDragDisabled={!canEdit || updating || selectedStatusFilter !== null}
                                     >
                                         {(columnProvided) => (
                                             <div
@@ -285,7 +343,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                 className="tasks"
                                             >
                                                 <div className="task-header-container task-header">
-                                                    {canEdit && (
+                                                    {canEdit && selectedStatusFilter === null && (
                                                         <div
                                                             className="drag-handle"
                                                             {...columnProvided.dragHandleProps}
@@ -343,7 +401,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                                     key={task.id}
                                                                     draggableId={String(task.id)}
                                                                     index={taskIndex}
-                                                                    isDragDisabled={!canEdit || updating}
+                                                                    isDragDisabled={!canEdit || updating || selectedStatusFilter !== null}
                                                                 >
                                                                     {(taskDragProvided) => (
                                                                         <div
@@ -465,7 +523,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                 ))}
                                 {provided.placeholder}
 
-                                {canEdit && (
+                                {canEdit && selectedStatusFilter === null && (
                                     <div className="tasks add-status-column">
                                         <div className="add-status-placeholder">
                                             <Button

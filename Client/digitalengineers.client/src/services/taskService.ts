@@ -24,6 +24,8 @@ export const taskService = {
     data: CreateTaskViewModel,
     attachments?: File[]
   ): Promise<TaskViewModel> {
+    console.log('taskService.createTask called with:', { data, attachments });
+    
     const formData = new FormData();
     
     // Add task fields
@@ -38,7 +40,11 @@ export const taskService = {
     }
     
     if (data.deadline) {
-      formData.append('deadline', data.deadline.toISOString());
+      // Convert string to Date if needed, then to ISO string
+      const deadlineDate = typeof data.deadline === 'string' 
+        ? new Date(data.deadline) 
+        : data.deadline;
+      formData.append('deadline', deadlineDate.toISOString());
     }
     
     if (data.assignedToUserId) {
@@ -61,15 +67,25 @@ export const taskService = {
       });
     }
     
-    return await httpClient.post<TaskViewModel>(
-      BASE_URL, 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    ) as TaskViewModel;
+    console.log('FormData prepared, sending request to:', BASE_URL);
+    
+    try {
+      const result = await httpClient.post<TaskViewModel>(
+        BASE_URL, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      
+      console.log('Request successful, result:', result);
+      return result as TaskViewModel;
+    } catch (error) {
+      console.error('Request failed:', error);
+      throw error;
+    }
   },
 
   async getTaskById(id: number): Promise<TaskDetailViewModel> {
