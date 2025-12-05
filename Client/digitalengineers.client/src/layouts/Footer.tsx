@@ -11,15 +11,15 @@ export default function Footer() {
 					<Col md={6}>{currentYear} © Digital Engineers - digital-engineers.com</Col>
 					<Col md={6}>
 						<div className="text-md-end footer-links d-none d-md-block">
-							<Link to="https://coderthemes.com" target="_blank">
+							<Link to="https://digital-engineers.com" target="_blank">
 								About
 							</Link>
 							&nbsp;
-							<Link to="https://coderthemes.com" target="_blank">
+							<Link to="https://digital-engineers.com" target="_blank">
 								Support
 							</Link>
 							&nbsp;
-							<Link to="https://coderthemes.com" target="_blank">
+							<Link to="https://digital-engineers.com" target="_blank">
 								Contact Us
 							</Link>
 						</div>

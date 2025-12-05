@@ -26,7 +26,7 @@ const SellerBox = () => {
 					</p>
 
 					<p className="text-muted">
-						<strong>Email :</strong> <span className="ms-2">coderthemes@gmail.com</span>
+						<strong>Email :</strong> <span className="ms-2">digital-engineers@gmail.com</span>
 					</p>
 
 					<p className="text-muted">

@@ -197,7 +197,7 @@ const AppMenu = ({ menuItems }: AppMenuProps) => {
 			{/*	<h5 className="mt-3">Unlimited Access</h5>*/}
 			{/*	<p className="mb-3">Upgrade to plan to get access to unlimited reports</p>*/}
 			{/*	<a*/}
-			{/*		href="https://coderthemes.com/hyper/"*/}
+			{/*		href="https://digital-engineers.com/hyper/"*/}
 			{/*		className="btn btn-secondary btn-sm"*/}
 			{/*		target="_blank"*/}
 			{/*	>*/}

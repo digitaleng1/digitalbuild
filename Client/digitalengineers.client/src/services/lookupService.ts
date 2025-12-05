@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { State, Profession, LicenseType } from '@/types/dictionary';
+import type { State, Profession, LicenseType, CreateProfessionDto, CreateLicenseTypeDto, ProfessionViewModel, LicenseTypeViewModel, ProfessionManagementDto, LicenseTypeManagementDto, UpdateProfessionDto, UpdateLicenseTypeDto, ApproveProfessionDto, ApproveLicenseTypeDto } from '@/types/lookup';
 
 interface CacheEntry<T> {
 	data: T;
@@ -86,6 +86,66 @@ class LookupService {
 		this.setCachedData(cacheKey, data);
 
 		return data;
+	}
+
+	// ==================== CLIENT OPERATIONS ====================
+
+	async createProfession(dto: CreateProfessionDto): Promise<ProfessionViewModel> {
+		const response = await httpClient.post<ProfessionViewModel>('/api/lookup/professions', dto);
+		this.clearCache();
+		return response as ProfessionViewModel;
+	}
+
+	async createLicenseType(dto: CreateLicenseTypeDto): Promise<LicenseTypeViewModel> {
+		const response = await httpClient.post<LicenseTypeViewModel>('/api/lookup/license-types', dto);
+		this.clearCache();
+		return response as LicenseTypeViewModel;
+	}
+
+	// ==================== ADMIN OPERATIONS ====================
+
+	async getAllProfessionsForManagement(): Promise<ProfessionManagementDto[]> {
+		const response = await httpClient.get<ProfessionManagementDto[]>('/api/lookup/professions/management');
+		return response as ProfessionManagementDto[];
+	}
+
+	async getAllLicenseTypesForManagement(): Promise<LicenseTypeManagementDto[]> {
+		const response = await httpClient.get<LicenseTypeManagementDto[]>('/api/lookup/license-types/management');
+		return response as LicenseTypeManagementDto[];
+	}
+
+	async updateProfession(id: number, dto: UpdateProfessionDto): Promise<ProfessionManagementDto> {
+		const response = await httpClient.put<ProfessionManagementDto>(`/api/lookup/professions/${id}`, dto);
+		this.clearCache();
+		return response as ProfessionManagementDto;
+	}
+
+	async updateLicenseType(id: number, dto: UpdateLicenseTypeDto): Promise<LicenseTypeManagementDto> {
+		const response = await httpClient.put<LicenseTypeManagementDto>(`/api/lookup/license-types/${id}`, dto);
+		this.clearCache();
+		return response as LicenseTypeManagementDto;
+	}
+
+	async approveProfession(id: number, dto: ApproveProfessionDto): Promise<ProfessionManagementDto> {
+		const response = await httpClient.put<ProfessionManagementDto>(`/api/lookup/professions/${id}/approve`, dto);
+		this.clearCache();
+		return response as ProfessionManagementDto;
+	}
+
+	async approveLicenseType(id: number, dto: ApproveLicenseTypeDto): Promise<LicenseTypeManagementDto> {
+		const response = await httpClient.put<LicenseTypeManagementDto>(`/api/lookup/license-types/${id}/approve`, dto);
+		this.clearCache();
+		return response as LicenseTypeManagementDto;
+	}
+
+	async deleteProfession(id: number): Promise<void> {
+		await httpClient.delete(`/api/lookup/professions/${id}`);
+		this.clearCache();
+	}
+
+	async deleteLicenseType(id: number): Promise<void> {
+		await httpClient.delete(`/api/lookup/license-types/${id}`);
+		this.clearCache();
 	}
 
 	clearCache(): void {

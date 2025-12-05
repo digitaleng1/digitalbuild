@@ -596,6 +596,198 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    // Profession and License Type Management notifications
+    public async Task SendNewProfessionNotificationToAdminsAsync(
+        string professionName,
+        string description,
+        string createdByUserName,
+        string createdByEmail,
+        CancellationToken cancellationToken = default)
+    {
+        var adminEmails = await GetAdminEmailsAsync(cancellationToken);
+        
+        var subject = $"New Profession Submission: {professionName}";
+        var body = $@"
+            <h2>New Profession Submission</h2>
+            <p>A new profession has been submitted by <strong>{createdByUserName}</strong> ({createdByEmail}):</p>
+            <ul>
+                <li><strong>Profession Name:</strong> {professionName}</li>
+                <li><strong>Description:</strong> {description}</li>
+                <li><strong>Submitted At:</strong> {DateTime.UtcNow:MMMM dd, yyyy HH:mm UTC}</li>
+            </ul>
+            <p>Please review and approve/reject this submission in the admin panel.</p>
+            <p><a href=""{GetBaseUrl()}/admin/dictionaries"">Go to Admin Panel</a></p>
+        ";
+
+        foreach (var adminEmail in adminEmails)
+        {
+            await SendEmailAsync(new EmailDto
+            {
+                To = adminEmail,
+                Subject = subject,
+                Body = body,
+                IsHtml = true
+            }, cancellationToken);
+        }
+    }
+
+    public async Task SendNewLicenseTypeNotificationToAdminsAsync(
+        string licenseTypeName,
+        string professionName,
+        string description,
+        string createdByUserName,
+        string createdByEmail,
+        CancellationToken cancellationToken = default)
+    {
+        var adminEmails = await GetAdminEmailsAsync(cancellationToken);
+        
+        var subject = $"New License Type Submission: {licenseTypeName}";
+        var body = $@"
+            <h2>New License Type Submission</h2>
+            <p>A new license type has been submitted by <strong>{createdByUserName}</strong> ({createdByEmail}):</p>
+            <ul>
+                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
+                <li><strong>Profession:</strong> {professionName}</li>
+                <li><strong>Description:</strong> {description}</li>
+                <li><strong>Submitted At:</strong> {DateTime.UtcNow:MMMM dd, yyyy HH:mm UTC}</li>
+            </ul>
+            <p>Please review and approve/reject this submission in the admin panel.</p>
+            <p><a href=""{GetBaseUrl()}/admin/dictionaries"">Go to Admin Panel</a></p>
+        ";
+
+        foreach (var adminEmail in adminEmails)
+        {
+            await SendEmailAsync(new EmailDto
+            {
+                To = adminEmail,
+                Subject = subject,
+                Body = body,
+                IsHtml = true
+            }, cancellationToken);
+        }
+    }
+
+    public async Task SendProfessionApprovalNotificationAsync(
+        string userEmail,
+        string userName,
+        string professionName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Your Profession \"{professionName}\" has been Approved";
+        var body = $@"
+            <h2>Profession Approved!</h2>
+            <p>Good news, {userName}!</p>
+            <p>Your profession submission has been approved by our team.</p>
+            <ul>
+                <li><strong>Profession Name:</strong> {professionName}</li>
+            </ul>
+            <p>You can now use this profession when creating projects.</p>
+            <p><a href=""{GetBaseUrl()}/client/projects"">Create New Project</a></p>
+        ";
+
+        await SendEmailAsync(new EmailDto
+        {
+            To = userEmail,
+            Subject = subject,
+            Body = body,
+            IsHtml = true
+        }, cancellationToken);
+    }
+
+    public async Task SendProfessionRejectionNotificationAsync(
+        string userEmail,
+        string userName,
+        string professionName,
+        string rejectionReason,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Your Profession \"{professionName}\" Submission";
+        var body = $@"
+            <h2>Profession Submission Update</h2>
+            <p>Hello {userName},</p>
+            <p>Unfortunately, we cannot approve your profession submission at this time.</p>
+            <ul>
+                <li><strong>Profession Name:</strong> {professionName}</li>
+                <li><strong>Reason:</strong> {rejectionReason}</li>
+            </ul>
+            <p>If you have questions, please contact our support team.</p>
+        ";
+
+        await SendEmailAsync(new EmailDto
+        {
+            To = userEmail,
+            Subject = subject,
+            Body = body,
+            IsHtml = true
+        }, cancellationToken);
+    }
+
+    public async Task SendLicenseTypeApprovalNotificationAsync(
+        string userEmail,
+        string userName,
+        string licenseTypeName,
+        string professionName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Your License Type \"{licenseTypeName}\" has been Approved";
+        var body = $@"
+            <h2>License Type Approved!</h2>
+            <p>Good news, {userName}!</p>
+            <p>Your license type submission has been approved by our team.</p>
+            <ul>
+                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
+                <li><strong>Profession:</strong> {professionName}</li>
+            </ul>
+            <p>You can now use this license type when creating projects.</p>
+            <p><a href=""{GetBaseUrl()}/client/projects"">Create New Project</a></p>
+        ";
+
+        await SendEmailAsync(new EmailDto
+        {
+            To = userEmail,
+            Subject = subject,
+            Body = body,
+            IsHtml = true
+        }, cancellationToken);
+    }
+
+    public async Task SendLicenseTypeRejectionNotificationAsync(
+        string userEmail,
+        string userName,
+        string licenseTypeName,
+        string professionName,
+        string rejectionReason,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Your License Type \"{licenseTypeName}\" Submission";
+        var body = $@"
+            <h2>License Type Submission Update</h2>
+            <p>Hello {userName},</p>
+            <p>Unfortunately, we cannot approve your license type submission at this time.</p>
+            <ul>
+                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
+                <li><strong>Profession:</strong> {professionName}</li>
+                <li><strong>Reason:</strong> {rejectionReason}</li>
+            </ul>
+            <p>If you have questions, please contact our support team.</p>
+        ";
+
+        await SendEmailAsync(new EmailDto
+        {
+            To = userEmail,
+            Subject = subject,
+            Body = body,
+            IsHtml = true
+        }, cancellationToken);
+    }
+
+    private async Task<List<string>> GetAdminEmailsAsync(CancellationToken cancellationToken = default)
+    {
+        // TODO: Get admin emails from database
+        // For now, return configured admin emails
+        return new List<string> { _emailSettings.FromEmail };
+    }
+
     private string GetSubjectForTemplate(EmailTemplateType templateType)
     {
         return templateType switch

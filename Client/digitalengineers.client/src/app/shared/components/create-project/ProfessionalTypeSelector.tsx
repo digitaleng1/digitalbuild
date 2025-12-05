@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Spinner } from 'react-bootstrap';
 import lookupService from '@/services/lookupService';
-import type { Profession, LicenseType, SelectedProfession } from '@/types/lookup';
+import type { Profession, LicenseType, SelectedProfession, ProfessionViewModel, LicenseTypeViewModel } from '@/types/lookup';
 import ProfessionBadge from './ProfessionBadge';
 import LicenseTypeModal from './LicenseTypeModal';
+import CreateProfessionModal from './CreateProfessionModal';
+import CreateLicenseTypeModal from './CreateLicenseTypeModal';
 
 interface ProfessionalTypeSelectorProps {
 	value: number[];
@@ -19,6 +21,9 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 		show: boolean;
 		profession: Profession | null;
 	}>({ show: false, profession: null });
+	const [createProfessionModalShow, setCreateProfessionModalShow] = useState(false);
+	const [createLicenseTypeModalShow, setCreateLicenseTypeModalShow] = useState(false);
+	const [selectedProfessionForNewLicense, setSelectedProfessionForNewLicense] = useState<Profession | null>(null);
 
 	useEffect(() => {
 		const loadData = async () => {
@@ -140,6 +145,74 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 		[onChange]
 	);
 
+	const handleCreateProfessionSuccess = useCallback(async (newProfession: ProfessionViewModel) => {
+		try {
+			const [professionsData, licenseTypesData] = await Promise.all([
+				lookupService.getProfessions(),
+				lookupService.getLicenseTypes(),
+			]);
+			setProfessions(professionsData);
+			setAllLicenseTypes(licenseTypesData);
+
+			// Auto-open license type modal for the new profession
+			const profession = professionsData.find(p => p.id === newProfession.id);
+			if (profession) {
+				openModal(profession);
+			}
+		} catch (error) {
+			console.error('Failed to reload data after profession creation:', error);
+		}
+	}, [openModal]);
+
+	const handleCreateLicenseTypeClick = useCallback(() => {
+		if (modalState.profession) {
+			setSelectedProfessionForNewLicense(modalState.profession);
+			closeModal();
+			setCreateLicenseTypeModalShow(true);
+		}
+	}, [modalState.profession, closeModal]);
+
+	const handleCreateLicenseTypeSuccess = useCallback(async (newLicenseType: LicenseTypeViewModel) => {
+		try {
+			const licenseTypesData = await lookupService.getLicenseTypes();
+			setAllLicenseTypes(licenseTypesData);
+
+			// Auto-select the new license type
+			if (selectedProfessionForNewLicense) {
+				const profession = selectedProfessionForNewLicense;
+				const licenseType = licenseTypesData.find(lt => lt.id === newLicenseType.id);
+				
+				if (licenseType) {
+					setSelectedProfessions((prev) => {
+						const existing = prev.find(sp => sp.profession.id === profession.id);
+						const filtered = prev.filter(sp => sp.profession.id !== profession.id);
+						
+						const newLicenseTypes = existing 
+							? [...existing.licenseTypes, licenseType]
+							: [licenseType];
+						
+						filtered.push({
+							profession,
+							licenseTypes: newLicenseTypes,
+						});
+
+						const allSelectedIds = filtered.flatMap((sp) => sp.licenseTypes.map((lt) => lt.id));
+						onChange(allSelectedIds);
+
+						return filtered;
+					});
+				}
+			}
+
+			// Reopen the license type modal
+			if (selectedProfessionForNewLicense) {
+				openModal(selectedProfessionForNewLicense);
+			}
+		} catch (error) {
+			console.error('Failed to reload license types after creation:', error);
+		}
+	}, [selectedProfessionForNewLicense, onChange, openModal]);
+
 	const allSelectedLicenseTypes = selectedProfessions.flatMap((sp) => sp.licenseTypes);
 
 	if (loading) {
@@ -167,6 +240,14 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 						}
 					/>
 				))}
+				
+				{/* Create New Profession Badge */}
+				<ProfessionBadge
+					profession={{ id: -1, name: '', description: '' }}
+					selectedLicenseTypes={[]}
+					onClick={() => {}}
+					onCreateNew={() => setCreateProfessionModalShow(true)}
+				/>
 			</div>
 
 			{allSelectedLicenseTypes.length > 0 && (
@@ -193,7 +274,26 @@ const ProfessionalTypeSelector = ({ value, onChange }: ProfessionalTypeSelectorP
 				availableLicenseTypes={getAvailableLicenseTypes(modalState.profession?.id)}
 				selectedLicenseTypes={getSelectedLicenseTypes(modalState.profession?.id ?? 0)}
 				onConfirm={handleConfirm}
+				onCreateNew={handleCreateLicenseTypeClick}
 			/>
+
+			<CreateProfessionModal
+				show={createProfessionModalShow}
+				onHide={() => setCreateProfessionModalShow(false)}
+				onSuccess={handleCreateProfessionSuccess}
+			/>
+
+			{selectedProfessionForNewLicense && (
+				<CreateLicenseTypeModal
+					show={createLicenseTypeModalShow}
+					onHide={() => {
+						setCreateLicenseTypeModalShow(false);
+						setSelectedProfessionForNewLicense(null);
+					}}
+					profession={selectedProfessionForNewLicense}
+					onSuccess={handleCreateLicenseTypeSuccess}
+				/>
+			)}
 		</div>
 	);
 };

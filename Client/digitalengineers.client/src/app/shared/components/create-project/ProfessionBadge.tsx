@@ -1,15 +1,31 @@
 import { Badge, Button } from 'react-bootstrap';
-import type { Profession, LicenseType } from '@/types/dictionary';
+import type { Profession, LicenseType } from '@/types/lookup';
 
 interface ProfessionBadgeProps {
 	profession: Profession;
 	selectedLicenseTypes: LicenseType[];
 	onClick: () => void;
 	onRemove?: () => void;
+	onCreateNew?: () => void; // NEW: callback for creating new profession
 }
 
-const ProfessionBadge = ({ profession, selectedLicenseTypes, onClick, onRemove }: ProfessionBadgeProps) => {
+const ProfessionBadge = ({ profession, selectedLicenseTypes, onClick, onRemove, onCreateNew }: ProfessionBadgeProps) => {
 	const count = selectedLicenseTypes.length;
+
+	// Special badge for "Create New" action
+	if (profession.id === -1 && onCreateNew) {
+		return (
+			<Badge
+				bg="success"
+				className="me-2 mb-2 d-inline-flex align-items-center"
+				style={{ cursor: 'pointer', fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
+				onClick={onCreateNew}
+			>
+				<i className="mdi mdi-plus-circle me-1"></i>
+				<span>Create New Profession</span>
+			</Badge>
+		);
+	}
 
 	return (
 		<Badge

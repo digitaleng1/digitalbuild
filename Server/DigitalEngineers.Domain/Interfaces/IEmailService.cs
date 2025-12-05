@@ -192,4 +192,12 @@ public interface IEmailService
         string state,
         string reason,
         CancellationToken cancellationToken = default);
+
+    // Profession & License Type management notifications
+    Task SendNewProfessionNotificationToAdminsAsync(string professionName, string description, string createdByUserName, string createdByEmail, CancellationToken cancellationToken = default);
+    Task SendNewLicenseTypeNotificationToAdminsAsync(string licenseTypeName, string professionName, string description, string createdByUserName, string createdByEmail, CancellationToken cancellationToken = default);
+    Task SendProfessionApprovalNotificationAsync(string userEmail, string userName, string professionName, CancellationToken cancellationToken = default);
+    Task SendProfessionRejectionNotificationAsync(string userEmail, string userName, string professionName, string rejectionReason, CancellationToken cancellationToken = default);
+    Task SendLicenseTypeApprovalNotificationAsync(string userEmail, string userName, string licenseTypeName, string professionName, CancellationToken cancellationToken = default);
+    Task SendLicenseTypeRejectionNotificationAsync(string userEmail, string userName, string licenseTypeName, string professionName, string rejectionReason, CancellationToken cancellationToken = default);
 }

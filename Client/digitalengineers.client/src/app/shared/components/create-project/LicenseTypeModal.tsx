@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
-import type { Profession, LicenseType } from '@/types/dictionary';
+import type { Profession, LicenseType } from '@/types/lookup';
 
 interface LicenseTypeModalProps {
 	show: boolean;
@@ -9,6 +9,7 @@ interface LicenseTypeModalProps {
 	availableLicenseTypes: LicenseType[];
 	selectedLicenseTypes: LicenseType[];
 	onConfirm: (selectedIds: number[]) => void;
+	onCreateNew?: () => void;
 }
 
 const LicenseTypeModal = ({
@@ -18,6 +19,7 @@ const LicenseTypeModal = ({
 	availableLicenseTypes,
 	selectedLicenseTypes,
 	onConfirm,
+	onCreateNew,
 }: LicenseTypeModalProps) => {
 	const [tempSelected, setTempSelected] = useState<number[]>([]);
 
@@ -68,18 +70,41 @@ const LicenseTypeModal = ({
 				<Modal.Title>Select {profession.name} License Types</Modal.Title>
 			</Modal.Header>
 			<Modal.Body>
-				<Row>{checkboxes}</Row>
+				{availableLicenseTypes.length === 0 ? (
+					<div className="text-center py-4">
+						<i className="mdi mdi-alert-circle-outline text-muted" style={{ fontSize: '48px' }}></i>
+						<p className="text-muted mt-2">No license types available for this profession.</p>
+						{onCreateNew && (
+							<Button variant="success" onClick={onCreateNew}>
+								<i className="mdi mdi-plus-circle me-1"></i>
+								Create New License Type
+							</Button>
+						)}
+					</div>
+				) : (
+					<Row>{checkboxes}</Row>
+				)}
 			</Modal.Body>
 			<Modal.Footer>
+				{availableLicenseTypes.length > 0 && onCreateNew && (
+					<Button variant="success" onClick={onCreateNew} className="me-auto">
+						<i className="mdi mdi-plus-circle me-1"></i>
+						Create New
+					</Button>
+				)}
 				<Button variant="secondary" onClick={onHide}>
 					Cancel
 				</Button>
-				<Button variant="outline-danger" onClick={handleClearAll}>
-					Clear All
-				</Button>
-				<Button variant="primary" onClick={handleConfirm}>
-					Confirm
-				</Button>
+				{availableLicenseTypes.length > 0 && (
+					<>
+						<Button variant="outline-danger" onClick={handleClearAll}>
+							Clear All
+						</Button>
+						<Button variant="primary" onClick={handleConfirm}>
+							Confirm
+						</Button>
+					</>
+				)}
 			</Modal.Footer>
 		</Modal>
 	);

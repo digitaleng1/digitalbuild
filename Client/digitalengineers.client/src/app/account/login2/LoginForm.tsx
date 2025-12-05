@@ -30,7 +30,7 @@ const LoginForm = () => {
 			<h4 className="mt-0">{t('Sign In')}</h4>
 			<p className="text-muted mb-4">{t('Enter your email address and password to access account.')}</p>
 
-			<Form onSubmit={login} schema={loginFormSchema} defaultValues={{ email: 'hyper@coderthemes.com', password: 'Hyper' }}>
+			<Form onSubmit={login} schema={loginFormSchema} defaultValues={{ email: 'hyper@coderthemes.com', password: 'digital-engineers' }}>
 				<TextInput label={t('Email Address')} type="email" name="email" placeholder={t('Enter your email')} containerClass={'mb-3'} />
 				<PasswordInput label={t('Password')} name="password" placeholder={t('Enter your password')} containerClass={'mb-3'}>
 					<Link to="/account/forget-password2" className="text-muted float-end">

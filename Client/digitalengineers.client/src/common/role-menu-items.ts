@@ -76,10 +76,17 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	},
 	{
 		key: 'licenses',
-		label: 'Licenses',
+		label: 'License Requests',
 		isTitle: false,
 		icon: 'uil-shield-check',
 		url: '/licenses',
+	},
+	{
+		key: 'dictionaries',
+		label: 'Professions & Licenses',
+		isTitle: false,
+		icon: 'uil-book-alt',
+		url: '/dictionaries',
 	},
 	{
 		key: 'projects-tasks',

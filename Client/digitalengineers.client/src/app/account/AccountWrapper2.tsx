@@ -49,7 +49,7 @@ const AccountWrapper2 = ({ bottomLinks, children }: AccountLayoutProps) => {
 						{t("It's a elegent templete. I love it very much! .")}
 						<i className="mdi mdi-format-quote-close"></i>
 					</p>
-					<p>{t('- Hyper Admin User')}</p>
+					<p>{t('- Admin User')}</p>
 				</div>
 			</div>
 		</div>

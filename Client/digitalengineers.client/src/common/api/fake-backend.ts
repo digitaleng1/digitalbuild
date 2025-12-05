@@ -21,11 +21,11 @@ export default function configureFakeBackend() {
 	const users: User[] = [
 		{
 			id: 1,
-			email: 'hyper@coderthemes.com',
+			email: 'digital-engineers@digital-engineers.com',
 			username: 'Hyper',
 			password: 'Hyper',
 			firstName: 'Hyper',
-			lastName: 'Coderthemes',
+			lastName: 'Digital Engineers',
 			role: 'Admin',
 			token: TOKEN,
 		},

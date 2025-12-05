@@ -40,7 +40,7 @@ const RightSideBar = () => {
 						</div>
 						<div className="col-6">
 							{/*<a*/}
-							{/*	href="https://coderthemes.com/hyper/"*/}
+							{/*	href="https://digital-engineers.com/hyper/"*/}
 							{/*	target="_blank"*/}
 							{/*	role="button"*/}
 							{/*	className="btn btn-primary w-100"*/}
