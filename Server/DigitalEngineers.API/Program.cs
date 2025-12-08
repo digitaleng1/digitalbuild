@@ -2,6 +2,7 @@ using System.Text;
 using DigitalEngineers.API.Middleware;
 using DigitalEngineers.Domain.Configuration;
 using DigitalEngineers.Domain.Interfaces;
+using DigitalEngineers.Infrastructure.Services;
 using DigitalEngineers.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -59,9 +60,15 @@ builder.Services.AddSwaggerGen(options =>
 // Configure AWS S3 Settings
 builder.Services.Configure<AwsS3Settings>(builder.Configuration.GetSection("AwsS3"));
 
-// Configure WebApp Settings
+// Configure WebApp Settings (with CorsOrigins)
 builder.Services.Configure<DigitalEngineers.Infrastructure.Configuration.WebAppConfig>(
-    builder.Configuration.GetSection("WebAppConfig"));
+    builder.Configuration.GetSection("App"));
+
+// Register IHttpContextAccessor (required for IUrlProvider)
+builder.Services.AddHttpContextAccessor();
+
+// Register IUrlProvider
+builder.Services.AddScoped<IUrlProvider, UrlProvider>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -94,17 +101,15 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
 });
 
+// Configure CORS with origins from configuration
+var corsOrigins = builder.Configuration.GetSection("App:CorsOrigins").Get<string[]>()
+    ?? throw new InvalidOperationException("App:CorsOrigins is not configured");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactClient", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "https://localhost:5173",
-                "https://localhost:5174",
-                "https://localhost:54034"
-            )
+        policy.WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()

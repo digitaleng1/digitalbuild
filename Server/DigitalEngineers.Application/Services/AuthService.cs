@@ -19,6 +19,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IFileStorageService _fileStorageService;
     private readonly IEmailService _emailService;
+    private readonly IUrlProvider _urlProvider;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
@@ -27,7 +28,8 @@ public class AuthService : IAuthService
         ApplicationDbContext context,
         IConfiguration configuration,
         IFileStorageService fileStorageService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IUrlProvider urlProvider)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -36,6 +38,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
         _fileStorageService = fileStorageService;
         _emailService = emailService;
+        _urlProvider = urlProvider;
     }
 
     public async Task<TokenData> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -95,8 +98,8 @@ public class AuthService : IAuthService
         // Generate email confirmation token
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = System.Web.HttpUtility.UrlEncode(token);
-        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
-        var confirmationUrl = $"{frontendUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var confirmationUrl = $"{baseUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
 
         // Send account activation email
         await _emailService.SendAccountActivationEmailAsync(
@@ -269,8 +272,8 @@ public class AuthService : IAuthService
         // Generate new token
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = System.Web.HttpUtility.UrlEncode(token);
-        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
-        var confirmationUrl = $"{frontendUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var confirmationUrl = $"{baseUrl}/account/confirm-email?userId={user.Id}&token={encodedToken}";
 
         // Send email
         await _emailService.SendAccountActivationEmailAsync(
@@ -293,8 +296,8 @@ public class AuthService : IAuthService
         // Generate password reset token
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var encodedToken = System.Web.HttpUtility.UrlEncode(token);
-        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
-        var resetUrl = $"{frontendUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var resetUrl = $"{baseUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
 
         // Send password reset email
         await _emailService.SendPasswordResetEmailAsync(
@@ -318,8 +321,8 @@ public class AuthService : IAuthService
         // Generate password reset token
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var encodedToken = System.Web.HttpUtility.UrlEncode(token);
-        var frontendUrl = _configuration["WebApp:BaseUrl"] ?? "http://localhost:5173";
-        var resetUrl = $"{frontendUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var resetUrl = $"{baseUrl}/account/reset-password?userId={user.Id}&token={encodedToken}";
 
         // Send password reset email
         await _emailService.SendPasswordResetEmailAsync(

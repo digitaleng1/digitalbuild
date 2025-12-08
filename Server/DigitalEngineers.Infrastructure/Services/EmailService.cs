@@ -18,18 +18,18 @@ public class EmailService : IEmailService
 {
     private readonly ILogger<EmailService> _logger;
     private readonly EmailSettings _emailSettings;
-    private readonly WebAppConfig _webAppConfig;
+    private readonly IUrlProvider _urlProvider;
     private readonly EmailBuilderFactory _builderFactory;
 
     public EmailService(
         ILogger<EmailService> logger,
         IOptions<EmailSettings> emailSettings,
-        IOptions<WebAppConfig> webAppConfig,
+        IUrlProvider urlProvider,
         EmailBuilderFactory builderFactory)
     {
         _logger = logger;
         _emailSettings = emailSettings.Value;
-        _webAppConfig = webAppConfig.Value;
+        _urlProvider = urlProvider;
         _builderFactory = builderFactory;
     }
 
@@ -837,7 +837,7 @@ public class EmailService : IEmailService
 
     private string GetBaseUrl()
     {
-        return _webAppConfig.BaseUrl;
+        return _urlProvider.GetBaseUrl();
     }
 
     private string StripHtml(string html)

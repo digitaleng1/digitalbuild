@@ -10,7 +10,6 @@ using DigitalEngineers.Infrastructure.Entities;
 using DigitalEngineers.Infrastructure.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace DigitalEngineers.Application.Services;
@@ -21,7 +20,7 @@ public class SpecialistInvitationService : ISpecialistInvitationService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
     private readonly ITokenService _tokenService;
-    private readonly IConfiguration _configuration;
+    private readonly IUrlProvider _urlProvider;
     private readonly ILogger<SpecialistInvitationService> _logger;
 
     public SpecialistInvitationService(
@@ -29,14 +28,14 @@ public class SpecialistInvitationService : ISpecialistInvitationService
         UserManager<ApplicationUser> userManager,
         IEmailService emailService,
         ITokenService tokenService,
-        IConfiguration configuration,
+        IUrlProvider urlProvider,
         ILogger<SpecialistInvitationService> logger)
     {
         _context = context;
         _userManager = userManager;
         _emailService = emailService;
         _tokenService = tokenService;
-        _configuration = configuration;
+        _urlProvider = urlProvider;
         _logger = logger;
     }
 
@@ -145,7 +144,7 @@ public class SpecialistInvitationService : ISpecialistInvitationService
             await transaction.CommitAsync(cancellationToken);
 
             // Send email (after successful transaction)
-            var baseUrl = _configuration["App:BaseUrl"] ?? "https://localhost:5173";
+            var baseUrl = _urlProvider.GetBaseUrl();
             var invitationUrl = $"{baseUrl}/account/invite/{invitationToken}";
 
             await _emailService.SendSpecialistInvitationEmailAsync(

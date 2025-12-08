@@ -6,4 +6,5 @@ namespace DigitalEngineers.Infrastructure.Configuration;
 public class WebAppConfig
 {
     public string BaseUrl { get; set; } = string.Empty;
+    public string[] CorsOrigins { get; set; } = [];
 }
