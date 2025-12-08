@@ -140,6 +140,7 @@ const NotificationDropdown = React.memo(() => {
 							<Col xs="auto" className="d-flex gap-1">
 								<Button 
 									size="sm" 
+									className="d-none"
 									variant="outline-primary" 
 									onClick={handleSendTest}
 									disabled={isSendingTest}
