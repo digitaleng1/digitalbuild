@@ -376,3 +376,4 @@ FodyWeavers.xsd
 /Server/DigitalEngineers.Infrastructure/Migrations/MigrateExistingClientsToClientsTable.sql
 /AWS_Alex_credentials.csv
 /Access
+/Client/digitalengineers.client/dist
