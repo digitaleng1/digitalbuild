@@ -8,7 +8,7 @@ public class ProfessionRejectionEmailBuilder : EmailBuilderBase
     public ProfessionRejectionEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Your Profession Submission - Digital Engineers";
+    public override string GetSubject() => "Your Profession Submission - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

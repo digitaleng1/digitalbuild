@@ -8,7 +8,7 @@ public class TaskCreatedEmailBuilder : EmailBuilderBase
     public TaskCreatedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "New Task Created - Digital Engineers";
+    public override string GetSubject() => "New Task Created - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

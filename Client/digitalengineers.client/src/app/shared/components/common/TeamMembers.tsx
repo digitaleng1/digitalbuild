@@ -114,7 +114,7 @@ const TeamMembers = ({ projectId, isAdmin = false, canInviteSpecialists = false,
 			
 			return (
 				<div style={{ textAlign: 'left', maxWidth: '250px' }}>
-					<div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Digital Engineers Specialist</div>
+					<div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Novobid Specialist</div>
 					{member.role && (
 						<div style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#6c757d' }}>
 							Role in Project: {member.role}

@@ -8,7 +8,7 @@ public class QuoteRejectedEmailBuilder : EmailBuilderBase
     public QuoteRejectedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Quote Rejected - Digital Engineers";
+    public override string GetSubject() => "Quote Rejected - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

@@ -15,10 +15,10 @@ const Footer = () => {
 									fontSize: '1.5rem'
 								}}
 							>
-								Digital Engineers
+								Novobid
 							</h4>
 							<p className="text-light text-opacity-50 mb-0">
-								© 2025 Digital Engineers. All rights reserved.
+								© 2025 Novobid. All rights reserved.
 							</p>
 						</div>
 					</Col>

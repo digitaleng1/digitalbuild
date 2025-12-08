@@ -8,7 +8,7 @@ public class ProjectStatusChangedEmailBuilder : EmailBuilderBase
     public ProjectStatusChangedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Project Status Update - Digital Engineers";
+    public override string GetSubject() => "Project Status Update - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

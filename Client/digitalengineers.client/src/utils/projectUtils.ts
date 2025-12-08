@@ -154,7 +154,7 @@ export function isDigitalEngineersManaged(project: ProjectDto | ProjectDetailsDt
 export function getManagementTypeLabel(managementType: string): string {
 	return managementType === ProjectManagementType.ClientManaged 
 		? 'Client Managed' 
-		: 'Digital Engineers Managed';
+		: 'Novobid Managed';
 }
 
 /**

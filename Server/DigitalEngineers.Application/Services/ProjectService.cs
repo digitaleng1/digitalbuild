@@ -698,7 +698,7 @@ public class ProjectService : IProjectService
             {
                 SpecialistId = index + 1, // Anonymous ID
                 UserId = string.Empty,
-                Name = "Digital Engineers Specialist",
+                Name = "Novobid Specialist",
                 ProfilePictureUrl = null,
                 Role = spec.Role,
                 IsAssigned = true,

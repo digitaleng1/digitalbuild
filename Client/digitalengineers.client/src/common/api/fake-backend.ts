@@ -25,7 +25,7 @@ export default function configureFakeBackend() {
 			username: 'Hyper',
 			password: 'Hyper',
 			firstName: 'Hyper',
-			lastName: 'Digital Engineers',
+			lastName: 'Novobid',
 			role: 'Admin',
 			token: TOKEN,
 		},

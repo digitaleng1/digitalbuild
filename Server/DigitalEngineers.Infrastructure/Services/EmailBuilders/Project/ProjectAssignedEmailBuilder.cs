@@ -8,7 +8,7 @@ public class ProjectAssignedEmailBuilder : EmailBuilderBase
     public ProjectAssignedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "You've Been Assigned to a Project - Digital Engineers";
+    public override string GetSubject() => "You've Been Assigned to a Project - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

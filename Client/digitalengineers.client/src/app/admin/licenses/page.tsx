@@ -7,7 +7,7 @@ import LicenseDetailsModal from './components/LicenseDetailsModal';
 import type { LicenseRequest } from '@/types/licenseRequest';
 
 const PageTitle = ({ title }: { title: string }) => {
-	return <title>{title} | Digital Engineers</title>;
+	return <title>{title} | Novobid</title>;
 };
 
 export default function LicensesPage() {

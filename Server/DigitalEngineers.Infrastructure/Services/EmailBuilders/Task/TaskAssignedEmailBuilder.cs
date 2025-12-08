@@ -8,7 +8,7 @@ public class TaskAssignedEmailBuilder : EmailBuilderBase
     public TaskAssignedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "New Task Assignment - Digital Engineers";
+    public override string GetSubject() => "New Task Assignment - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

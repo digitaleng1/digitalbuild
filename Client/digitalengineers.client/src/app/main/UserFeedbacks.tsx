@@ -17,7 +17,7 @@ const UserFeedbacks = () => {
 			role: 'Project Manager',
 			avatar: 'https://randomuser.me/api/portraits/women/10.jpg',
 			rating: 5,
-			comment: 'Digital Engineers helped me find the perfect structural engineer for our commercial building project. The quality of professionals on this platform is outstanding.'
+			comment: 'Novobid helped me find the perfect structural engineer for our commercial building project. The quality of professionals on this platform is outstanding.'
 		},
 		{
 			id: 2,
@@ -33,7 +33,7 @@ const UserFeedbacks = () => {
 			role: 'Architectural Firm Owner',
 			avatar: 'https://randomuser.me/api/portraits/women/11.jpg',
 			rating: 5,
-			comment: "We've hired multiple specialized engineers through Digital Engineers. The verification process ensures we're working with qualified professionals every time."
+			comment: "We've hired multiple specialized engineers through Novobid. The verification process ensures we're working with qualified professionals every time."
 		}
 	];
 
@@ -60,7 +60,7 @@ const UserFeedbacks = () => {
 								What Our Users Say
 							</h2>
 							<p className="text-muted" style={{ fontSize: '1rem' }}>
-								Engineers and clients share their experiences with Digital Engineers
+								Engineers and clients share their experiences with Novobid
 							</p>
 						</div>
 					</Col>

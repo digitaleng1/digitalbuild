@@ -795,46 +795,6 @@ public class EmailService : IEmailService
         return new List<string> { _emailSettings.FromEmail };
     }
 
-    private string GetSubjectForTemplate(EmailTemplateType templateType)
-    {
-        return templateType switch
-        {
-            // Auth
-            EmailTemplateType.WelcomeEmail => "Welcome to Digital Engineers!",
-            EmailTemplateType.PasswordReset => "Password Reset Request - Digital Engineers",
-            EmailTemplateType.PasswordChanged => "Your Password Has Been Changed - Digital Engineers",
-            EmailTemplateType.AccountActivation => "Activate Your Account - Digital Engineers",
-            EmailTemplateType.SpecialistInvitation => "You're Invited to Digital Engineers!",
-
-            // Project
-            EmailTemplateType.ProjectCreated => "Project Created Successfully - Digital Engineers",
-            EmailTemplateType.ProjectAssigned => "You've Been Assigned to a Project - Digital Engineers",
-            EmailTemplateType.ProjectStatusChanged => "Project Status Update - Digital Engineers",
-
-            // Quote
-            EmailTemplateType.QuoteSubmitted => "Quote Ready for Review - Digital Engineers",
-            EmailTemplateType.QuoteAccepted => "Quote Accepted - Digital Engineers",
-            EmailTemplateType.QuoteRejected => "Quote Rejected - Digital Engineers",
-
-            // Bid
-            EmailTemplateType.BidRequest => "New Bid Request - Digital Engineers",
-            EmailTemplateType.BidResponseReceived => "New Bid Response Received - Digital Engineers",
-            EmailTemplateType.BidAccepted => "Your Bid Was Accepted - Digital Engineers",
-            EmailTemplateType.BidRejected => "Bid Response Update - Digital Engineers",
-
-            // Task
-            EmailTemplateType.TaskCreated => "New Task Created - Digital Engineers",
-            EmailTemplateType.TaskAssigned => "New Task Assignment - Digital Engineers",
-            EmailTemplateType.TaskCompleted => "Task Completed - Digital Engineers",
-            
-            // License
-            EmailTemplateType.LicenseRequestApproved => "License Request Approved - Digital Engineers",
-            EmailTemplateType.LicenseRequestRejected => "License Request Decision - Digital Engineers",
-
-            _ => "Notification - Digital Engineers"
-        };
-    }
-
     private string GetBaseUrl()
     {
         return _urlProvider.GetBaseUrl();

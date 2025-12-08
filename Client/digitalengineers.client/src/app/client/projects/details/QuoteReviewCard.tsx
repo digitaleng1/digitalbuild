@@ -72,7 +72,7 @@ const QuoteReviewCard = ({ project, onQuoteAccepted, onQuoteRejected }: QuoteRev
 						title={
 							<h4 className="header-title mb-0">
 								<i className="mdi mdi-cash-multiple me-2 text-primary"></i>
-								Quote from Digital Engineers
+								Quote from Novobid
 							</h4>
 						}
 					/>

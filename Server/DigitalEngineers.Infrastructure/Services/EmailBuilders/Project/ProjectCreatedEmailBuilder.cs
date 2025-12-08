@@ -8,7 +8,7 @@ public class ProjectCreatedEmailBuilder : EmailBuilderBase
     public ProjectCreatedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Project Created Successfully - Digital Engineers";
+    public override string GetSubject() => "Project Created Successfully - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {
@@ -19,7 +19,7 @@ public class ProjectCreatedEmailBuilder : EmailBuilderBase
             <p><strong>Description:</strong> {{Description}}</p>
             <p><strong>Address:</strong> {{Address}}</p>
             <p>Our team will review your project and get back to you shortly with a quote.</p>
-            <p>Thank you for choosing Digital Engineers!</p>
+            <p>Thank you for choosing Novobid!</p>
         ";
         
         return ReplacePlaceholders(template, placeholders);

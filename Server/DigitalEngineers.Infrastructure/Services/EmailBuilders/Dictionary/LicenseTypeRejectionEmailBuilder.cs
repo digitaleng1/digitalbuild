@@ -8,7 +8,7 @@ public class LicenseTypeRejectionEmailBuilder : EmailBuilderBase
     public LicenseTypeRejectionEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Your License Type Submission - Digital Engineers";
+    public override string GetSubject() => "Your License Type Submission - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

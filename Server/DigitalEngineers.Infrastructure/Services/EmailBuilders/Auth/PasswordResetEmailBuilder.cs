@@ -8,7 +8,7 @@ public class PasswordResetEmailBuilder : EmailBuilderBase
     public PasswordResetEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Password Reset Request - Digital Engineers";
+    public override string GetSubject() => "Password Reset Request - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

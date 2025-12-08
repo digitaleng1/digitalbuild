@@ -8,7 +8,7 @@ public class NewLicenseTypeNotificationEmailBuilder : EmailBuilderBase
     public NewLicenseTypeNotificationEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "New License Type Submission - Digital Engineers";
+    public override string GetSubject() => "New License Type Submission - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

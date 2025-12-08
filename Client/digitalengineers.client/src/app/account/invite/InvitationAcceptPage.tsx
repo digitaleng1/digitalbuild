@@ -72,7 +72,7 @@ const InvitationAcceptPage = () => {
 								{status === 'success' && (
 									<Alert variant="success">
 										<i className="mdi mdi-check-circle me-2"></i>
-										<strong>Welcome to Digital Engineers!</strong>
+										<strong>Welcome to Novobid!</strong>
 										<br />
 										Your account has been activated. Redirecting to dashboard...
 									</Alert>

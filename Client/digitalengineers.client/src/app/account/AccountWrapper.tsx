@@ -37,7 +37,7 @@ export default function AccountWrapper({ bottomLinks, children }: AccountWrapper
 				</Container>
 			</div>
 			<footer className="footer footer-alt">
-				2018 - {new Date().getFullYear()} © Digital Engineers - digital-engineers.com
+				2018 - {new Date().getFullYear()} © Novobid - novobid.com
 			</footer>
 		</>
 	);

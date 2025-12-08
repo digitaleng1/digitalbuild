@@ -76,6 +76,24 @@ public class AuthService : IAuthService
 
         await _userManager.AddToRoleAsync(user, dto.Role);
 
+        // Create Client record if role is Client
+        if (dto.Role == "Client")
+        {
+            var client = new Client
+            {
+                UserId = user.Id,
+                CompanyName = null,
+                Industry = null,
+                Website = null,
+                CompanyDescription = null,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Set<Client>().Add(client);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
         // Create Specialist record if role is Provider
         if (dto.Role == "Provider")
         {

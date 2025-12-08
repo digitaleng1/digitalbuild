@@ -34,7 +34,7 @@ const NavBar = () => {
 						textDecoration: 'none'
 					}}
 				>
-					Digital Engineers
+					Novobid
 				</Navbar.Brand>
 
 				<Navbar.Toggle aria-controls="responsive-navbar-nav" className="navbar-toggler">

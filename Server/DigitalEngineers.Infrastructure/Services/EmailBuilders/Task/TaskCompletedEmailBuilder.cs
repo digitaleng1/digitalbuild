@@ -8,7 +8,7 @@ public class TaskCompletedEmailBuilder : EmailBuilderBase
     public TaskCompletedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Task Completed - Digital Engineers";
+    public override string GetSubject() => "Task Completed - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

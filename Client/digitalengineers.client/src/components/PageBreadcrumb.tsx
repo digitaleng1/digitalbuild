@@ -15,11 +15,11 @@ type PageMetaDataProps = {
 
 
 const defaultPageMetaData: PageMetaDataProps = {
-	title: 'Digital Engineers - Platform',
+	title: 'Novobid - Platform',
 	description:
-		'Digital Engineers - Professional platform for engineers and construction projects management.',
+		'Novobid - Professional platform for engineers and construction projects management.',
 	keywords:
-		'Digital Engineers, construction, project management, engineers, building, CRM, platform',
+		'Digital Engineers, Novobid, construction, project management, engineers, building, CRM, platform',
 }
 
 const PageBreadcrumb = ({ subName, title, children }: PageTitleProps) => {
@@ -34,7 +34,7 @@ const PageBreadcrumb = ({ subName, title, children }: PageTitleProps) => {
 						<div className="page-title-box">
 							<div className="page-title-right">
 								<Breadcrumb listProps={{ className: 'm-0' }}>
-									<BreadcrumbItem as={'li'}>Digital Engineers</BreadcrumbItem>
+									<BreadcrumbItem as={'li'}>Novobid</BreadcrumbItem>
 									<BreadcrumbItem as={'li'}>{subName}</BreadcrumbItem>
 									<BreadcrumbItem as={'li'} active>
 										{title}

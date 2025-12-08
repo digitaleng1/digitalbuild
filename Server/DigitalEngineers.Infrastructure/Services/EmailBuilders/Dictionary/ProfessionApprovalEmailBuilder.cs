@@ -8,7 +8,7 @@ public class ProfessionApprovalEmailBuilder : EmailBuilderBase
     public ProfessionApprovalEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Your Profession Has Been Approved - Digital Engineers";
+    public override string GetSubject() => "Your Profession Has Been Approved - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

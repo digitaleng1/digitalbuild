@@ -8,7 +8,7 @@ public class LicenseTypeApprovalEmailBuilder : EmailBuilderBase
     public LicenseTypeApprovalEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Your License Type Has Been Approved - Digital Engineers";
+    public override string GetSubject() => "Your License Type Has Been Approved - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

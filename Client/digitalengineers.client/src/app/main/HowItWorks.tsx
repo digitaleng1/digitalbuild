@@ -33,7 +33,7 @@ const HowItWorks = () => {
 					<Col lg={12}>
 						<div className="text-center">
 							<h2 className="mb-3" style={{ fontWeight: '600', color: '#1F2937' }}>
-								How Digital Engineers Works
+								How Novobid Works
 							</h2>
 							<p className="text-muted" style={{ fontSize: '1rem', maxWidth: '800px', margin: '0 auto' }}>
 								Our platform connects talented engineering professionals with clients looking for specialized expertise

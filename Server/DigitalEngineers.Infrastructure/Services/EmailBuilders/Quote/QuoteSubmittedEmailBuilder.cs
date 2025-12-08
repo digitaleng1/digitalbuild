@@ -8,7 +8,7 @@ public class QuoteSubmittedEmailBuilder : EmailBuilderBase
     public QuoteSubmittedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Quote Ready for Review - Digital Engineers";
+    public override string GetSubject() => "Quote Ready for Review - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

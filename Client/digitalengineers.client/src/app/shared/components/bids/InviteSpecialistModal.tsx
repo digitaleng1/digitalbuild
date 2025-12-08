@@ -12,7 +12,7 @@ interface InviteSpecialistModalProps {
 	onInvitationSent: (result: InviteSpecialistResult) => void;
 }
 
-const DEFAULT_MESSAGE = `Welcome to Digital Engineers! We're excited to have you join our platform. 
+const DEFAULT_MESSAGE = `Welcome toNovobid! We're excited to have you join our platform. 
 You'll be working on projects that require your expertise and skills. 
 Please use the credentials below to log in and get started.`;
 

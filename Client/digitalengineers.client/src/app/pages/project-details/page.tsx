@@ -259,7 +259,7 @@ const ProjectDetailsPage = () => {
 										<div>
 											<strong className="d-block mb-1">
 												{project.managementType === ProjectManagementType.DigitalEngineersManaged 
-													? 'Digital Engineers Managed' 
+													? 'Novobid Managed' 
 													: 'Client Managed (Self-Managed'}
 											</strong>
 											<span className="text-muted small">

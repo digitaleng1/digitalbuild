@@ -8,7 +8,7 @@ public class PasswordChangedEmailBuilder : EmailBuilderBase
     public PasswordChangedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Your Password Has Been Changed - Digital Engineers";
+    public override string GetSubject() => "Your Password Has Been Changed - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

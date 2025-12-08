@@ -8,7 +8,7 @@ public class BidRejectedEmailBuilder : EmailBuilderBase
     public BidRejectedEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "Bid Response Update - Digital Engineers";
+    public override string GetSubject() => "Bid Response Update - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

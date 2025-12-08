@@ -8,7 +8,7 @@ public class NewProfessionNotificationEmailBuilder : EmailBuilderBase
     public NewProfessionNotificationEmailBuilder(IOptions<EmailSettings> settings) 
         : base(settings.Value) { }
 
-    public override string GetSubject() => "New Profession Submission - Digital Engineers";
+    public override string GetSubject() => "New Profession Submission - Novobid";
 
     protected override string GetEmailContent(Dictionary<string, string> placeholders)
     {

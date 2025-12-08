@@ -59,7 +59,7 @@ const MaintenancePage = () => {
 				</Container>
 			</div>
 
-			<footer className="footer footer-alt">2018 - {new Date().getFullYear()} © Digital Engineers - digital-engineers.com</footer>
+			<footer className="footer footer-alt">2025 - {new Date().getFullYear()} © Novobid - novobid.com</footer>
 		</>
 	);
 };

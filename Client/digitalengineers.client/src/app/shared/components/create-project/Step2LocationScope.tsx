@@ -152,7 +152,7 @@ const Step2LocationScope = () => {
 								<div>
 									<strong className="d-block mb-1">
 										{managementType === ProjectManagementType.DigitalEngineersManaged 
-											? 'Digital Engineers Managed' 
+											? 'Novobid Managed' 
 											: 'Client Managed (Self-Managed)'
 										}
 									</strong>

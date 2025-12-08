@@ -98,7 +98,7 @@ public abstract class EmailBuilderBase : IEmailBuilder
 <body>
     <div class=""email-container"">
         <div class=""email-header"">
-            <h1>Digital Engineers</h1>
+            <h1>Novobid</h1>
         </div>
         <div class=""email-body"">
             {content}
@@ -107,7 +107,7 @@ public abstract class EmailBuilderBase : IEmailBuilder
             <p><strong>{_settings.FromName}</strong></p>
             <p>{_settings.CompanyAddress}</p>
             {(!string.IsNullOrEmpty(_settings.UnsubscribeUrl) ? $@"<p><a href=""{_settings.UnsubscribeUrl}"">Unsubscribe</a></p>" : "")}
-            <p>&copy; {DateTime.UtcNow.Year} Digital Engineers. All rights reserved.</p>
+            <p>&copy; {DateTime.UtcNow.Year} Novobid. All rights reserved.</p>
         </div>
     </div>
 </body>
