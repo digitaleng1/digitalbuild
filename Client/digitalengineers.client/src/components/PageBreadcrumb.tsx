@@ -15,11 +15,11 @@ type PageMetaDataProps = {
 
 
 const defaultPageMetaData: PageMetaDataProps = {
-	title: 'Hyper React - Admin & Dashboard Template',
+	title: 'Digital Engineers - Platform',
 	description:
-		'Hyper React Perfect for building CRM, CMS, project management tools, and custom web apps with clean UI, responsive design, and powerful features.',
+		'Digital Engineers - Professional platform for engineers and construction projects management.',
 	keywords:
-		'Hyper, admin dashboard, HTML template, Bootstrap admin, CRM template, CMS template, responsive admin, web app UI, admin theme, best admin template',
+		'Digital Engineers, construction, project management, engineers, building, CRM, platform',
 }
 
 const PageBreadcrumb = ({ subName, title, children }: PageTitleProps) => {

@@ -2,6 +2,7 @@ using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Configuration;
+using DigitalEngineers.Infrastructure.Services.EmailBuilders;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
@@ -17,18 +18,19 @@ public class EmailService : IEmailService
 {
     private readonly ILogger<EmailService> _logger;
     private readonly EmailSettings _emailSettings;
-    private readonly EmailTemplates _emailTemplates;
     private readonly WebAppConfig _webAppConfig;
+    private readonly EmailBuilderFactory _builderFactory;
 
     public EmailService(
         ILogger<EmailService> logger,
         IOptions<EmailSettings> emailSettings,
-        IOptions<WebAppConfig> webAppConfig)
+        IOptions<WebAppConfig> webAppConfig,
+        EmailBuilderFactory builderFactory)
     {
         _logger = logger;
         _emailSettings = emailSettings.Value;
         _webAppConfig = webAppConfig.Value;
-        _emailTemplates = new EmailTemplates(_emailSettings);
+        _builderFactory = builderFactory;
     }
 
     public async Task SendEmailAsync(EmailDto emailDto, CancellationToken cancellationToken = default)
@@ -97,8 +99,9 @@ public class EmailService : IEmailService
     {
         try
         {
-            var subject = GetSubjectForTemplate(templateType);
-            var htmlBody = _emailTemplates.GetTemplate(templateType, placeholders);
+            var builder = _builderFactory.GetBuilder(templateType);
+            var subject = builder.GetSubject();
+            var htmlBody = builder.GetHtmlBody(placeholders);
 
             var emailDto = new EmailDto
             {
@@ -606,18 +609,20 @@ public class EmailService : IEmailService
     {
         var adminEmails = await GetAdminEmailsAsync(cancellationToken);
         
-        var subject = $"New Profession Submission: {professionName}";
-        var body = $@"
-            <h2>New Profession Submission</h2>
-            <p>A new profession has been submitted by <strong>{createdByUserName}</strong> ({createdByEmail}):</p>
-            <ul>
-                <li><strong>Profession Name:</strong> {professionName}</li>
-                <li><strong>Description:</strong> {description}</li>
-                <li><strong>Submitted At:</strong> {DateTime.UtcNow:MMMM dd, yyyy HH:mm UTC}</li>
-            </ul>
-            <p>Please review and approve/reject this submission in the admin panel.</p>
-            <p><a href=""{GetBaseUrl()}/admin/dictionaries"">Go to Admin Panel</a></p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "ProfessionName", professionName },
+            { "Description", description },
+            { "CreatedByUserName", createdByUserName },
+            { "CreatedByEmail", createdByEmail },
+            { "SubmittedAt", DateTime.UtcNow.ToString("MMMM dd, yyyy HH:mm UTC") },
+            { "AdminPanelUrl", $"{GetBaseUrl()}/admin/dictionaries" }
+        };
+
+        var builder = new EmailBuilders.Dictionary.NewProfessionNotificationEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         foreach (var adminEmail in adminEmails)
         {
@@ -625,7 +630,7 @@ public class EmailService : IEmailService
             {
                 To = adminEmail,
                 Subject = subject,
-                Body = body,
+                Body = htmlBody,
                 IsHtml = true
             }, cancellationToken);
         }
@@ -641,19 +646,21 @@ public class EmailService : IEmailService
     {
         var adminEmails = await GetAdminEmailsAsync(cancellationToken);
         
-        var subject = $"New License Type Submission: {licenseTypeName}";
-        var body = $@"
-            <h2>New License Type Submission</h2>
-            <p>A new license type has been submitted by <strong>{createdByUserName}</strong> ({createdByEmail}):</p>
-            <ul>
-                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
-                <li><strong>Profession:</strong> {professionName}</li>
-                <li><strong>Description:</strong> {description}</li>
-                <li><strong>Submitted At:</strong> {DateTime.UtcNow:MMMM dd, yyyy HH:mm UTC}</li>
-            </ul>
-            <p>Please review and approve/reject this submission in the admin panel.</p>
-            <p><a href=""{GetBaseUrl()}/admin/dictionaries"">Go to Admin Panel</a></p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "LicenseTypeName", licenseTypeName },
+            { "ProfessionName", professionName },
+            { "Description", description },
+            { "CreatedByUserName", createdByUserName },
+            { "CreatedByEmail", createdByEmail },
+            { "SubmittedAt", DateTime.UtcNow.ToString("MMMM dd, yyyy HH:mm UTC") },
+            { "AdminPanelUrl", $"{GetBaseUrl()}/admin/dictionaries" }
+        };
+
+        var builder = new EmailBuilders.Dictionary.NewLicenseTypeNotificationEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         foreach (var adminEmail in adminEmails)
         {
@@ -661,7 +668,7 @@ public class EmailService : IEmailService
             {
                 To = adminEmail,
                 Subject = subject,
-                Body = body,
+                Body = htmlBody,
                 IsHtml = true
             }, cancellationToken);
         }
@@ -673,23 +680,23 @@ public class EmailService : IEmailService
         string professionName,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Your Profession \"{professionName}\" has been Approved";
-        var body = $@"
-            <h2>Profession Approved!</h2>
-            <p>Good news, {userName}!</p>
-            <p>Your profession submission has been approved by our team.</p>
-            <ul>
-                <li><strong>Profession Name:</strong> {professionName}</li>
-            </ul>
-            <p>You can now use this profession when creating projects.</p>
-            <p><a href=""{GetBaseUrl()}/client/projects"">Create New Project</a></p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "ProfessionName", professionName },
+            { "ProjectsUrl", $"{GetBaseUrl()}/client/projects" }
+        };
+
+        var builder = new EmailBuilders.Dictionary.ProfessionApprovalEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         await SendEmailAsync(new EmailDto
         {
             To = userEmail,
             Subject = subject,
-            Body = body,
+            Body = htmlBody,
             IsHtml = true
         }, cancellationToken);
     }
@@ -701,23 +708,23 @@ public class EmailService : IEmailService
         string rejectionReason,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Your Profession \"{professionName}\" Submission";
-        var body = $@"
-            <h2>Profession Submission Update</h2>
-            <p>Hello {userName},</p>
-            <p>Unfortunately, we cannot approve your profession submission at this time.</p>
-            <ul>
-                <li><strong>Profession Name:</strong> {professionName}</li>
-                <li><strong>Reason:</strong> {rejectionReason}</li>
-            </ul>
-            <p>If you have questions, please contact our support team.</p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "ProfessionName", professionName },
+            { "RejectionReason", rejectionReason }
+        };
+
+        var builder = new EmailBuilders.Dictionary.ProfessionRejectionEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         await SendEmailAsync(new EmailDto
         {
             To = userEmail,
             Subject = subject,
-            Body = body,
+            Body = htmlBody,
             IsHtml = true
         }, cancellationToken);
     }
@@ -729,24 +736,24 @@ public class EmailService : IEmailService
         string professionName,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Your License Type \"{licenseTypeName}\" has been Approved";
-        var body = $@"
-            <h2>License Type Approved!</h2>
-            <p>Good news, {userName}!</p>
-            <p>Your license type submission has been approved by our team.</p>
-            <ul>
-                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
-                <li><strong>Profession:</strong> {professionName}</li>
-            </ul>
-            <p>You can now use this license type when creating projects.</p>
-            <p><a href=""{GetBaseUrl()}/client/projects"">Create New Project</a></p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "LicenseTypeName", licenseTypeName },
+            { "ProfessionName", professionName },
+            { "ProjectsUrl", $"{GetBaseUrl()}/client/projects" }
+        };
+
+        var builder = new EmailBuilders.Dictionary.LicenseTypeApprovalEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         await SendEmailAsync(new EmailDto
         {
             To = userEmail,
             Subject = subject,
-            Body = body,
+            Body = htmlBody,
             IsHtml = true
         }, cancellationToken);
     }
@@ -759,24 +766,24 @@ public class EmailService : IEmailService
         string rejectionReason,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Your License Type \"{licenseTypeName}\" Submission";
-        var body = $@"
-            <h2>License Type Submission Update</h2>
-            <p>Hello {userName},</p>
-            <p>Unfortunately, we cannot approve your license type submission at this time.</p>
-            <ul>
-                <li><strong>License Type Name:</strong> {licenseTypeName}</li>
-                <li><strong>Profession:</strong> {professionName}</li>
-                <li><strong>Reason:</strong> {rejectionReason}</li>
-            </ul>
-            <p>If you have questions, please contact our support team.</p>
-        ";
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "LicenseTypeName", licenseTypeName },
+            { "ProfessionName", professionName },
+            { "RejectionReason", rejectionReason }
+        };
+
+        var builder = new EmailBuilders.Dictionary.LicenseTypeRejectionEmailBuilder(
+            Microsoft.Extensions.Options.Options.Create(_emailSettings));
+        var subject = builder.GetSubject();
+        var htmlBody = builder.GetHtmlBody(placeholders);
 
         await SendEmailAsync(new EmailDto
         {
             To = userEmail,
             Subject = subject,
-            Body = body,
+            Body = htmlBody,
             IsHtml = true
         }, cancellationToken);
     }
