@@ -46,6 +46,7 @@ public static class ServiceCollectionExtensions
         // Configuration bindings
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.Configure<FirebaseSettings>(configuration.GetSection("FirebaseSettings"));
+        services.Configure<DbInitSettings>(configuration.GetSection("DbInit"));
 
         // Email Builder Factory
         services.AddScoped<EmailBuilderFactory>();

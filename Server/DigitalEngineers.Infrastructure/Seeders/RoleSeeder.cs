@@ -1,19 +1,21 @@
 using DigitalEngineers.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace DigitalEngineers.Infrastructure.Seeders;
 
 public static class RoleSeeder
 {
-    public static async Task SeedAsync(RoleManager<IdentityRole> roleManager)
+    public static async Task SeedAsync(
+        RoleManager<IdentityRole> roleManager,
+        List<string> roles,
+        ILogger logger)
     {
-        string[] roles = UserRoles.ToArray();
-
-        foreach (var role in roles)
+        foreach (var roleName in roles)
         {
-            if (!await roleManager.RoleExistsAsync(role))
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                await roleManager.CreateAsync(new IdentityRole(roleName));
             }
         }
     }

@@ -15,7 +15,6 @@ public static class ClientSeeder
     {
         if (await context.Clients.AnyAsync())
         {
-            logger.LogWarning("Clients already seeded");
             return;
         }
 
@@ -33,14 +32,12 @@ public static class ClientSeeder
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt
             };
-            
+
             clients.Add(client);
         }
 
         await context.Clients.AddRangeAsync(clients);
         await context.SaveChangesAsync();
-        
-        logger.LogWarning("Seeded {Count} clients", clients.Count);
     }
 
     private static string GenerateCompanyName(string? firstName, string? lastName)

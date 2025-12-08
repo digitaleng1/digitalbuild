@@ -1,81 +1,83 @@
+using DigitalEngineers.Infrastructure.Configuration;
 using DigitalEngineers.Infrastructure.Data;
 using DigitalEngineers.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using ProjectTaskStatusEntity = DigitalEngineers.Infrastructure.Entities.ProjectTaskStatus;
 
 namespace DigitalEngineers.Infrastructure.Seeders;
 
 public static class LookupSeeder
 {
-    public static async Task<SeededLookups> SeedAsync(ApplicationDbContext context, ILogger logger)
+    public static async Task<SeededLookups> SeedAsync(
+        ApplicationDbContext context,
+        List<ProfessionConfig> professionConfigs,
+        List<LicenseTypeConfig> licenseTypeConfigs,
+        ILogger logger)
     {
-        var professions = await SeedProfessionsAsync(context, logger);
-        var licenseTypes = await SeedLicenseTypesAsync(context, logger, professions);
+        var professions = new List<Profession>();
+        var licenseTypes = new List<LicenseType>();
+
+        // Seed professions from config
+        foreach (var config in professionConfigs)
+        {
+            var existing = await context.Professions
+                .FirstOrDefaultAsync(p => p.Name == config.Name);
+
+            if (existing == null)
+            {
+                var profession = new Profession
+                {
+                    Name = config.Name,
+                    Description = config.Description,
+                    IsApproved = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Professions.Add(profession);
+                professions.Add(profession);
+            }
+            else
+            {
+                professions.Add(existing);
+            }
+        }
+
+        await context.SaveChangesAsync();
+
+        // Seed license types from config
+        foreach (var config in licenseTypeConfigs)
+        {
+            var profession = professions.FirstOrDefault(p => p.Name == config.ProfessionName);
+            if (profession == null)
+            {
+                logger.LogWarning("Profession {ProfessionName} not found for license type {LicenseTypeName}",
+                    config.ProfessionName, config.Name);
+                continue;
+            }
+
+            var existing = await context.LicenseTypes
+                .FirstOrDefaultAsync(lt => lt.Name == config.Name && lt.ProfessionId == profession.Id);
+
+            if (existing == null)
+            {
+                var licenseType = new LicenseType
+                {
+                    Name = config.Name,
+                    Description = config.Description,
+                    ProfessionId = profession.Id,
+                    IsApproved = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.LicenseTypes.Add(licenseType);
+                licenseTypes.Add(licenseType);
+            }
+            else
+            {
+                licenseTypes.Add(existing);
+            }
+        }
+
+        await context.SaveChangesAsync();
 
         return new SeededLookups(professions, licenseTypes);
     }
-
-    private static async Task<List<Profession>> SeedProfessionsAsync(ApplicationDbContext context, ILogger logger)
-    {
-        if (await context.Professions.AnyAsync())
-        {
-            return await context.Professions.ToListAsync();
-        }
-
-        var professions = new List<Profession>
-        {
-            new() { Name = "Engineering", Description = "Professional Engineer" },
-            new() { Name = "Transportation Trades", Description = "Transportation" }
-        };
-
-        await context.Professions.AddRangeAsync(professions);
-        await context.SaveChangesAsync();
-
-        return professions;
-    }
-
-    private static async Task<List<LicenseType>> SeedLicenseTypesAsync(ApplicationDbContext context, ILogger logger, List<Profession> professions)
-    {
-        if (await context.LicenseTypes.AnyAsync())
-        {
-            return await context.LicenseTypes.ToListAsync();
-        }
-
-        var engineeringProfession = professions.FirstOrDefault(p => p.Name == "Engineering");
-        var transportationProfession = professions.FirstOrDefault(p => p.Name == "Transportation Trades");
-
-        if (engineeringProfession == null || transportationProfession == null)
-        {
-            logger.LogError("Cannot seed license types - professions not found");
-            return new List<LicenseType>();
-        }
-
-        var licenseTypes = new List<LicenseType>
-        {
-            new() { Name = "Agricultural and Biological Engineering", Description = "Agricultural and Biological Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Architectural Engineering", Description = "Architectural Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Chemical Engineering", Description = "Chemical Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Civil Engineering", Description = "Civil Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Control Systems Engineering", Description = "Control Systems Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Electrical and Computer Engineering", Description = "Electrical and Computer Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Environmental Engineering", Description = "Environmental Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Fire Protection Engineering", Description = "Fire Protection Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Industrial and Systems Engineering", Description = "Industrial and Systems Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Mechanical Engineering", Description = "Mechanical Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Metallurgical and Materials Engineering", Description = "Metallurgical and Materials Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Mining and Mineral Processing Engineering", Description = "Mining and Mineral Processing Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Naval Architecture and Marine Engineering", Description = "Naval Architecture and Marine Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Nuclear Engineering", Description = "Nuclear Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Petroleum Engineering", Description = "Petroleum Engineering", ProfessionId = engineeringProfession.Id },
-            new() { Name = "Crane Operation", Description = "Crane Operation", ProfessionId = transportationProfession.Id },
-            new() { Name = "Commercial Truck Driving", Description = "Commercial Truck Driving", ProfessionId = transportationProfession.Id }
-        };
-
-        await context.LicenseTypes.AddRangeAsync(licenseTypes);
-        await context.SaveChangesAsync();
-
-        return licenseTypes;
-    }
-
 }

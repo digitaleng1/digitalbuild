@@ -1,3 +1,4 @@
+using DigitalEngineers.Infrastructure.Configuration;
 using DigitalEngineers.Infrastructure.Data;
 using DigitalEngineers.Infrastructure.Entities;
 using DigitalEngineers.Infrastructure.Entities.Identity;
@@ -12,6 +13,7 @@ public static class SpecialistSeeder
         ApplicationDbContext context,
         List<ApplicationUser> providers,
         List<LicenseType> licenseTypes,
+        List<ProviderConfig> providerConfigs,
         ILogger logger)
     {
         if (await context.Specialists.AnyAsync())
@@ -21,13 +23,12 @@ public static class SpecialistSeeder
 
         if (licenseTypes.Count == 0)
         {
-            logger.LogError("No license types found. Cannot seed specialists.");
+            logger.LogError("No license types found. Cannot seed specialists");
             return new List<Specialist>();
         }
 
         var specialists = new List<Specialist>();
         var specialistLicenseTypes = new List<SpecialistLicenseType>();
-        var allLicenseTypeIds = licenseTypes.Select(lt => lt.Id).ToList();
 
         foreach (var provider in providers)
         {
@@ -49,21 +50,46 @@ public static class SpecialistSeeder
         await context.Specialists.AddRangeAsync(specialists);
         await context.SaveChangesAsync();
 
+        // Assign license types from config
         foreach (var specialist in specialists)
         {
-            var licenseCount = Random.Shared.Next(5, 11);
-            var selectedLicenseIds = allLicenseTypeIds
-                .OrderBy(_ => Random.Shared.Next())
-                .Take(licenseCount)
-                .ToList();
+            var provider = providers.First(p => p.Id == specialist.UserId);
+            var config = providerConfigs.FirstOrDefault(pc => pc.Email == provider.Email);
 
-            foreach (var licenseId in selectedLicenseIds)
+            if (config != null && config.LicenseTypeNames.Count > 0)
             {
-                specialistLicenseTypes.Add(new SpecialistLicenseType
+                // Use config license types
+                foreach (var licenseTypeName in config.LicenseTypeNames)
                 {
-                    SpecialistId = specialist.Id,
-                    LicenseTypeId = licenseId
-                });
+                    var licenseType = licenseTypes.FirstOrDefault(lt => lt.Name == licenseTypeName);
+                    if (licenseType != null)
+                    {
+                        specialistLicenseTypes.Add(new SpecialistLicenseType
+                        {
+                            SpecialistId = specialist.Id,
+                            LicenseTypeId = licenseType.Id
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: random license types
+                var licenseCount = Random.Shared.Next(5, 11);
+                var allLicenseTypeIds = licenseTypes.Select(lt => lt.Id).ToList();
+                var selectedLicenseIds = allLicenseTypeIds
+                    .OrderBy(_ => Random.Shared.Next())
+                    .Take(licenseCount)
+                    .ToList();
+
+                foreach (var licenseId in selectedLicenseIds)
+                {
+                    specialistLicenseTypes.Add(new SpecialistLicenseType
+                    {
+                        SpecialistId = specialist.Id,
+                        LicenseTypeId = licenseId
+                    });
+                }
             }
         }
 
