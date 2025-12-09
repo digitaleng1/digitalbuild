@@ -4,6 +4,7 @@ import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import bidService from '@/services/bidService';
 import type { BidRequestDetailsDto, CreateBidResponseDto } from '@/types/bid';
+import { BidRequestStatus } from '@/types/bid';
 import BidStatusBadge from '../components/BidStatusBadge';
 import BidResponseForm from '../components/BidResponseForm';
 import BidChat from '@/components/modals/BidChatModal';
@@ -86,14 +87,14 @@ const BidDetails = () => {
         );
     }
 
-    const canSubmitResponse = bid.status === 'Pending' && !bid.hasResponse;
+    const canSubmitResponse = bid.status === BidRequestStatus.Pending && !bid.hasResponse;
 
     return (
         <>
             <PageBreadcrumb title="Bid Request Details" subName="Bids" />
 
             {/* Status Alerts */}
-            {bid.status === 'Accepted' && (
+            {bid.status === BidRequestStatus.Accepted && (
                 <Alert variant="success" className="mb-3">
                     <div className="d-flex align-items-center">
                         <i className="mdi mdi-check-circle me-2" style={{ fontSize: '24px' }}></i>
@@ -105,7 +106,7 @@ const BidDetails = () => {
                 </Alert>
             )}
 
-            {bid.status === 'Rejected' && (
+            {bid.status === BidRequestStatus.Rejected && (
                 <Alert variant="danger" className="mb-3">
                     <div className="d-flex align-items-center">
                         <i className="mdi mdi-close-circle me-2" style={{ fontSize: '24px' }}></i>
@@ -117,7 +118,7 @@ const BidDetails = () => {
                 </Alert>
             )}
 
-            {bid.status === 'Withdrawn' && (
+            {bid.status === BidRequestStatus.Withdrawn && (
                 <Alert variant="warning" className="mb-3">
                     <div className="d-flex align-items-center">
                         <i className="mdi mdi-information-outline me-2" style={{ fontSize: '24px' }}></i>
@@ -195,17 +196,17 @@ const BidDetails = () => {
                         recipientAvatar={undefined}
                     />
 
-                    {bid.status === 'Rejected' && (
+                    {bid.status === BidRequestStatus.Rejected && (
                         <Alert variant="danger">
                             <i className="mdi mdi-alert-circle-outline me-2"></i>
                             This bid request has been rejected.
                         </Alert>
                     )}
 
-                    {bid.status === 'Cancelled' && (
+                    {bid.status === BidRequestStatus.Withdrawn && (
                         <Alert variant="warning">
                             <i className="mdi mdi-information-outline me-2"></i>
-                            This bid request has been cancelled.
+                            This bid request has been withdrawn.
                         </Alert>
                     )}
                 </Col>

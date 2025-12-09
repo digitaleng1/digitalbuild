@@ -18,7 +18,6 @@ const BidsTable = ({ data }: BidsTableProps) => {
             showPagination
             isSearchable
             searchBoxClass="mb-3"
-            searchPlaceholder="Search projects..."
         />
     );
 };

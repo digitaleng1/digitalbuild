@@ -100,7 +100,6 @@ export default function SpecialistProjectList({
 						<Col md={6} xxl={3} key={project.id}>
 							<ProjectCard 
 								project={project}
-								basePath={basePath}
 							/>
 						</Col>
 					))}

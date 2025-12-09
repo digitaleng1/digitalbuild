@@ -4,7 +4,7 @@ import { useWizard } from 'react-use-wizard';
 import { TextInput, SelectInput, Form as RHForm } from '@/components/Form';
 import * as yup from 'yup';
 import lookupService from '@/services/lookupService';
-import type { State } from '@/types/dictionary';
+import type { State } from '@/types/lookup';
 import { ProjectManagementType } from '@/types/project';
 import { useProjectWizard } from './ProjectWizardContext';
 

@@ -32,12 +32,10 @@ const GoogleLoginButton = () => {
                 scope: 'email profile',
                 callback: async (response: any) => {
                     try {
-                        const result = await authApi.externalLogin({
+                        const tokenResponse = await authApi.externalLogin({
                             provider: 'Google',
                             idToken: response.access_token,
                         });
-
-                        const tokenResponse: TokenResponse = result.data;
 
                         saveSession(
                             tokenResponse.user,

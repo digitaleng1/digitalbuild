@@ -5,7 +5,6 @@ import { LoadingSpinner, EmptyState } from '../common';
 import type { ProjectDto } from '@/types/project';
 
 interface ProjectListProps {
-	basePath?: string;
 	createProjectUrl?: string;
 	showCreateButton?: boolean;
 	projects?: ProjectDto[];
@@ -18,7 +17,6 @@ interface ProjectListProps {
 }
 
 export default function ProjectList({
-	basePath = '/client/projects',
 	createProjectUrl,
 	showCreateButton = true,
 	projects = [],
@@ -80,7 +78,6 @@ export default function ProjectList({
 					<Col className="mb-2" md={6} xxl={3} key={project.id}>
 						<ProjectCard 
 							project={project}
-							basePath={basePath}
 							onEdit={onEdit}
 							onDelete={onDelete}
 						/>

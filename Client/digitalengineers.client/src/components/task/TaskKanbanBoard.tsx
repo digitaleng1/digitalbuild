@@ -370,7 +370,6 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                                 width={18}
                                                                 className="action-icon"
                                                                 onClick={() => handleEditStatus(column.status)}
-                                                                title="Edit status"
                                                             />
                                                             {!column.status.isDefault && (
                                                                 <Icon
@@ -378,7 +377,6 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                                     width={18}
                                                                     className="action-icon text-danger"
                                                                     onClick={() => handleDeleteStatus(column.status.id, column.status.name)}
-                                                                    title="Delete status"
                                                                 />
                                                             )}
                                                         </div>
@@ -503,7 +501,6 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                                                                 className="text-primary"
                                                                                                 style={{ cursor: 'pointer' }}
                                                                                                 onClick={(e) => handleViewTask(e, task.id)}
-                                                                                                title="Edit task"
                                                                                             />
                                                                                         )}
                                                                                     </div>

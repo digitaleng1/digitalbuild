@@ -1,4 +1,4 @@
-import { httpClient } from './interceptors';
+import HttpClient from '../helpers/httpClient';
 import type {
     RegisterDto,
     LoginDto,
@@ -11,55 +11,55 @@ import type {
 
 function AuthService() {
     return {
-        register: (data: RegisterDto) => {
-            return httpClient.post<TokenResponse>('/api/auth/register', data);
+        register: (data: RegisterDto): Promise<TokenResponse> => {
+            return HttpClient.post<TokenResponse>('/api/auth/register', data);
         },
 
-        login: (data: LoginDto) => {
-            return httpClient.post<TokenResponse>('/api/auth/login', data);
+        login: (data: LoginDto): Promise<TokenResponse> => {
+            return HttpClient.post<TokenResponse>('/api/auth/login', data);
         },
 
-        refreshToken: (data: RefreshTokenDto) => {
-            return httpClient.post<TokenResponse>('/api/auth/refresh-token', data);
+        refreshToken: (data: RefreshTokenDto): Promise<TokenResponse> => {
+            return HttpClient.post<TokenResponse>('/api/auth/refresh-token', data);
         },
 
-        externalLogin: (data: ExternalLoginDto) => {
-            return httpClient.post<TokenResponse>('/api/auth/external-login', data);
+        externalLogin: (data: ExternalLoginDto): Promise<TokenResponse> => {
+            return HttpClient.post<TokenResponse>('/api/auth/external-login', data);
         },
 
-        revokeToken: () => {
-            return httpClient.post('/api/auth/revoke-token', {});
+        revokeToken: (): Promise<any> => {
+            return HttpClient.post('/api/auth/revoke-token', {});
         },
 
-        logout: () => {
-            return httpClient.post('/api/auth/revoke-token', {});
+        logout: (): Promise<any> => {
+            return HttpClient.post('/api/auth/revoke-token', {});
         },
 
-        getMyAvatarUrl: () => {
-            return httpClient.get<{ profilePictureUrl: string | null }>('/api/auth/me/avatar');
+        getMyAvatarUrl: (): Promise<{ profilePictureUrl: string | null }> => {
+            return HttpClient.get<{ profilePictureUrl: string | null }>('/api/auth/me/avatar');
         },
 
-        confirmEmail: (userId: string, token: string) => {
-            return httpClient.get<TokenResponse>(
+        confirmEmail: (userId: string, token: string): Promise<TokenResponse> => {
+            return HttpClient.get<TokenResponse>(
                 `/api/auth/confirm-email?userId=${userId}&token=${encodeURIComponent(token)}`
             );
         },
 
-        resendEmailConfirmation: (email: string) => {
+        resendEmailConfirmation: (email: string): Promise<any> => {
             const data: ResendEmailConfirmationDto = { email };
-            return httpClient.post('/api/auth/resend-email-confirmation', data);
+            return HttpClient.post('/api/auth/resend-email-confirmation', data);
         },
 
-        initiatePasswordReset: () => {
-            return httpClient.post<{ message: string }>('/api/auth/initiate-password-reset', {});
+        initiatePasswordReset: (): Promise<{ message: string }> => {
+            return HttpClient.post<{ message: string }>('/api/auth/initiate-password-reset', {});
         },
 
-        forgotPassword: (email: string) => {
-            return httpClient.post<{ message: string }>('/api/auth/forgot-password', { email });
+        forgotPassword: (email: string): Promise<{ message: string }> => {
+            return HttpClient.post<{ message: string }>('/api/auth/forgot-password', { email });
         },
 
-        resetPassword: (dto: ResetPasswordDto) => {
-            return httpClient.post<TokenResponse>('/api/auth/reset-password', dto);
+        resetPassword: (dto: ResetPasswordDto): Promise<TokenResponse> => {
+            return HttpClient.post<TokenResponse>('/api/auth/reset-password', dto);
         },
     };
 }

@@ -10,7 +10,6 @@ import ProjectCard from './ProjectCard';
 interface ProjectKanbanBoardProps {
 	projects: ProjectDto[];
 	onProjectStatusChange?: (projectId: number, newStatus: string) => void;
-	basePath?: string;
 }
 
 type ProjectColumn = {
@@ -19,7 +18,7 @@ type ProjectColumn = {
 	projects: ProjectDto[];
 };
 
-const ProjectKanbanBoard = ({ projects, onProjectStatusChange, basePath = '/admin/projects' }: ProjectKanbanBoardProps) => {
+const ProjectKanbanBoard = ({ projects, onProjectStatusChange }: ProjectKanbanBoardProps) => {
 	const { updateStatus, isUpdating } = useUpdateProjectStatus();
 
 	const visibleStatuses: ProjectStatus[] = useMemo(() => [
@@ -141,7 +140,7 @@ const ProjectKanbanBoard = ({ projects, onProjectStatusChange, basePath = '/admi
 													marginTop: '1rem',
 												}}
 											>
-												<ProjectCard project={project} basePath={basePath} variant="compact" />
+												<ProjectCard project={project} variant="compact" />
 											</div>
 										)}
 									</Draggable>

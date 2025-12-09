@@ -6,7 +6,7 @@ interface EditProfessionModalProps {
 	show: boolean;
 	onHide: () => void;
 	profession: ProfessionManagementDto | null;
-	onUpdate: (id: number, dto: UpdateProfessionDto) => Promise<void>;
+	onUpdate: (id: number, dto: UpdateProfessionDto) => Promise<ProfessionManagementDto>;
 }
 
 const EditProfessionModal: React.FC<EditProfessionModalProps> = ({ 

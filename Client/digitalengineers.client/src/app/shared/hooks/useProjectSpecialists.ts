@@ -17,7 +17,7 @@ export const useProjectSpecialists = (projectId: number | undefined) => {
 		try {
 			setLoading(true);
 			setError(null);
-			const data = await projectService.getProjectSpecialists(projectId);
+			const data = await projectService.getProjectTeamMembers(projectId);
 			setSpecialists(data);
 		} catch (err: any) {
 			const errorMessage = getErrorMessage(err);

@@ -5,7 +5,7 @@ import licenseRequestService from '@/services/licenseRequestService';
 import lookupService from '@/services/lookupService';
 import { useLicenseTypes } from '@/app/shared/hooks/useLicenseTypes';
 import type { CreateLicenseRequest } from '@/types/licenseRequest';
-import type { State } from '@/types/dictionary';
+import type { State } from '@/types/lookup';
 
 interface AddLicenseRequestModalProps {
 	show: boolean;

@@ -11,7 +11,15 @@ export default function LoadingSpinner({
 	text = 'Loading...', 
 	fullScreen = false 
 }: LoadingSpinnerProps) {
-	const spinnerSize = size === 'sm' ? undefined : size === 'lg' ? 'lg' : undefined;
+	// React Bootstrap Spinner only accepts 'sm' or undefined (default)
+	const spinnerSize = size === 'sm' ? 'sm' : undefined;
+	
+	// Apply custom styles for larger sizes
+	const spinnerStyle = size === 'lg' 
+		? { width: '3rem', height: '3rem' } 
+		: size === 'md' 
+		? { width: '2rem', height: '2rem' }
+		: undefined;
 	
 	const content = (
 		<div className="text-center">
@@ -19,7 +27,8 @@ export default function LoadingSpinner({
 				animation="border" 
 				role="status" 
 				variant="primary"
-				{...(spinnerSize && { size: spinnerSize })}
+				size={spinnerSize}
+				style={spinnerStyle}
 			>
 				<span className="visually-hidden">Loading...</span>
 			</Spinner>

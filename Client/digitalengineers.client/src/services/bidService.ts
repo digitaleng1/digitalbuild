@@ -3,7 +3,8 @@ import type {
 	SendBidDto, 
 	BidRequestDto, 
 	BidRequestDetailsDto, 
-	CreateBidResponseDto, 
+	CreateBidResponseDto,
+	BidResponseDto,
 	AcceptBidResponseDto,
 	BidMessageDto
 } from '@/types/bid';
@@ -51,7 +52,7 @@ class BidService {
 		return data as AdminBidListItem[];
 	}
 
-	async sendBidRequest(data: SendBidRequestDto): Promise<void> {
+	async sendBidRequest(data: SendBidDto): Promise<void> {
 		await httpClient.post('/api/bids/send', data);
 	}
 

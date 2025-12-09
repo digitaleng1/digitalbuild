@@ -28,7 +28,7 @@ class QuoteService {
 	 * Accept quote (Client only)
 	 */
 	async acceptQuote(projectId: number): Promise<void> {
-		await httpClient.post(`/api/projects/${projectId}/quote/accept`);
+		await httpClient.post(`/api/projects/${projectId}/quote/accept`, {});
 	}
 
 	/**

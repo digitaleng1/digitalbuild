@@ -129,7 +129,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 						</Toast.Header>
 						<Toast.Body
 							className={
-								toast.type === 'error' || toast.type === 'danger'
+								toast.type === 'error'
 									? 'text-white'
 									: 'text-dark'
 							}

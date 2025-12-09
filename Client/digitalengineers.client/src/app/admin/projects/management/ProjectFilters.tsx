@@ -136,4 +136,3 @@ const ProjectFilters = ({ onFilterChange, filters }: ProjectFiltersProps) => {
 };
 
 export default ProjectFilters;
-export type { ProjectFiltersData };

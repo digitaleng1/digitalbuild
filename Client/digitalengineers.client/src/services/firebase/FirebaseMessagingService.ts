@@ -7,6 +7,7 @@ import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 import { firebaseConfig, vapidKey } from '@/config/firebase.config';
 import type { Notification } from '@/types/notification';
+import { NotificationType, NotificationSubType } from '@/types/notification';
 
 interface NotificationPayload {
   notification?: {
@@ -190,23 +191,19 @@ class FirebaseMessagingService {
   private convertToNotification(payload: NotificationPayload, source: 'foreground' | 'background'): Notification {
     return {
       id: parseInt(payload.data?.notificationId || '0'),
-      userId: payload.data?.userId || '',
       title: payload.notification?.title || 'New Notification',
       body: payload.notification?.body || '',
-      type: payload.data?.type || 'System',
-      subType: payload.data?.subType || 'General',
+      type: (payload.data?.type as NotificationType) || NotificationType.System,
+      subType: (payload.data?.subType as NotificationSubType) || NotificationSubType.WelcomeMessage,
       isRead: false,
       isDelivered: true,
       createdAt: new Date().toISOString(),
-      readAt: null,
+      readAt: undefined,
       deliveredAt: new Date().toISOString(),
-      relatedEntityId: payload.data?.relatedEntityId ? parseInt(payload.data.relatedEntityId) : null,
-      relatedEntityType: payload.data?.relatedEntityType || null,
-      senderId: payload.data?.senderId || null,
-      senderName: payload.data?.senderName || null,
-      senderProfilePicture: payload.data?.senderProfilePicture || null,
-      actionUrl: payload.data?.actionUrl || null,
-      metadata: payload.data?.metadata ? JSON.parse(payload.data.metadata) : null,
+      senderId: payload.data?.senderId || '',
+      senderName: payload.data?.senderName || '',
+      senderProfilePicture: payload.data?.senderProfilePicture,
+      additionalData: payload.data
     };
   }
 
@@ -216,23 +213,19 @@ class FirebaseMessagingService {
   private convertFromServiceWorker(payload: any): Notification {
     return {
       id: payload.id || 0,
-      userId: payload.data?.userId || '',
       title: payload.title || 'New Notification',
       body: payload.body || '',
-      type: payload.type || 'System',
-      subType: payload.subType || 'General',
+      type: (payload.type as NotificationType) || NotificationType.System,
+      subType: (payload.subType as NotificationSubType) || NotificationSubType.WelcomeMessage,
       isRead: false,
       isDelivered: true,
       createdAt: new Date().toISOString(),
-      readAt: null,
+      readAt: undefined,
       deliveredAt: new Date().toISOString(),
-      relatedEntityId: payload.data?.relatedEntityId ? parseInt(payload.data.relatedEntityId) : null,
-      relatedEntityType: payload.data?.relatedEntityType || null,
-      senderId: payload.data?.senderId || null,
-      senderName: payload.data?.senderName || null,
-      senderProfilePicture: payload.data?.senderProfilePicture || null,
-      actionUrl: payload.data?.actionUrl || null,
-      metadata: payload.data?.metadata ? JSON.parse(payload.data.metadata) : null,
+      senderId: payload.data?.senderId || '',
+      senderName: payload.data?.senderName || '',
+      senderProfilePicture: payload.data?.senderProfilePicture,
+      additionalData: payload.data
     };
   }
 

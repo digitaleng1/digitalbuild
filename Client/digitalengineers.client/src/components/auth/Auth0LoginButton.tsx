@@ -39,12 +39,10 @@ const Auth0LoginButton = () => {
 
             const idToken = await auth0Client.getIdTokenClaims();
 
-            const result = await authApi.externalLogin({
+            const tokenResponse = await authApi.externalLogin({
                 provider: 'Auth0',
                 idToken: idToken.__raw,
             });
-
-            const tokenResponse: TokenResponse = result.data;
 
             saveSession(
                 tokenResponse.user,

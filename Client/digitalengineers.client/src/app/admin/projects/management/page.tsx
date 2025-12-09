@@ -100,13 +100,11 @@ const AdminProjectsManagement = () => {
 
 			{/* Content based on view mode */}
 			{viewMode === 'cards' && (
-				<ProjectList
-					basePath="/admin/projects"
+				<ProjectList 
 					showCreateButton={false}
-					projects={filteredProjects}
+					projects={projects}
 					loading={loading}
 					error={error}
-					onRefresh={() => window.location.reload()}
 				/>
 			)}
 
@@ -125,7 +123,6 @@ const AdminProjectsManagement = () => {
 						<ProjectKanbanBoard
 							projects={filteredProjects}
 							onProjectStatusChange={updateProjectStatus}
-							basePath="/admin/projects"
 						/>
 					</Col>
 				</Row>

@@ -69,7 +69,6 @@ const CustomDatePicker = (props: HyperDatepickerProps) => {
 				timeIntervals={props.tI}
 				className={classNames('form-control', props.inputClass)}
 				selected={props.value}
-				// @ts-expect-error - onchange
 				onChange={(date: Date) => props.onChange(date)}
 				showTimeSelect={props.showTimeSelect}
 				timeFormat={props.timeFormat || 'hh:mm a'}

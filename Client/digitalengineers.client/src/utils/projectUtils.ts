@@ -102,7 +102,7 @@ export function getFileExtension(filename: string): string {
  * @param status - Project status
  * @returns Bootstrap variant
  */
-export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'primary' | 'secondary' | 'warning' | 'danger' {
+export function getStatusBadgeVariant(status: string): 'success' | 'info' | 'primary' | 'secondary' | 'warning' | 'danger' | 'dark' {
 	switch (status.toLowerCase()) {
 		case 'quotepending':
 			return 'info';

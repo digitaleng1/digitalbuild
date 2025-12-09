@@ -20,11 +20,11 @@ function HttpClient() {
 	);
 
 	return {
-		get: (url: string, config = {}) => client.get(url, config),
-		post: (url: string, data: any, config = {}) => client.post(url, data, config),
-		patch: (url: string, data: any, config = {}) => client.patch(url, data, config),
-		put: (url: string, data: any, config = {}) => client.put(url, data, config),
-		delete: (url: string, config = {}) => client.delete(url, config),
+		get: <T = any>(url: string, config = {}): Promise<T> => client.get(url, config),
+		post: <T = any>(url: string, data: any, config = {}): Promise<T> => client.post(url, data, config),
+		patch: <T = any>(url: string, data: any, config = {}): Promise<T> => client.patch(url, data, config),
+		put: <T = any>(url: string, data: any, config = {}): Promise<T> => client.put(url, data, config),
+		delete: <T = any>(url: string, config = {}): Promise<T> => client.delete(url, config),
 		client,
 	};
 }

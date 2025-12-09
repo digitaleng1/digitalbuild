@@ -2,7 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Card, Collapse } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
-import { ReactSortable, ItemInterface } from 'react-sortablejs';
+import { ReactSortable } from 'react-sortablejs';
+import type { ItemInterface } from 'react-sortablejs';
 import type { TaskViewModel, ProjectTaskStatusViewModel } from '@/types/task';
 import TaskListItem from './TaskListItem';
 
@@ -86,8 +87,8 @@ const TaskListSection = React.memo(({
               setList={setSortableTasks}
               group="taskList"
               animation={200}
-              delayOnTouchStart={true}
-              delay={2}
+              delay={200}
+              delayOnTouchOnly={true}
               data-status-id={status.id}
               className="task-sortable-list"
               onAdd={handleAdd}

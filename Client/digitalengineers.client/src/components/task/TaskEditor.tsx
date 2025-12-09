@@ -11,7 +11,8 @@ import type {
   TaskLabelViewModel, 
   TaskPriority,
   TaskDetailViewModel,
-  TaskCommentViewModel
+  TaskCommentViewModel,
+  TaskAttachmentViewModel
 } from '@/types/task';
 import type { ProjectSpecialistDto } from '@/types/project';
 import UserSelector from './UserSelector';
@@ -451,7 +452,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                           <Form.Control
                             type="date"
                             name="deadline"
-                            value={formData.deadline}
+                            value={typeof formData.deadline === 'string' ? formData.deadline : ''}
                             onChange={handleChange}
                             disabled={isSubmitting}
                           />
@@ -604,7 +605,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                       {member.profilePictureUrl ? (
                         <img 
                           src={member.profilePictureUrl} 
-                          alt={member.userName} 
+                          alt={member.name} 
                           className="rounded-circle" 
                           height="32" 
                           width="32"
@@ -612,7 +613,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                       ) : (
                         <div className="avatar-sm">
                           <span className="avatar-title rounded-circle bg-primary">
-                            {member.userName.charAt(0).toUpperCase()}
+                            {member.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}

@@ -109,6 +109,7 @@ export interface ProjectDetailsDto {
 	updatedAt: string;
 	thumbnailUrl?: string;
 	files: ProjectFile[];
+	taskCount: number; // Add taskCount to match ProjectDto
 	// Quote fields
 	quotedAmount?: number;
 	quoteSubmittedAt?: string;

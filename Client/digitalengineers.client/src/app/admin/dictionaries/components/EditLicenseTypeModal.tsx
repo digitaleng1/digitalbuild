@@ -7,7 +7,7 @@ interface EditLicenseTypeModalProps {
 	onHide: () => void;
 	licenseType: LicenseTypeManagementDto | null;
 	professions: ProfessionManagementDto[];
-	onUpdate: (id: number, dto: UpdateLicenseTypeDto) => Promise<void>;
+	onUpdate: (id: number, dto: UpdateLicenseTypeDto) => Promise<LicenseTypeManagementDto>;
 }
 
 const EditLicenseTypeModal: React.FC<EditLicenseTypeModalProps> = ({ 

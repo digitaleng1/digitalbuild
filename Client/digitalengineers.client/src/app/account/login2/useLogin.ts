@@ -1,13 +1,11 @@
-
 import { authApi } from '@/common/api';
 import { useNotificationContext } from '@/common/context';
 import { useState } from 'react';
 import { useAuthContext } from '@/common/context/useAuthContext';
 import { useQuery } from '@/hooks';
-import type { User } from '@/types/User';
-import {type AxiosResponse } from 'axios';
+import type { LoginDto, TokenResponse } from '@/types/auth.types';
 import * as yup from 'yup';
-import {useNavigate} from "react-router";
+import { useNavigate } from "react-router";
 
 export const loginFormSchema = yup.object({
 	email: yup.string().email('Please enter valid email').required('Please enter email'),
@@ -28,11 +26,21 @@ export default function useLogin() {
 	const login = async (values: LoginFormFields) => {
 		setLoading(true);
 		try {
-			const res: AxiosResponse<User> = await authApi.login(values);
-			if (res.data.token) {
-				saveSession({ ...(res.data ?? {}), token: res.data.token });
-				navigate(queryParams['redirectTo'] ?? '/dashboard/analytics');
-			}
+			const loginDto: LoginDto = {
+				email: values.email!,
+				password: values.password!
+			};
+			
+			const tokenResponse: TokenResponse = await authApi.login(loginDto);
+			
+			saveSession(
+				tokenResponse.user,
+				tokenResponse.accessToken,
+				tokenResponse.refreshToken,
+				tokenResponse.expiresAt
+			);
+			
+			navigate(queryParams['redirectTo'] ?? '/dashboard/analytics');
 		} catch (error: any) {
 			showNotification({ message: error.toString(), type: 'error' });
 		} finally {

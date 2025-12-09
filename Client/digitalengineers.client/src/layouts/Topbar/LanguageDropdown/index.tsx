@@ -36,7 +36,7 @@ const Languages: Language[] = [
 ];
 
 const LanguageDropdown = () => {
-	const enLang = Languages[0] || {};
+	const enLang = Languages[0];
 	const [isOpen, toggleDropdown] = useToggle();
 
 	return (
