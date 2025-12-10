@@ -19,6 +19,7 @@ public class ProjectService : IProjectService
     private readonly IEmailService _emailService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly INotificationService _notificationService;
+    private readonly IUrlProvider _urlProvider;
 
     public ProjectService(
         ApplicationDbContext context,
@@ -26,7 +27,8 @@ public class ProjectService : IProjectService
         ILogger<ProjectService> logger,
         IEmailService emailService,
         UserManager<ApplicationUser> userManager,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IUrlProvider urlProvider)
     {
         _context = context;
         _fileStorageService = fileStorageService;
@@ -34,6 +36,7 @@ public class ProjectService : IProjectService
         _emailService = emailService;
         _userManager = userManager;
         _notificationService = notificationService;
+        _urlProvider = urlProvider;
     }
 
     public async Task<ProjectDto> CreateProjectAsync(
@@ -878,7 +881,8 @@ public class ProjectService : IProjectService
 
         // Send quote submitted email to client
         var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
-        var quoteUrl = $"https://localhost:5173/client/projects/{project.Id}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var quoteUrl = $"{baseUrl}/client/projects/{project.Id}";
         
         await _emailService.SendQuoteSubmittedNotificationAsync(
             project.Client.Email!,

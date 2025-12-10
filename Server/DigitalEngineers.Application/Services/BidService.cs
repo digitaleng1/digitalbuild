@@ -17,6 +17,7 @@ public class BidService : IBidService
     private readonly INotificationService _notificationService;
     private readonly ILogger<BidService> _logger;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IUrlProvider _urlProvider;
 
     public BidService(
         ApplicationDbContext context,
@@ -24,7 +25,8 @@ public class BidService : IBidService
         IEmailService emailService,
         INotificationService notificationService,
         ILogger<BidService> logger,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        IUrlProvider urlProvider)
     {
         _context = context;
         _specialistService = specialistService;
@@ -32,6 +34,7 @@ public class BidService : IBidService
         _notificationService = notificationService;
         _logger = logger;
         _fileStorageService = fileStorageService;
+        _urlProvider = urlProvider;
     }
 
     public async Task<BidRequestDto> CreateBidRequestAsync(CreateBidRequestDto dto, CancellationToken cancellationToken = default)
@@ -320,7 +323,8 @@ public class BidService : IBidService
             .ToListAsync(cancellationToken);
 
         var specialistName = $"{specialist.User.FirstName} {specialist.User.LastName}";
-        var bidResponseUrl = $"https://localhost:5173/admin/bids/{bidResponse.Id}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var bidResponseUrl = $"{baseUrl}/admin/bids/{bidResponse.Id}";
 
         foreach (var admin in admins)
         {
@@ -509,7 +513,8 @@ public class BidService : IBidService
         var specialistFullName = $"{bidResponse.Specialist.User.FirstName} {bidResponse.Specialist.User.LastName}";
         var bidProjectName = bidResponse.BidRequest.Project.Name;
         var finalPrice = bidResponse.ProposedPrice * (1 + adminMarkupPercentage / 100);
-        var projectUrl = $"https://localhost:5173/specialist/projects/{bidResponse.BidRequest.ProjectId}";
+        var baseUrl = _urlProvider.GetBaseUrl();
+        var projectUrl = $"{baseUrl}/specialist/projects/{bidResponse.BidRequest.ProjectId}";
 
         // Send Email notification to specialist
         await _emailService.SendBidAcceptedNotificationAsync(
