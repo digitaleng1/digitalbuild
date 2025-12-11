@@ -190,4 +190,29 @@ public class LookupController : ControllerBase
         await _lookupService.DeleteLicenseTypeAsync(id, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("export")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<ActionResult<ExportDictionariesDto>> ExportDictionaries(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var data = await _lookupService.ExportDictionariesAsync(userId, cancellationToken);
+        return Ok(data);
+    }
+
+    [HttpPost("import")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<ActionResult<ImportResultDto>> ImportDictionaries(
+        [FromBody] ImportDictionariesDto dto,
+        CancellationToken cancellationToken)
+    {
+        var result = await _lookupService.ImportDictionariesAsync(dto, cancellationToken);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

@@ -104,3 +104,55 @@ export interface ApproveLicenseTypeDto {
 	isApproved: boolean;
 	rejectionReason?: string;
 }
+
+export interface ExportDictionaries {
+	professions: ExportProfession[];
+	licenseTypes: ExportLicenseType[];
+}
+
+export interface ExportProfession {
+	id: number;
+	name: string;
+	description?: string;
+	isActive: boolean;
+}
+
+export interface ExportLicenseType {
+	id: number;
+	name: string;
+	description?: string;
+	professionId: number;
+	professionName: string;
+	isActive: boolean;
+}
+
+export interface ImportDictionaries {
+	professions: ImportProfession[];
+	licenseTypes: ImportLicenseType[];
+}
+
+export interface ImportProfession {
+	id?: number;
+	name: string;
+	description?: string;
+	isActive?: boolean;
+}
+
+export interface ImportLicenseType {
+	id?: number;
+	name: string;
+	description?: string;
+	professionId?: number;
+	professionName?: string;
+	isActive?: boolean;
+}
+
+export interface ImportResult {
+	professionsCreated: number;
+	professionsUpdated: number;
+	licenseTypesCreated: number;
+	licenseTypesUpdated: number;
+	warnings: string[];
+	errors: string[];
+	success: boolean;
+}

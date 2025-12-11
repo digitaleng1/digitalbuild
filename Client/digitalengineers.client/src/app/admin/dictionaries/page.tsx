@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { Row, Col, Card, Tabs, Tab, Spinner, Alert, Button, Modal } from 'react-bootstrap';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { useDictionaries } from './hooks/useDictionaries';
@@ -7,7 +7,9 @@ import EditProfessionModal from './components/EditProfessionModal';
 import EditLicenseTypeModal from './components/EditLicenseTypeModal';
 import ApproveProfessionModal from './components/ApproveProfessionModal';
 import ApproveLicenseTypeModal from './components/ApproveLicenseTypeModal';
-import type { ProfessionManagementDto, LicenseTypeManagementDto } from '@/types/lookup';
+import lookupService from '@/services/lookupService';
+import { useToast } from '@/contexts/ToastContext';
+import type { ProfessionManagementDto, LicenseTypeManagementDto, ImportDictionaries } from '@/types/lookup';
 
 const DictionariesManagementPage: React.FC = () => {
 	const {
@@ -24,6 +26,9 @@ const DictionariesManagementPage: React.FC = () => {
 		deleteLicenseType,
 	} = useDictionaries();
 
+	const { showSuccess, showError } = useToast();
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
 	const [activeTab, setActiveTab] = useState<string>('professions');
 	const [editProfessionModal, setEditProfessionModal] = useState<ProfessionManagementDto | null>(null);
 	const [editLicenseTypeModal, setEditLicenseTypeModal] = useState<LicenseTypeManagementDto | null>(null);
@@ -34,6 +39,7 @@ const DictionariesManagementPage: React.FC = () => {
 		item: ProfessionManagementDto | LicenseTypeManagementDto;
 	} | null>(null);
 	const [deleting, setDeleting] = useState(false);
+	const [exporting, setExporting] = useState(false);
 
 	const handleApproveProfession = useCallback(async (id: number, isApproved: boolean, rejectionReason?: string) => {
 		await approveProfession(id, { isApproved, rejectionReason });
@@ -55,11 +61,66 @@ const DictionariesManagementPage: React.FC = () => {
 			}
 			setDeleteConfirmModal(null);
 		} catch (err) {
-			// Error handled by hook
 		} finally {
 			setDeleting(false);
 		}
 	}, [deleteConfirmModal, deleteProfession, deleteLicenseType]);
+
+	const handleExport = useCallback(async () => {
+		setExporting(true);
+		try {
+			const data = await lookupService.exportDictionaries();
+			
+			const json = JSON.stringify(data, null, 2);
+			const blob = new Blob([json], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `dictionaries_export_${new Date().toISOString().split('T')[0]}.json`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			
+			showSuccess('Success', 'Dictionaries exported successfully');
+		} catch (error) {
+			showError('Error', 'Failed to export dictionaries');
+		} finally {
+			setExporting(false);
+		}
+	}, [showSuccess, showError]);
+
+	const handleImportClick = useCallback(() => {
+		fileInputRef.current?.click();
+	}, []);
+
+	const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		try {
+			const text = await file.text();
+			const data: ImportDictionaries = JSON.parse(text);
+			
+			const result = await lookupService.importDictionaries(data);
+			
+			if (result.success) {
+				const message = `Professions: ${result.professionsCreated} created, ${result.professionsUpdated} updated\nLicense Types: ${result.licenseTypesCreated} created, ${result.licenseTypesUpdated} updated`;
+				showSuccess('Success', message);
+				await refresh();
+			} else {
+				const errorMessage = result.errors.join('\n');
+				showError('Import Failed', errorMessage);
+			}
+		} catch (error) {
+			showError('Error', 'Failed to parse or import JSON file');
+		} finally {
+			if (fileInputRef.current) {
+				fileInputRef.current.value = '';
+			}
+		}
+	}, [showSuccess, showError, refresh]);
 
 	const pendingProfessions = useMemo(() => 
 		professions.filter(p => !p.isApproved).length, 
@@ -107,10 +168,39 @@ const DictionariesManagementPage: React.FC = () => {
 									<h4 className="mb-0">Professions & License Types</h4>
 									<p className="text-muted mb-0">Manage and approve user-submitted entries</p>
 								</div>
-								<Button variant="primary" onClick={refresh}>
-									<i className="mdi mdi-refresh me-1"></i>
-									Refresh
-								</Button>
+								<div className="d-flex gap-2">
+									<Button variant="outline-primary" onClick={handleExport} disabled={exporting}>
+										{exporting ? (
+											<>
+												<Spinner as="span" animation="border" size="sm" className="me-2" />
+												Exporting...
+											</>
+										) : (
+											<>
+												<i className="bi bi-download me-2"></i>
+												Export to JSON
+											</>
+										)}
+									</Button>
+									
+									<Button variant="outline-success" onClick={handleImportClick}>
+										<i className="bi bi-upload me-2"></i>
+										Import from JSON
+									</Button>
+									
+									<input
+										ref={fileInputRef}
+										type="file"
+										accept=".json"
+										style={{ display: 'none' }}
+										onChange={handleFileChange}
+									/>
+
+									<Button variant="primary" onClick={refresh}>
+										<i className="mdi mdi-refresh me-1"></i>
+										Refresh
+									</Button>
+								</div>
 							</div>
 
 							<Tabs

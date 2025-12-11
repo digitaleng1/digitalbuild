@@ -23,4 +23,8 @@ public interface ILookupService
     Task<LicenseTypeManagementDto> ApproveLicenseTypeAsync(int id, ApproveLicenseTypeDto dto, CancellationToken cancellationToken = default);
     Task DeleteProfessionAsync(int id, CancellationToken cancellationToken = default);
     Task DeleteLicenseTypeAsync(int id, CancellationToken cancellationToken = default);
+    
+    // Import/Export
+    Task<ExportDictionariesDto> ExportDictionariesAsync(string userId, CancellationToken cancellationToken = default);
+    Task<ImportResultDto> ImportDictionariesAsync(ImportDictionariesDto dto, CancellationToken cancellationToken = default);
 }

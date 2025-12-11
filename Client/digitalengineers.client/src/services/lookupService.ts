@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { State, Profession, LicenseType, CreateProfessionDto, CreateLicenseTypeDto, ProfessionViewModel, LicenseTypeViewModel, ProfessionManagementDto, LicenseTypeManagementDto, UpdateProfessionDto, UpdateLicenseTypeDto, ApproveProfessionDto, ApproveLicenseTypeDto } from '@/types/lookup';
+import type { State, Profession, LicenseType, CreateProfessionDto, CreateLicenseTypeDto, ProfessionViewModel, LicenseTypeViewModel, ProfessionManagementDto, LicenseTypeManagementDto, UpdateProfessionDto, UpdateLicenseTypeDto, ApproveProfessionDto, ApproveLicenseTypeDto, ExportDictionaries, ImportDictionaries, ImportResult } from '@/types/lookup';
 
 interface CacheEntry<T> {
 	data: T;
@@ -146,6 +146,17 @@ class LookupService {
 	async deleteLicenseType(id: number): Promise<void> {
 		await httpClient.delete(`/api/lookup/license-types/${id}`);
 		this.clearCache();
+	}
+
+	async exportDictionaries(): Promise<ExportDictionaries> {
+		const response = await httpClient.get<ExportDictionaries>('/api/lookup/export');
+		return response as ExportDictionaries;
+	}
+
+	async importDictionaries(data: ImportDictionaries): Promise<ImportResult> {
+		const response = await httpClient.post<ImportResult>('/api/lookup/import', data);
+		this.clearCache();
+		return response as ImportResult;
 	}
 
 	clearCache(): void {

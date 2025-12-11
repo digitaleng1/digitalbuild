@@ -489,4 +489,255 @@ public class LookupService : ILookupService
         _context.LicenseTypes.Remove(licenseType);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<ExportDictionariesDto> ExportDictionariesAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var professions = await _context.Professions
+            .AsNoTracking()
+            .Where(p => p.IsApproved)
+            .OrderBy(p => p.Name)
+            .Select(p => new ExportProfessionDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                IsActive = p.IsApproved
+            })
+            .ToListAsync(cancellationToken);
+
+        var licenseTypes = await _context.LicenseTypes
+            .AsNoTracking()
+            .Include(lt => lt.Profession)
+            .Where(lt => lt.IsApproved)
+            .OrderBy(lt => lt.Profession.Name)
+            .ThenBy(lt => lt.Name)
+            .Select(lt => new ExportLicenseTypeDto
+            {
+                Id = lt.Id,
+                Name = lt.Name,
+                Description = lt.Description,
+                ProfessionId = lt.ProfessionId,
+                ProfessionName = lt.Profession.Name,
+                IsActive = lt.IsApproved
+            })
+            .ToListAsync(cancellationToken);
+
+        return new ExportDictionariesDto
+        {
+            Professions = professions,
+            LicenseTypes = licenseTypes
+        };
+    }
+
+    public async Task<ImportResultDto> ImportDictionariesAsync(ImportDictionariesDto dto, CancellationToken cancellationToken = default)
+    {
+        var result = new ImportResultDto();
+
+        ValidateImportData(dto, result);
+        if (!result.Success)
+            return result;
+
+        await ProcessProfessionsAsync(dto.Professions, result, cancellationToken);
+        
+        if (!result.Success)
+            return result;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await ProcessLicenseTypesAsync(dto.LicenseTypes, result, cancellationToken);
+
+        if (result.Success)
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return result;
+    }
+
+    private void ValidateImportData(ImportDictionariesDto dto, ImportResultDto result)
+    {
+        var professionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var profession in dto.Professions)
+        {
+            if (string.IsNullOrWhiteSpace(profession.Name))
+            {
+                result.Errors.Add("Profession name cannot be empty");
+                continue;
+            }
+
+            if (!professionNames.Add(profession.Name))
+            {
+                result.Errors.Add($"Duplicate profession name in import data: '{profession.Name}'");
+            }
+        }
+
+        var licenseTypeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var licenseType in dto.LicenseTypes)
+        {
+            if (string.IsNullOrWhiteSpace(licenseType.Name))
+            {
+                result.Errors.Add("License type name cannot be empty");
+                continue;
+            }
+
+            if (!licenseType.ProfessionId.HasValue && string.IsNullOrWhiteSpace(licenseType.ProfessionName))
+            {
+                result.Errors.Add($"License type '{licenseType.Name}' must have either ProfessionId or ProfessionName");
+                continue;
+            }
+
+            var key = $"{licenseType.ProfessionId ?? 0}_{licenseType.ProfessionName ?? ""}_{licenseType.Name}";
+            if (!licenseTypeKeys.Add(key))
+            {
+                result.Errors.Add($"Duplicate license type in import data: '{licenseType.Name}'");
+            }
+        }
+    }
+
+    private async Task ProcessProfessionsAsync(List<ImportProfessionDto> professions, ImportResultDto result, CancellationToken cancellationToken)
+    {
+        foreach (var dto in professions)
+        {
+            if (dto.Id.HasValue)
+            {
+                var existing = await _context.Professions.FindAsync([dto.Id.Value], cancellationToken);
+                if (existing == null)
+                {
+                    result.Errors.Add($"Profession ID {dto.Id} not found");
+                    continue;
+                }
+
+                if (existing.Name != dto.Name)
+                {
+                    var duplicate = await _context.Professions
+                        .FirstOrDefaultAsync(p => p.Name == dto.Name && p.Id != dto.Id, cancellationToken);
+                    if (duplicate != null)
+                    {
+                        result.Errors.Add($"Profession '{dto.Name}' already exists");
+                        continue;
+                    }
+                }
+
+                existing.Name = dto.Name;
+                existing.Description = dto.Description;
+                existing.IsApproved = dto.IsActive;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                result.ProfessionsUpdated++;
+            }
+            else
+            {
+                var duplicate = await _context.Professions
+                    .FirstOrDefaultAsync(p => p.Name == dto.Name, cancellationToken);
+                if (duplicate != null)
+                {
+                    result.Errors.Add($"Profession '{dto.Name}' already exists");
+                    continue;
+                }
+
+                var profession = new Infrastructure.Entities.Profession
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    IsApproved = dto.IsActive,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Professions.Add(profession);
+                result.ProfessionsCreated++;
+            }
+        }
+    }
+
+    private async Task ProcessLicenseTypesAsync(List<ImportLicenseTypeDto> licenseTypes, ImportResultDto result, CancellationToken cancellationToken)
+    {
+        foreach (var dto in licenseTypes)
+        {
+            int professionId;
+            if (dto.ProfessionId.HasValue)
+            {
+                professionId = dto.ProfessionId.Value;
+                var professionExists = await _context.Professions.AnyAsync(p => p.Id == professionId, cancellationToken);
+                if (!professionExists)
+                {
+                    result.Errors.Add($"Profession ID {professionId} not found for license type '{dto.Name}'");
+                    continue;
+                }
+            }
+            else if (!string.IsNullOrEmpty(dto.ProfessionName))
+            {
+                var profession = await _context.Professions
+                    .FirstOrDefaultAsync(p => p.Name == dto.ProfessionName, cancellationToken);
+                if (profession == null)
+                {
+                    result.Errors.Add($"Profession '{dto.ProfessionName}' not found for license type '{dto.Name}'");
+                    continue;
+                }
+                professionId = profession.Id;
+            }
+            else
+            {
+                result.Errors.Add($"License type '{dto.Name}' missing ProfessionId or ProfessionName");
+                continue;
+            }
+
+            if (dto.Id.HasValue)
+            {
+                var existing = await _context.LicenseTypes.FindAsync([dto.Id.Value], cancellationToken);
+                if (existing == null)
+                {
+                    result.Errors.Add($"License type ID {dto.Id} not found");
+                    continue;
+                }
+
+                if (existing.Name != dto.Name || existing.ProfessionId != professionId)
+                {
+                    var duplicate = await _context.LicenseTypes
+                        .FirstOrDefaultAsync(lt =>
+                            lt.Name == dto.Name &&
+                            lt.ProfessionId == professionId &&
+                            lt.Id != dto.Id, cancellationToken);
+                    if (duplicate != null)
+                    {
+                        result.Errors.Add($"License type '{dto.Name}' already exists in this profession");
+                        continue;
+                    }
+                }
+
+                existing.Name = dto.Name;
+                existing.Description = dto.Description;
+                existing.ProfessionId = professionId;
+                existing.IsApproved = dto.IsActive;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                result.LicenseTypesUpdated++;
+            }
+            else
+            {
+                var duplicate = await _context.LicenseTypes
+                    .FirstOrDefaultAsync(lt =>
+                        lt.Name == dto.Name &&
+                        lt.ProfessionId == professionId, cancellationToken);
+                if (duplicate != null)
+                {
+                    result.Errors.Add($"License type '{dto.Name}' already exists in this profession");
+                    continue;
+                }
+
+                var licenseType = new Infrastructure.Entities.LicenseType
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    ProfessionId = professionId,
+                    IsApproved = dto.IsActive,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.LicenseTypes.Add(licenseType);
+                result.LicenseTypesCreated++;
+            }
+        }
+    }
 }
