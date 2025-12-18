@@ -369,7 +369,6 @@ FodyWeavers.xsd
 /Alex_accessKeys.csv
 /Alex_credentials.csv
 /Server/DigitalEngineers.API/appsettings.Development.json
-/ADMIN_PANEL_IMPLEMENTATION_PLAN.md
 *.md
 /Server/DigitalEngineers.API/test-notificator-firebase-adminsdk-fbsvc-bdb9e467a9.json
 /Server/DigitalEngineers.API/firebase-notification.json
@@ -378,3 +377,5 @@ FodyWeavers.xsd
 /Access
 /Client/digitalengineers.client/dist
 /Client/digitalengineers.client/dist.zip
+*.docx
+*.pdf
