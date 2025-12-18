@@ -22,20 +22,6 @@ public class DbInitSettings
     public List<UserConfig> Users { get; set; } = new();
     
     /// <summary>
-    /// Professions to seed
-    /// Production: [2 essential professions]
-    /// Development: [10 professions]
-    /// </summary>
-    public List<ProfessionConfig> Professions { get; set; } = new();
-    
-    /// <summary>
-    /// License types to seed
-    /// Production: [1 essential license]
-    /// Development: [30 license types]
-    /// </summary>
-    public List<LicenseTypeConfig> LicenseTypes { get; set; } = new();
-    
-    /// <summary>
     /// Test clients to seed
     /// Production: []
     /// Development: [9 clients]
@@ -55,6 +41,11 @@ public class DbInitSettings
     /// Development: [10 projects]
     /// </summary>
     public List<ProjectConfig> Projects { get; set; } = new();
+    
+    /// <summary>
+    /// CSI Trade Categories data (Professions, ProfessionTypes, LicenseTypes, LicenseRequirements)
+    /// </summary>
+    public CsiTradeSettings CsiTrade { get; set; } = new();
 }
 
 public class UserConfig
@@ -70,19 +61,6 @@ public class UserConfig
     public string? Biography { get; set; }
     public string? Location { get; set; }
     public string? Website { get; set; }
-}
-
-public class ProfessionConfig
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-}
-
-public class LicenseTypeConfig
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string ProfessionName { get; set; } = string.Empty;
 }
 
 public class ClientConfig
@@ -129,4 +107,75 @@ public class ProjectConfig
     public List<string> LicenseTypeNames { get; set; } = new();
     public int CreatedDaysAgo { get; set; }
     public string? ThumbnailUrl { get; set; }
+}
+
+/// <summary>
+/// CSI Trade Categories configuration
+/// </summary>
+public class CsiTradeSettings
+{
+    /// <summary>
+    /// Profession categories (e.g., Engineering, Architecture, Electrical Trades)
+    /// </summary>
+    public List<CsiProfessionConfig> Professions { get; set; } = new();
+    
+    /// <summary>
+    /// License types (e.g., PE, RA, ME)
+    /// </summary>
+    public List<CsiLicenseTypeConfig> LicenseTypes { get; set; } = new();
+    
+    /// <summary>
+    /// Profession types/subcategories (e.g., Structural Engineering, Civil Engineering)
+    /// </summary>
+    public List<CsiProfessionTypeConfig> ProfessionTypes { get; set; } = new();
+    
+    /// <summary>
+    /// License requirements mapping profession types to license types
+    /// </summary>
+    public List<CsiLicenseRequirementConfig> LicenseRequirements { get; set; } = new();
+}
+
+/// <summary>
+/// CSI Profession configuration (category)
+/// </summary>
+public class CsiProfessionConfig
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int DisplayOrder { get; set; }
+}
+
+/// <summary>
+/// CSI License Type configuration
+/// </summary>
+public class CsiLicenseTypeConfig
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsStateSpecific { get; set; }
+}
+
+/// <summary>
+/// CSI Profession Type configuration (subcategory)
+/// </summary>
+public class CsiProfessionTypeConfig
+{
+    public string ProfessionCode { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool RequiresStateLicense { get; set; }
+    public int DisplayOrder { get; set; }
+}
+
+/// <summary>
+/// CSI License Requirement configuration (mapping profession type to license type)
+/// </summary>
+public class CsiLicenseRequirementConfig
+{
+    public string ProfessionTypeCode { get; set; } = string.Empty;
+    public string LicenseTypeCode { get; set; } = string.Empty;
+    public bool IsRequired { get; set; }
 }

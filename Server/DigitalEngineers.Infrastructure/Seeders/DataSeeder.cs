@@ -67,21 +67,20 @@ public static class DataSeeder
             // Seed all users at once
             var seededUsers = await UniversalUserSeeder.SeedAsync(userManager, allUsersToCreate, logger);
 
-            // 3. Seed professions and license types from config
-            var seededLookups = await LookupSeeder.SeedAsync(
-                context,
-                dbInitSettings.Professions,
-                dbInitSettings.LicenseTypes,
-                logger);
+            // 3. Seed CSI Trade Categories (Professions, ProfessionTypes, LicenseTypes, Requirements)
+            await CsiTradeSeeder.SeedAsync(context, dbInitSettings.CsiTrade, logger);
 
-            // 4. Seed client details if clients exist in config
+            // 4. Get license types from DB for other seeders
+            var licenseTypes = await context.LicenseTypes.ToListAsync();
+
+            // 5. Seed client details if clients exist in config
             if (dbInitSettings.Clients.Count > 0)
             {
                 var clientUsers = seededUsers.Where(u => dbInitSettings.Clients.Any(c => c.Email == u.Email)).ToList();
                 await ClientSeeder.SeedAsync(context, clientUsers, logger);
             }
 
-            // 5. Seed provider specialists if providers exist in config
+            // 6. Seed provider specialists if providers exist in config
             var specialists = new List<Infrastructure.Entities.Specialist>();
             if (dbInitSettings.Providers.Count > 0)
             {
@@ -89,23 +88,23 @@ public static class DataSeeder
                 specialists = await SpecialistSeeder.SeedAsync(
                     context,
                     providerUsers,
-                    seededLookups.LicenseTypes,
+                    licenseTypes,
                     dbInitSettings.Providers,
                     logger);
             }
 
-            // 6. Seed projects if they exist in config
+            // 7. Seed projects if they exist in config
             if (dbInitSettings.Projects.Count > 0)
             {
                 var clientUsers = seededUsers.Where(u => dbInitSettings.Clients.Any(c => c.Email == u.Email)).ToList();
                 var seededProjects = await ProjectSeeder.SeedAsync(
                     context,
                     clientUsers,
-                    seededLookups.LicenseTypes,
+                    licenseTypes,
                     dbInitSettings.Projects,
                     logger);
 
-                // 7. Seed bids only if we have both projects and specialists
+                // 8. Seed bids only if we have both projects and specialists
                 if (specialists.Count > 0)
                 {
                     var clientIds = clientUsers.Select(c => c.Id).ToArray();

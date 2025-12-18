@@ -377,8 +377,9 @@ public class SpecialistService : ISpecialistService
             {
                 Id = slt.LicenseType.Id,
                 Name = slt.LicenseType.Name,
+                Code = slt.LicenseType.Code,
                 Description = slt.LicenseType.Description,
-                ProfessionId = slt.LicenseType.ProfessionId
+                IsStateSpecific = slt.LicenseType.IsStateSpecific
             }).ToArray(),
             Portfolio = specialist.Portfolio.Select(p => new PortfolioItemDto
             {
@@ -411,8 +412,7 @@ public class SpecialistService : ISpecialistService
         var specialists = await _context.Specialists
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
-            .ThenInclude(slt => slt.LicenseType)
-            .ThenInclude(lt => lt.Profession)
+                .ThenInclude(slt => slt.LicenseType)
             .Where(s => s.IsAvailable
                 && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
             .ToListAsync(cancellationToken);
@@ -431,8 +431,9 @@ public class SpecialistService : ISpecialistService
             {
                 Id = slt.LicenseType.Id,
                 Name = slt.LicenseType.Name,
+                Code = slt.LicenseType.Code,
                 Description = slt.LicenseType.Description,
-                ProfessionId = slt.LicenseType.ProfessionId
+                IsStateSpecific = slt.LicenseType.IsStateSpecific
             }).ToList()
         });
     }
@@ -448,8 +449,7 @@ public class SpecialistService : ISpecialistService
         var specialists = await _context.Specialists
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
-            .ThenInclude(slt => slt.LicenseType)
-            .ThenInclude(lt => lt.Profession)
+                .ThenInclude(slt => slt.LicenseType)
             .Where(s => s.IsAvailable
                 && !existingBidSpecialistIds.Contains(s.Id)
                 && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
@@ -469,8 +469,9 @@ public class SpecialistService : ISpecialistService
             {
                 Id = slt.LicenseType.Id,
                 Name = slt.LicenseType.Name,
+                Code = slt.LicenseType.Code,
                 Description = slt.LicenseType.Description,
-                ProfessionId = slt.LicenseType.ProfessionId
+                IsStateSpecific = slt.LicenseType.IsStateSpecific
             }).ToList()
         });
     }

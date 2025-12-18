@@ -13,11 +13,16 @@ namespace DigitalEngineers.API.Controllers;
 public class LookupController : ControllerBase
 {
     private readonly ILookupService _lookupService;
+    private readonly IProfessionTypeService _professionTypeService;
     private readonly IMapper _mapper;
 
-    public LookupController(ILookupService lookupService, IMapper mapper)
+    public LookupController(
+        ILookupService lookupService, 
+        IProfessionTypeService professionTypeService,
+        IMapper mapper)
     {
         _lookupService = lookupService;
+        _professionTypeService = professionTypeService;
         _mapper = mapper;
     }
 
@@ -37,6 +42,14 @@ public class LookupController : ControllerBase
         var dtos = await _lookupService.GetProfessionsAsync(cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<ProfessionViewModel>>(dtos);
         return Ok(viewModels);
+    }
+
+    [HttpGet("professions/{professionId}/profession-types")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    public async Task<IActionResult> GetProfessionTypesByProfession(int professionId, CancellationToken cancellationToken)
+    {
+        var dtos = await _professionTypeService.GetProfessionTypesByProfessionIdAsync(professionId, cancellationToken);
+        return Ok(dtos);
     }
 
     [HttpGet("license-types")]

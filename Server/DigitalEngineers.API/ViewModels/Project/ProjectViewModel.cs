@@ -84,6 +84,6 @@ public class SpecialistLicenseInfoViewModel
 {
     public int LicenseTypeId { get; set; }
     public string LicenseTypeName { get; set; } = string.Empty;
-    public int ProfessionId { get; set; }
-    public string ProfessionName { get; set; } = string.Empty;
+    public string LicenseTypeCode { get; set; } = string.Empty;
+    public bool IsStateSpecific { get; set; }
 }

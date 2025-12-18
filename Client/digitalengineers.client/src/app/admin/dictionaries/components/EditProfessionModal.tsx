@@ -17,7 +17,9 @@ const EditProfessionModal: React.FC<EditProfessionModalProps> = ({
 }) => {
 	const [formData, setFormData] = useState<UpdateProfessionDto>({
 		name: '',
+		code: '',
 		description: '',
+		displayOrder: 0,
 	});
 	const [loading, setLoading] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,7 +28,9 @@ const EditProfessionModal: React.FC<EditProfessionModalProps> = ({
 		if (profession) {
 			setFormData({
 				name: profession.name,
+				code: profession.code,
 				description: profession.description,
+				displayOrder: profession.displayOrder,
 			});
 		}
 	}, [profession]);
@@ -47,9 +51,15 @@ const EditProfessionModal: React.FC<EditProfessionModalProps> = ({
 			newErrors.name = 'Name must be less than 100 characters';
 		}
 
-		if (!formData.description.trim()) {
-			newErrors.description = 'Description is required';
-		} else if (formData.description.length > 500) {
+		if (!formData.code.trim()) {
+			newErrors.code = 'Code is required';
+		} else if (formData.code.length > 20) {
+			newErrors.code = 'Code must be less than 20 characters';
+		} else if (!/^[A-Z0-9_-]+$/i.test(formData.code)) {
+			newErrors.code = 'Code can only contain letters, numbers, hyphens and underscores';
+		}
+
+		if (formData.description && formData.description.length > 500) {
 			newErrors.description = 'Description must be less than 500 characters';
 		}
 
@@ -101,8 +111,26 @@ const EditProfessionModal: React.FC<EditProfessionModalProps> = ({
 
 					<Form.Group className="mb-3">
 						<Form.Label>
-							Description <span className="text-danger">*</span>
+							Code <span className="text-danger">*</span>
 						</Form.Label>
+						<Form.Control
+							type="text"
+							value={formData.code}
+							onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+							isInvalid={!!errors.code}
+							disabled={loading}
+							maxLength={20}
+							placeholder="E.g., ENG, ARCH, ELEC"
+							className="font-monospace"
+						/>
+						<Form.Control.Feedback type="invalid">{errors.code}</Form.Control.Feedback>
+						<Form.Text className="text-muted">
+							Unique identifier code (uppercase letters, numbers, hyphens)
+						</Form.Text>
+					</Form.Group>
+
+					<Form.Group className="mb-3">
+						<Form.Label>Description</Form.Label>
 						<Form.Control
 							as="textarea"
 							rows={3}
@@ -115,7 +143,21 @@ const EditProfessionModal: React.FC<EditProfessionModalProps> = ({
 						/>
 						<Form.Control.Feedback type="invalid">{errors.description}</Form.Control.Feedback>
 						<Form.Text className="text-muted">
-							{formData.description.length}/500 characters
+							{formData.description?.length || 0}/500 characters
+						</Form.Text>
+					</Form.Group>
+
+					<Form.Group className="mb-3">
+						<Form.Label>Display Order</Form.Label>
+						<Form.Control
+							type="number"
+							value={formData.displayOrder}
+							onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
+							disabled={loading}
+							min={0}
+						/>
+						<Form.Text className="text-muted">
+							Order in which this profession appears in lists
 						</Form.Text>
 					</Form.Group>
 

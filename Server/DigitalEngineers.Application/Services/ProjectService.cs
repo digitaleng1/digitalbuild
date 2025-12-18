@@ -394,8 +394,9 @@ public class ProjectService : IProjectService
             {
                 Id = plt.LicenseType.Id,
                 Name = plt.LicenseType.Name,
+                Code = plt.LicenseType.Code,
                 Description = plt.LicenseType.Description,
-                ProfessionId = plt.LicenseType.ProfessionId
+                IsStateSpecific = plt.LicenseType.IsStateSpecific
             })
             .ToArray();
 
@@ -682,7 +683,6 @@ public class ProjectService : IProjectService
                 .Include(ps => ps.Specialist)
                     .ThenInclude(s => s.LicenseTypes)
                         .ThenInclude(slt => slt.LicenseType)
-                            .ThenInclude(lt => lt.Profession)
                 .Select(ps => new
                 {
                     ps.Role,
@@ -691,8 +691,8 @@ public class ProjectService : IProjectService
                     {
                         LicenseTypeId = slt.LicenseTypeId,
                         LicenseTypeName = slt.LicenseType.Name,
-                        ProfessionId = slt.LicenseType.ProfessionId,
-                        ProfessionName = slt.LicenseType.Profession.Name
+                        LicenseTypeCode = slt.LicenseType.Code,
+                        IsStateSpecific = slt.LicenseType.IsStateSpecific
                     }).ToArray()
                 })
                 .ToListAsync(cancellationToken);
@@ -721,7 +721,6 @@ public class ProjectService : IProjectService
             .Include(ps => ps.Specialist)
                 .ThenInclude(s => s.LicenseTypes)
                     .ThenInclude(slt => slt.LicenseType)
-                        .ThenInclude(lt => lt.Profession)
             .Select(ps => new ProjectSpecialistDto
             {
                 SpecialistId = ps.SpecialistId,
@@ -736,8 +735,8 @@ public class ProjectService : IProjectService
                 {
                     LicenseTypeId = slt.LicenseTypeId,
                     LicenseTypeName = slt.LicenseType.Name,
-                    ProfessionId = slt.LicenseType.ProfessionId,
-                    ProfessionName = slt.LicenseType.Profession.Name
+                    LicenseTypeCode = slt.LicenseType.Code,
+                    IsStateSpecific = slt.LicenseType.IsStateSpecific
                 }).ToArray()
             })
             .ToListAsync(cancellationToken);
@@ -757,7 +756,6 @@ public class ProjectService : IProjectService
                 .Include(br => br.Specialist)
                     .ThenInclude(s => s.LicenseTypes)
                         .ThenInclude(slt => slt.LicenseType)
-                            .ThenInclude(lt => lt.Profession)
                 .Select(br => new
                 {
                     SpecialistId = br.SpecialistId,
@@ -770,8 +768,8 @@ public class ProjectService : IProjectService
                     {
                         LicenseTypeId = slt.LicenseTypeId,
                         LicenseTypeName = slt.LicenseType.Name,
-                        ProfessionId = slt.LicenseType.ProfessionId,
-                        ProfessionName = slt.LicenseType.Profession.Name
+                        LicenseTypeCode = slt.LicenseType.Code,
+                        IsStateSpecific = slt.LicenseType.IsStateSpecific
                     }).ToArray()
                 })
                 .Where(x => !assignedSpecialistIds.Contains(x.SpecialistId))

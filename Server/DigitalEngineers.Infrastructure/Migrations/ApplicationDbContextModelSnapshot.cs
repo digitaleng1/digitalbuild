@@ -325,6 +325,11 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -341,13 +346,15 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsStateSpecific")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<int>("ProfessionId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("RejectionReason")
                         .HasMaxLength(1000)
@@ -358,13 +365,14 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("IsApproved");
 
                     b.HasIndex("Name");
-
-                    b.HasIndex("ProfessionId");
 
                     b.ToTable("LicenseTypes", (string)null);
                 });
@@ -486,6 +494,11 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -496,6 +509,11 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<bool>("IsApproved")
                         .ValueGeneratedOnAdd()
@@ -516,6 +534,9 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("IsApproved");
@@ -523,6 +544,120 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("Professions", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProfessionType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsApproved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ProfessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("RequiresStateLicense")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("IsApproved");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("ProfessionId");
+
+                    b.HasIndex("ProfessionId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ProfessionTypes", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProfessionTypeLicenseRequirement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsRequired")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("LicenseTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("ProfessionTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LicenseTypeId");
+
+                    b.HasIndex("ProfessionTypeId");
+
+                    b.HasIndex("ProfessionTypeId", "LicenseTypeId")
+                        .IsUnique();
+
+                    b.ToTable("ProfessionTypeLicenseRequirements", (string)null);
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Project", b =>
@@ -1523,15 +1658,7 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Profession", "Profession")
-                        .WithMany("LicenseTypes")
-                        .HasForeignKey("ProfessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("CreatedBy");
-
-                    b.Navigation("Profession");
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Notification", b =>
@@ -1571,6 +1698,43 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProfessionType", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Profession", "Profession")
+                        .WithMany("ProfessionTypes")
+                        .HasForeignKey("ProfessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Profession");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProfessionTypeLicenseRequirement", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.LicenseType", "LicenseType")
+                        .WithMany("ProfessionTypeLicenseRequirements")
+                        .HasForeignKey("LicenseTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProfessionType", "ProfessionType")
+                        .WithMany("LicenseRequirements")
+                        .HasForeignKey("ProfessionTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LicenseType");
+
+                    b.Navigation("ProfessionType");
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Project", b =>
@@ -1954,9 +2118,19 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Projects");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.LicenseType", b =>
+                {
+                    b.Navigation("ProfessionTypeLicenseRequirements");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Profession", b =>
                 {
-                    b.Navigation("LicenseTypes");
+                    b.Navigation("ProfessionTypes");
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProfessionType", b =>
+                {
+                    b.Navigation("LicenseRequirements");
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Project", b =>

@@ -6,7 +6,9 @@ public class Profession
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public int DisplayOrder { get; set; }
     
     // Approval workflow fields
     public bool IsApproved { get; set; } = true;
@@ -16,6 +18,6 @@ public class Profession
     public string? RejectionReason { get; set; }
     
     // Navigation properties
-    public ICollection<LicenseType> LicenseTypes { get; set; } = new List<LicenseType>();
+    public ICollection<ProfessionType> ProfessionTypes { get; set; } = new List<ProfessionType>();
     public ApplicationUser? CreatedBy { get; set; }
 }

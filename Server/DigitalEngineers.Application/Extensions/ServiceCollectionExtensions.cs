@@ -108,6 +108,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<ISpecialistInvitationService, SpecialistInvitationService>();
+        services.AddScoped<IProfessionTypeService, ProfessionTypeService>();
 
         return services;
     }

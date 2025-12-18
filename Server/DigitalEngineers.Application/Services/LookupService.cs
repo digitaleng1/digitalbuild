@@ -2,6 +2,7 @@ using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Exceptions;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Data;
+using DigitalEngineers.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -83,70 +84,49 @@ public class LookupService : ILookupService
         return Task.FromResult<IEnumerable<StateDto>>(usStates);
     }
 
+    #region Professions
+
     public async Task<IEnumerable<ProfessionDto>> GetProfessionsAsync(CancellationToken cancellationToken = default)
     {
         var professions = await _context.Professions
             .AsNoTracking()
             .Where(p => p.IsApproved)
+            .OrderBy(p => p.DisplayOrder)
+            .ThenBy(p => p.Name)
             .Select(p => new ProfessionDto
             {
                 Id = p.Id,
                 Name = p.Name,
-                Description = p.Description
+                Code = p.Code,
+                Description = p.Description,
+                ProfessionTypesCount = p.ProfessionTypes.Count(pt => pt.IsActive && pt.IsApproved)
             })
             .ToListAsync(cancellationToken);
 
         return professions;
     }
 
-    public async Task<IEnumerable<LicenseTypeDto>> GetLicenseTypesAsync(CancellationToken cancellationToken = default)
-    {
-        var licenseTypes = await _context.LicenseTypes
-            .AsNoTracking()
-            .Where(lt => lt.IsApproved)
-            .Select(lt => new LicenseTypeDto
-            {
-                Id = lt.Id,
-                Name = lt.Name,
-                Description = lt.Description,
-                ProfessionId = lt.ProfessionId
-            })
-            .ToListAsync(cancellationToken);
-
-        return licenseTypes;
-    }
-
-    public async Task<IEnumerable<LicenseTypeDto>> GetLicenseTypesByProfessionIdAsync(int professionId, CancellationToken cancellationToken = default)
-    {
-        var licenseTypes = await _context.LicenseTypes
-            .AsNoTracking()
-            .Where(lt => lt.ProfessionId == professionId && lt.IsApproved)
-            .Select(lt => new LicenseTypeDto
-            {
-                Id = lt.Id,
-                Name = lt.Name,
-                Description = lt.Description,
-                ProfessionId = lt.ProfessionId
-            })
-            .ToListAsync(cancellationToken);
-
-        return licenseTypes;
-    }
-
-    // Client operations
     public async Task<ProfessionDto> CreateProfessionAsync(CreateProfessionDto dto, string userId, CancellationToken cancellationToken = default)
     {
-        var exists = await _context.Professions
+        var existsByName = await _context.Professions
             .AnyAsync(p => p.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
         
-        if (exists)
+        if (existsByName)
             throw new DuplicateProfessionException(dto.Name);
 
-        var profession = new Infrastructure.Entities.Profession
+        var existsByCode = await _context.Professions
+            .AnyAsync(p => p.Code.ToLower() == dto.Code.ToLower(), cancellationToken);
+        
+        if (existsByCode)
+            throw new DuplicateProfessionException($"Code '{dto.Code}' already exists");
+
+        var profession = new Profession
         {
             Name = dto.Name,
+            Code = dto.Code,
             Description = dto.Description,
-            IsApproved = true, // ✅ Immediately approved
+            DisplayOrder = dto.DisplayOrder,
+            IsApproved = true,
             CreatedByUserId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -159,63 +139,28 @@ public class LookupService : ILookupService
         {
             Id = profession.Id,
             Name = profession.Name,
-            Description = profession.Description
+            Code = profession.Code,
+            Description = profession.Description,
+            ProfessionTypesCount = 0
         };
     }
 
-    public async Task<LicenseTypeDto> CreateLicenseTypeAsync(CreateLicenseTypeDto dto, string userId, CancellationToken cancellationToken = default)
-    {
-        var profession = await _context.Professions
-            .FirstOrDefaultAsync(p => p.Id == dto.ProfessionId, cancellationToken);
-        
-        if (profession == null)
-            throw new ProfessionNotFoundException(dto.ProfessionId);
-        
-        var exists = await _context.LicenseTypes
-            .AnyAsync(lt => lt.ProfessionId == dto.ProfessionId && 
-                           lt.Name.ToLower() == dto.Name.ToLower(), 
-                     cancellationToken);
-        
-        if (exists)
-            throw new DuplicateLicenseTypeException(dto.Name, dto.ProfessionId);
-        
-        var licenseType = new Infrastructure.Entities.LicenseType
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            ProfessionId = dto.ProfessionId,
-            IsApproved = true, // ✅ Immediately approved
-            CreatedByUserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        
-        _context.LicenseTypes.Add(licenseType);
-        await _context.SaveChangesAsync(cancellationToken);
-        
-        return new LicenseTypeDto
-        {
-            Id = licenseType.Id,
-            Name = licenseType.Name,
-            Description = licenseType.Description,
-            ProfessionId = licenseType.ProfessionId
-        };
-    }
-
-    // Admin management
     public async Task<IEnumerable<ProfessionManagementDto>> GetAllProfessionsForManagementAsync(CancellationToken cancellationToken = default)
     {
         var professions = await _context.Professions
             .AsNoTracking()
             .Include(p => p.CreatedBy)
-            .Include(p => p.LicenseTypes)
+            .Include(p => p.ProfessionTypes)
             .OrderBy(p => p.IsApproved)
+            .ThenBy(p => p.DisplayOrder)
             .ThenByDescending(p => p.CreatedAt)
             .Select(p => new ProfessionManagementDto
             {
                 Id = p.Id,
                 Name = p.Name,
+                Code = p.Code,
                 Description = p.Description,
+                DisplayOrder = p.DisplayOrder,
                 IsApproved = p.IsApproved,
                 CreatedByUserId = p.CreatedByUserId,
                 CreatedByUserName = p.CreatedBy != null 
@@ -224,47 +169,18 @@ public class LookupService : ILookupService
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 RejectionReason = p.RejectionReason,
-                LicenseTypesCount = p.LicenseTypes.Count
+                ProfessionTypesCount = p.ProfessionTypes.Count
             })
             .ToListAsync(cancellationToken);
 
         return professions;
     }
 
-    public async Task<IEnumerable<LicenseTypeManagementDto>> GetAllLicenseTypesForManagementAsync(CancellationToken cancellationToken = default)
-    {
-        var licenseTypes = await _context.LicenseTypes
-            .AsNoTracking()
-            .Include(lt => lt.CreatedBy)
-            .Include(lt => lt.Profession)
-            .OrderBy(lt => lt.IsApproved)
-            .ThenByDescending(lt => lt.CreatedAt)
-            .Select(lt => new LicenseTypeManagementDto
-            {
-                Id = lt.Id,
-                Name = lt.Name,
-                Description = lt.Description,
-                ProfessionId = lt.ProfessionId,
-                ProfessionName = lt.Profession.Name,
-                IsApproved = lt.IsApproved,
-                CreatedByUserId = lt.CreatedByUserId,
-                CreatedByUserName = lt.CreatedBy != null 
-                    ? $"{lt.CreatedBy.FirstName} {lt.CreatedBy.LastName}" 
-                    : "System",
-                CreatedAt = lt.CreatedAt,
-                UpdatedAt = lt.UpdatedAt,
-                RejectionReason = lt.RejectionReason
-            })
-            .ToListAsync(cancellationToken);
-
-        return licenseTypes;
-    }
-
     public async Task<ProfessionManagementDto> UpdateProfessionAsync(int id, UpdateProfessionDto dto, CancellationToken cancellationToken = default)
     {
         var profession = await _context.Professions
             .Include(p => p.CreatedBy)
-            .Include(p => p.LicenseTypes)
+            .Include(p => p.ProfessionTypes)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         
         if (profession == null)
@@ -275,9 +191,17 @@ public class LookupService : ILookupService
         
         if (existingWithSameName)
             throw new DuplicateProfessionException(dto.Name);
+
+        var existingWithSameCode = await _context.Professions
+            .AnyAsync(p => p.Id != id && p.Code.ToLower() == dto.Code.ToLower(), cancellationToken);
+        
+        if (existingWithSameCode)
+            throw new DuplicateProfessionException($"Code '{dto.Code}' already exists");
         
         profession.Name = dto.Name;
+        profession.Code = dto.Code;
         profession.Description = dto.Description;
+        profession.DisplayOrder = dto.DisplayOrder;
         profession.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
@@ -286,7 +210,9 @@ public class LookupService : ILookupService
         {
             Id = profession.Id,
             Name = profession.Name,
+            Code = profession.Code,
             Description = profession.Description,
+            DisplayOrder = profession.DisplayOrder,
             IsApproved = profession.IsApproved,
             CreatedByUserId = profession.CreatedByUserId,
             CreatedByUserName = profession.CreatedBy != null 
@@ -295,57 +221,7 @@ public class LookupService : ILookupService
             CreatedAt = profession.CreatedAt,
             UpdatedAt = profession.UpdatedAt,
             RejectionReason = profession.RejectionReason,
-            LicenseTypesCount = profession.LicenseTypes.Count
-        };
-    }
-
-    public async Task<LicenseTypeManagementDto> UpdateLicenseTypeAsync(int id, UpdateLicenseTypeDto dto, CancellationToken cancellationToken = default)
-    {
-        var licenseType = await _context.LicenseTypes
-            .Include(lt => lt.CreatedBy)
-            .Include(lt => lt.Profession)
-            .FirstOrDefaultAsync(lt => lt.Id == id, cancellationToken);
-        
-        if (licenseType == null)
-            throw new LicenseTypeNotFoundException(id);
-        
-        var profession = await _context.Professions
-            .FirstOrDefaultAsync(p => p.Id == dto.ProfessionId, cancellationToken);
-        
-        if (profession == null)
-            throw new ProfessionNotFoundException(dto.ProfessionId);
-        
-        var existingWithSameName = await _context.LicenseTypes
-            .AnyAsync(lt => lt.Id != id && 
-                           lt.ProfessionId == dto.ProfessionId && 
-                           lt.Name.ToLower() == dto.Name.ToLower(), 
-                     cancellationToken);
-        
-        if (existingWithSameName)
-            throw new DuplicateLicenseTypeException(dto.Name, dto.ProfessionId);
-        
-        licenseType.Name = dto.Name;
-        licenseType.Description = dto.Description;
-        licenseType.ProfessionId = dto.ProfessionId;
-        licenseType.UpdatedAt = DateTime.UtcNow;
-        
-        await _context.SaveChangesAsync(cancellationToken);
-        
-        return new LicenseTypeManagementDto
-        {
-            Id = licenseType.Id,
-            Name = licenseType.Name,
-            Description = licenseType.Description,
-            ProfessionId = licenseType.ProfessionId,
-            ProfessionName = licenseType.Profession.Name,
-            IsApproved = licenseType.IsApproved,
-            CreatedByUserId = licenseType.CreatedByUserId,
-            CreatedByUserName = licenseType.CreatedBy != null 
-                ? $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}" 
-                : "System",
-            CreatedAt = licenseType.CreatedAt,
-            UpdatedAt = licenseType.UpdatedAt,
-            RejectionReason = licenseType.RejectionReason
+            ProfessionTypesCount = profession.ProfessionTypes.Count
         };
     }
 
@@ -353,7 +229,7 @@ public class LookupService : ILookupService
     {
         var profession = await _context.Professions
             .Include(p => p.CreatedBy)
-            .Include(p => p.LicenseTypes)
+            .Include(p => p.ProfessionTypes)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         
         if (profession == null)
@@ -393,7 +269,9 @@ public class LookupService : ILookupService
         {
             Id = profession.Id,
             Name = profession.Name,
+            Code = profession.Code,
             Description = profession.Description,
+            DisplayOrder = profession.DisplayOrder,
             IsApproved = profession.IsApproved,
             CreatedByUserId = profession.CreatedByUserId,
             CreatedByUserName = profession.CreatedBy != null 
@@ -402,7 +280,185 @@ public class LookupService : ILookupService
             CreatedAt = profession.CreatedAt,
             UpdatedAt = profession.UpdatedAt,
             RejectionReason = profession.RejectionReason,
-            LicenseTypesCount = profession.LicenseTypes.Count
+            ProfessionTypesCount = profession.ProfessionTypes.Count
+        };
+    }
+
+    public async Task DeleteProfessionAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var profession = await _context.Professions
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        
+        if (profession == null)
+            throw new ProfessionNotFoundException(id);
+        
+        _context.Professions.Remove(profession);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    #endregion
+
+    #region LicenseTypes
+
+    public async Task<IEnumerable<LicenseTypeDto>> GetLicenseTypesAsync(CancellationToken cancellationToken = default)
+    {
+        var licenseTypes = await _context.LicenseTypes
+            .AsNoTracking()
+            .Where(lt => lt.IsApproved)
+            .OrderBy(lt => lt.Name)
+            .Select(lt => new LicenseTypeDto
+            {
+                Id = lt.Id,
+                Name = lt.Name,
+                Code = lt.Code,
+                Description = lt.Description,
+                IsStateSpecific = lt.IsStateSpecific
+            })
+            .ToListAsync(cancellationToken);
+
+        return licenseTypes;
+    }
+
+    public async Task<IEnumerable<LicenseTypeDto>> GetLicenseTypesByProfessionIdAsync(int professionId, CancellationToken cancellationToken = default)
+    {
+        // Get license types linked to any ProfessionType under this Profession
+        var licenseTypes = await _context.ProfessionTypeLicenseRequirements
+            .AsNoTracking()
+            .Where(lr => lr.ProfessionType.ProfessionId == professionId && 
+                        lr.ProfessionType.IsActive && 
+                        lr.ProfessionType.IsApproved &&
+                        lr.LicenseType.IsApproved)
+            .Select(lr => lr.LicenseType)
+            .Distinct()
+            .OrderBy(lt => lt.Name)
+            .Select(lt => new LicenseTypeDto
+            {
+                Id = lt.Id,
+                Name = lt.Name,
+                Code = lt.Code,
+                Description = lt.Description,
+                IsStateSpecific = lt.IsStateSpecific
+            })
+            .ToListAsync(cancellationToken);
+
+        return licenseTypes;
+    }
+
+    public async Task<LicenseTypeDto> CreateLicenseTypeAsync(CreateLicenseTypeDto dto, string userId, CancellationToken cancellationToken = default)
+    {
+        var existsByName = await _context.LicenseTypes
+            .AnyAsync(lt => lt.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
+        
+        if (existsByName)
+            throw new DuplicateLicenseTypeException(dto.Name, 0);
+
+        var existsByCode = await _context.LicenseTypes
+            .AnyAsync(lt => lt.Code.ToLower() == dto.Code.ToLower(), cancellationToken);
+        
+        if (existsByCode)
+            throw new DuplicateLicenseTypeException($"Code '{dto.Code}' already exists", 0);
+        
+        var licenseType = new LicenseType
+        {
+            Name = dto.Name,
+            Code = dto.Code,
+            Description = dto.Description,
+            IsStateSpecific = dto.IsStateSpecific,
+            IsApproved = true,
+            CreatedByUserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        _context.LicenseTypes.Add(licenseType);
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        return new LicenseTypeDto
+        {
+            Id = licenseType.Id,
+            Name = licenseType.Name,
+            Code = licenseType.Code,
+            Description = licenseType.Description,
+            IsStateSpecific = licenseType.IsStateSpecific
+        };
+    }
+
+    public async Task<IEnumerable<LicenseTypeManagementDto>> GetAllLicenseTypesForManagementAsync(CancellationToken cancellationToken = default)
+    {
+        var licenseTypes = await _context.LicenseTypes
+            .AsNoTracking()
+            .Include(lt => lt.CreatedBy)
+            .Include(lt => lt.ProfessionTypeLicenseRequirements)
+            .OrderBy(lt => lt.IsApproved)
+            .ThenByDescending(lt => lt.CreatedAt)
+            .Select(lt => new LicenseTypeManagementDto
+            {
+                Id = lt.Id,
+                Name = lt.Name,
+                Code = lt.Code,
+                Description = lt.Description,
+                IsStateSpecific = lt.IsStateSpecific,
+                IsApproved = lt.IsApproved,
+                CreatedByUserId = lt.CreatedByUserId,
+                CreatedByUserName = lt.CreatedBy != null 
+                    ? $"{lt.CreatedBy.FirstName} {lt.CreatedBy.LastName}" 
+                    : "System",
+                CreatedAt = lt.CreatedAt,
+                UpdatedAt = lt.UpdatedAt,
+                RejectionReason = lt.RejectionReason,
+                UsageCount = lt.ProfessionTypeLicenseRequirements.Count
+            })
+            .ToListAsync(cancellationToken);
+
+        return licenseTypes;
+    }
+
+    public async Task<LicenseTypeManagementDto> UpdateLicenseTypeAsync(int id, UpdateLicenseTypeDto dto, CancellationToken cancellationToken = default)
+    {
+        var licenseType = await _context.LicenseTypes
+            .Include(lt => lt.CreatedBy)
+            .Include(lt => lt.ProfessionTypeLicenseRequirements)
+            .FirstOrDefaultAsync(lt => lt.Id == id, cancellationToken);
+        
+        if (licenseType == null)
+            throw new LicenseTypeNotFoundException(id);
+        
+        var existingWithSameName = await _context.LicenseTypes
+            .AnyAsync(lt => lt.Id != id && lt.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
+        
+        if (existingWithSameName)
+            throw new DuplicateLicenseTypeException(dto.Name, 0);
+
+        var existingWithSameCode = await _context.LicenseTypes
+            .AnyAsync(lt => lt.Id != id && lt.Code.ToLower() == dto.Code.ToLower(), cancellationToken);
+        
+        if (existingWithSameCode)
+            throw new DuplicateLicenseTypeException($"Code '{dto.Code}' already exists", 0);
+        
+        licenseType.Name = dto.Name;
+        licenseType.Code = dto.Code;
+        licenseType.Description = dto.Description;
+        licenseType.IsStateSpecific = dto.IsStateSpecific;
+        licenseType.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        return new LicenseTypeManagementDto
+        {
+            Id = licenseType.Id,
+            Name = licenseType.Name,
+            Code = licenseType.Code,
+            Description = licenseType.Description,
+            IsStateSpecific = licenseType.IsStateSpecific,
+            IsApproved = licenseType.IsApproved,
+            CreatedByUserId = licenseType.CreatedByUserId,
+            CreatedByUserName = licenseType.CreatedBy != null 
+                ? $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}" 
+                : "System",
+            CreatedAt = licenseType.CreatedAt,
+            UpdatedAt = licenseType.UpdatedAt,
+            RejectionReason = licenseType.RejectionReason,
+            UsageCount = licenseType.ProfessionTypeLicenseRequirements.Count
         };
     }
 
@@ -410,7 +466,7 @@ public class LookupService : ILookupService
     {
         var licenseType = await _context.LicenseTypes
             .Include(lt => lt.CreatedBy)
-            .Include(lt => lt.Profession)
+            .Include(lt => lt.ProfessionTypeLicenseRequirements)
             .FirstOrDefaultAsync(lt => lt.Id == id, cancellationToken);
         
         if (licenseType == null)
@@ -433,7 +489,7 @@ public class LookupService : ILookupService
                     licenseType.CreatedBy.Email!,
                     $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}",
                     licenseType.Name,
-                    licenseType.Profession.Name,
+                    "General", // No longer profession-specific
                     cancellationToken);
             }
             else
@@ -442,7 +498,7 @@ public class LookupService : ILookupService
                     licenseType.CreatedBy.Email!,
                     $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}",
                     licenseType.Name,
-                    licenseType.Profession.Name,
+                    "General",
                     dto.RejectionReason!,
                     cancellationToken);
             }
@@ -452,9 +508,9 @@ public class LookupService : ILookupService
         {
             Id = licenseType.Id,
             Name = licenseType.Name,
+            Code = licenseType.Code,
             Description = licenseType.Description,
-            ProfessionId = licenseType.ProfessionId,
-            ProfessionName = licenseType.Profession.Name,
+            IsStateSpecific = licenseType.IsStateSpecific,
             IsApproved = licenseType.IsApproved,
             CreatedByUserId = licenseType.CreatedByUserId,
             CreatedByUserName = licenseType.CreatedBy != null 
@@ -462,20 +518,9 @@ public class LookupService : ILookupService
                 : "System",
             CreatedAt = licenseType.CreatedAt,
             UpdatedAt = licenseType.UpdatedAt,
-            RejectionReason = licenseType.RejectionReason
+            RejectionReason = licenseType.RejectionReason,
+            UsageCount = licenseType.ProfessionTypeLicenseRequirements.Count
         };
-    }
-
-    public async Task DeleteProfessionAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var profession = await _context.Professions
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
-        
-        if (profession == null)
-            throw new ProfessionNotFoundException(id);
-        
-        _context.Professions.Remove(profession);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteLicenseTypeAsync(int id, CancellationToken cancellationToken = default)
@@ -490,42 +535,85 @@ public class LookupService : ILookupService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    #endregion
+
+    #region Export/Import
+
     public async Task<ExportDictionariesDto> ExportDictionariesAsync(string userId, CancellationToken cancellationToken = default)
     {
         var professions = await _context.Professions
             .AsNoTracking()
             .Where(p => p.IsApproved)
-            .OrderBy(p => p.Name)
+            .OrderBy(p => p.DisplayOrder)
+            .ThenBy(p => p.Name)
             .Select(p => new ExportProfessionDto
             {
                 Id = p.Id,
                 Name = p.Name,
+                Code = p.Code,
                 Description = p.Description,
+                DisplayOrder = p.DisplayOrder,
                 IsActive = p.IsApproved
+            })
+            .ToListAsync(cancellationToken);
+
+        var professionTypes = await _context.ProfessionTypes
+            .AsNoTracking()
+            .Include(pt => pt.Profession)
+            .Where(pt => pt.IsActive && pt.IsApproved)
+            .OrderBy(pt => pt.Profession.DisplayOrder)
+            .ThenBy(pt => pt.DisplayOrder)
+            .Select(pt => new ExportProfessionTypeDto
+            {
+                Id = pt.Id,
+                Name = pt.Name,
+                Code = pt.Code,
+                Description = pt.Description,
+                ProfessionId = pt.ProfessionId,
+                ProfessionCode = pt.Profession.Code,
+                RequiresStateLicense = pt.RequiresStateLicense,
+                DisplayOrder = pt.DisplayOrder,
+                IsActive = pt.IsActive
             })
             .ToListAsync(cancellationToken);
 
         var licenseTypes = await _context.LicenseTypes
             .AsNoTracking()
-            .Include(lt => lt.Profession)
             .Where(lt => lt.IsApproved)
-            .OrderBy(lt => lt.Profession.Name)
-            .ThenBy(lt => lt.Name)
+            .OrderBy(lt => lt.Name)
             .Select(lt => new ExportLicenseTypeDto
             {
                 Id = lt.Id,
                 Name = lt.Name,
+                Code = lt.Code,
                 Description = lt.Description,
-                ProfessionId = lt.ProfessionId,
-                ProfessionName = lt.Profession.Name,
+                IsStateSpecific = lt.IsStateSpecific,
                 IsActive = lt.IsApproved
+            })
+            .ToListAsync(cancellationToken);
+
+        var licenseRequirements = await _context.ProfessionTypeLicenseRequirements
+            .AsNoTracking()
+            .Include(lr => lr.ProfessionType)
+            .Include(lr => lr.LicenseType)
+            .Select(lr => new ExportLicenseRequirementDto
+            {
+                Id = lr.Id,
+                ProfessionTypeId = lr.ProfessionTypeId,
+                ProfessionTypeCode = lr.ProfessionType.Code,
+                LicenseTypeId = lr.LicenseTypeId,
+                LicenseTypeCode = lr.LicenseType.Code,
+                IsRequired = lr.IsRequired,
+                Notes = lr.Notes
             })
             .ToListAsync(cancellationToken);
 
         return new ExportDictionariesDto
         {
             Professions = professions,
-            LicenseTypes = licenseTypes
+            ProfessionTypes = professionTypes,
+            LicenseTypes = licenseTypes,
+            LicenseRequirements = licenseRequirements
         };
     }
 
@@ -537,15 +625,26 @@ public class LookupService : ILookupService
         if (!result.Success)
             return result;
 
+        // 1. Process Professions
         await ProcessProfessionsAsync(dto.Professions, result, cancellationToken);
-        
         if (!result.Success)
             return result;
-
         await _context.SaveChangesAsync(cancellationToken);
 
+        // 2. Process LicenseTypes
         await ProcessLicenseTypesAsync(dto.LicenseTypes, result, cancellationToken);
+        if (!result.Success)
+            return result;
+        await _context.SaveChangesAsync(cancellationToken);
 
+        // 3. Process ProfessionTypes
+        await ProcessProfessionTypesAsync(dto.ProfessionTypes, result, cancellationToken);
+        if (!result.Success)
+            return result;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // 4. Process LicenseRequirements
+        await ProcessLicenseRequirementsAsync(dto.LicenseRequirements, result, cancellationToken);
         if (result.Success)
         {
             await _context.SaveChangesAsync(cancellationToken);
@@ -556,41 +655,44 @@ public class LookupService : ILookupService
 
     private void ValidateImportData(ImportDictionariesDto dto, ImportResultDto result)
     {
-        var professionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Validate Professions
+        var professionCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var profession in dto.Professions)
         {
             if (string.IsNullOrWhiteSpace(profession.Name))
-            {
                 result.Errors.Add("Profession name cannot be empty");
-                continue;
-            }
-
-            if (!professionNames.Add(profession.Name))
-            {
-                result.Errors.Add($"Duplicate profession name in import data: '{profession.Name}'");
-            }
+            if (string.IsNullOrWhiteSpace(profession.Code))
+                result.Errors.Add($"Profession '{profession.Name}' must have a code");
+            else if (!professionCodes.Add(profession.Code))
+                result.Errors.Add($"Duplicate profession code: '{profession.Code}'");
         }
 
-        var licenseTypeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var licenseType in dto.LicenseTypes)
+        // Validate LicenseTypes
+        var licenseTypeCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var lt in dto.LicenseTypes)
         {
-            if (string.IsNullOrWhiteSpace(licenseType.Name))
-            {
+            if (string.IsNullOrWhiteSpace(lt.Name))
                 result.Errors.Add("License type name cannot be empty");
-                continue;
-            }
+            if (string.IsNullOrWhiteSpace(lt.Code))
+                result.Errors.Add($"License type '{lt.Name}' must have a code");
+            else if (!licenseTypeCodes.Add(lt.Code))
+                result.Errors.Add($"Duplicate license type code: '{lt.Code}'");
+        }
 
-            if (!licenseType.ProfessionId.HasValue && string.IsNullOrWhiteSpace(licenseType.ProfessionName))
-            {
-                result.Errors.Add($"License type '{licenseType.Name}' must have either ProfessionId or ProfessionName");
-                continue;
-            }
-
-            var key = $"{licenseType.ProfessionId ?? 0}_{licenseType.ProfessionName ?? ""}_{licenseType.Name}";
-            if (!licenseTypeKeys.Add(key))
-            {
-                result.Errors.Add($"Duplicate license type in import data: '{licenseType.Name}'");
-            }
+        // Validate ProfessionTypes
+        var professionTypeCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pt in dto.ProfessionTypes)
+        {
+            if (string.IsNullOrWhiteSpace(pt.Name))
+                result.Errors.Add("Profession type name cannot be empty");
+            if (string.IsNullOrWhiteSpace(pt.Code))
+                result.Errors.Add($"Profession type '{pt.Name}' must have a code");
+            if (string.IsNullOrWhiteSpace(pt.ProfessionCode) && !pt.ProfessionId.HasValue)
+                result.Errors.Add($"Profession type '{pt.Name}' must have ProfessionCode or ProfessionId");
+            
+            var key = $"{pt.ProfessionCode ?? pt.ProfessionId?.ToString()}_{pt.Code}";
+            if (!professionTypeCodes.Add(key))
+                result.Errors.Add($"Duplicate profession type code: '{pt.Code}' in profession '{pt.ProfessionCode}'");
         }
     }
 
@@ -607,38 +709,30 @@ public class LookupService : ILookupService
                     continue;
                 }
 
-                if (existing.Name != dto.Name)
-                {
-                    var duplicate = await _context.Professions
-                        .FirstOrDefaultAsync(p => p.Name == dto.Name && p.Id != dto.Id, cancellationToken);
-                    if (duplicate != null)
-                    {
-                        result.Errors.Add($"Profession '{dto.Name}' already exists");
-                        continue;
-                    }
-                }
-
                 existing.Name = dto.Name;
-                existing.Description = dto.Description;
+                existing.Code = dto.Code;
+                existing.Description = dto.Description ?? string.Empty;
+                existing.DisplayOrder = dto.DisplayOrder ?? 0;
                 existing.IsApproved = dto.IsActive;
                 existing.UpdatedAt = DateTime.UtcNow;
-
                 result.ProfessionsUpdated++;
             }
             else
             {
                 var duplicate = await _context.Professions
-                    .FirstOrDefaultAsync(p => p.Name == dto.Name, cancellationToken);
+                    .FirstOrDefaultAsync(p => p.Code == dto.Code, cancellationToken);
                 if (duplicate != null)
                 {
-                    result.Errors.Add($"Profession '{dto.Name}' already exists");
+                    result.Warnings.Add($"Profession with code '{dto.Code}' already exists, skipping");
                     continue;
                 }
 
-                var profession = new Infrastructure.Entities.Profession
+                var profession = new Profession
                 {
                     Name = dto.Name,
-                    Description = dto.Description,
+                    Code = dto.Code,
+                    Description = dto.Description ?? string.Empty,
+                    DisplayOrder = dto.DisplayOrder ?? 0,
                     IsApproved = dto.IsActive,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -654,34 +748,6 @@ public class LookupService : ILookupService
     {
         foreach (var dto in licenseTypes)
         {
-            int professionId;
-            if (dto.ProfessionId.HasValue)
-            {
-                professionId = dto.ProfessionId.Value;
-                var professionExists = await _context.Professions.AnyAsync(p => p.Id == professionId, cancellationToken);
-                if (!professionExists)
-                {
-                    result.Errors.Add($"Profession ID {professionId} not found for license type '{dto.Name}'");
-                    continue;
-                }
-            }
-            else if (!string.IsNullOrEmpty(dto.ProfessionName))
-            {
-                var profession = await _context.Professions
-                    .FirstOrDefaultAsync(p => p.Name == dto.ProfessionName, cancellationToken);
-                if (profession == null)
-                {
-                    result.Errors.Add($"Profession '{dto.ProfessionName}' not found for license type '{dto.Name}'");
-                    continue;
-                }
-                professionId = profession.Id;
-            }
-            else
-            {
-                result.Errors.Add($"License type '{dto.Name}' missing ProfessionId or ProfessionName");
-                continue;
-            }
-
             if (dto.Id.HasValue)
             {
                 var existing = await _context.LicenseTypes.FindAsync([dto.Id.Value], cancellationToken);
@@ -691,45 +757,30 @@ public class LookupService : ILookupService
                     continue;
                 }
 
-                if (existing.Name != dto.Name || existing.ProfessionId != professionId)
-                {
-                    var duplicate = await _context.LicenseTypes
-                        .FirstOrDefaultAsync(lt =>
-                            lt.Name == dto.Name &&
-                            lt.ProfessionId == professionId &&
-                            lt.Id != dto.Id, cancellationToken);
-                    if (duplicate != null)
-                    {
-                        result.Errors.Add($"License type '{dto.Name}' already exists in this profession");
-                        continue;
-                    }
-                }
-
                 existing.Name = dto.Name;
-                existing.Description = dto.Description;
-                existing.ProfessionId = professionId;
+                existing.Code = dto.Code;
+                existing.Description = dto.Description ?? string.Empty;
+                existing.IsStateSpecific = dto.IsStateSpecific;
                 existing.IsApproved = dto.IsActive;
                 existing.UpdatedAt = DateTime.UtcNow;
-
                 result.LicenseTypesUpdated++;
             }
             else
             {
                 var duplicate = await _context.LicenseTypes
-                    .FirstOrDefaultAsync(lt =>
-                        lt.Name == dto.Name &&
-                        lt.ProfessionId == professionId, cancellationToken);
+                    .FirstOrDefaultAsync(lt => lt.Code == dto.Code, cancellationToken);
                 if (duplicate != null)
                 {
-                    result.Errors.Add($"License type '{dto.Name}' already exists in this profession");
+                    result.Warnings.Add($"License type with code '{dto.Code}' already exists, skipping");
                     continue;
                 }
 
-                var licenseType = new Infrastructure.Entities.LicenseType
+                var licenseType = new LicenseType
                 {
                     Name = dto.Name,
-                    Description = dto.Description,
-                    ProfessionId = professionId,
+                    Code = dto.Code,
+                    Description = dto.Description ?? string.Empty,
+                    IsStateSpecific = dto.IsStateSpecific,
                     IsApproved = dto.IsActive,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -740,4 +791,121 @@ public class LookupService : ILookupService
             }
         }
     }
+
+    private async Task ProcessProfessionTypesAsync(List<ImportProfessionTypeDto> professionTypes, ImportResultDto result, CancellationToken cancellationToken)
+    {
+        foreach (var dto in professionTypes)
+        {
+            int professionId;
+            if (dto.ProfessionId.HasValue)
+            {
+                professionId = dto.ProfessionId.Value;
+            }
+            else
+            {
+                var profession = await _context.Professions
+                    .FirstOrDefaultAsync(p => p.Code == dto.ProfessionCode, cancellationToken);
+                if (profession == null)
+                {
+                    result.Errors.Add($"Profession with code '{dto.ProfessionCode}' not found for profession type '{dto.Name}'");
+                    continue;
+                }
+                professionId = profession.Id;
+            }
+
+            if (dto.Id.HasValue)
+            {
+                var existing = await _context.ProfessionTypes.FindAsync([dto.Id.Value], cancellationToken);
+                if (existing == null)
+                {
+                    result.Errors.Add($"Profession type ID {dto.Id} not found");
+                    continue;
+                }
+
+                existing.Name = dto.Name;
+                existing.Code = dto.Code;
+                existing.Description = dto.Description ?? string.Empty;
+                existing.ProfessionId = professionId;
+                existing.RequiresStateLicense = dto.RequiresStateLicense;
+                existing.DisplayOrder = dto.DisplayOrder ?? 0;
+                existing.IsActive = dto.IsActive;
+                existing.UpdatedAt = DateTime.UtcNow;
+                result.ProfessionTypesUpdated++;
+            }
+            else
+            {
+                var duplicate = await _context.ProfessionTypes
+                    .FirstOrDefaultAsync(pt => pt.ProfessionId == professionId && pt.Code == dto.Code, cancellationToken);
+                if (duplicate != null)
+                {
+                    result.Warnings.Add($"Profession type with code '{dto.Code}' already exists in profession, skipping");
+                    continue;
+                }
+
+                var professionType = new ProfessionType
+                {
+                    Name = dto.Name,
+                    Code = dto.Code,
+                    Description = dto.Description ?? string.Empty,
+                    ProfessionId = professionId,
+                    RequiresStateLicense = dto.RequiresStateLicense,
+                    DisplayOrder = dto.DisplayOrder ?? 0,
+                    IsActive = dto.IsActive,
+                    IsApproved = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.ProfessionTypes.Add(professionType);
+                result.ProfessionTypesCreated++;
+            }
+        }
+    }
+
+    private async Task ProcessLicenseRequirementsAsync(List<ImportLicenseRequirementDto> requirements, ImportResultDto result, CancellationToken cancellationToken)
+    {
+        foreach (var dto in requirements)
+        {
+            var professionType = await _context.ProfessionTypes
+                .FirstOrDefaultAsync(pt => pt.Code == dto.ProfessionTypeCode, cancellationToken);
+            if (professionType == null)
+            {
+                result.Errors.Add($"Profession type with code '{dto.ProfessionTypeCode}' not found");
+                continue;
+            }
+
+            var licenseType = await _context.LicenseTypes
+                .FirstOrDefaultAsync(lt => lt.Code == dto.LicenseTypeCode, cancellationToken);
+            if (licenseType == null)
+            {
+                result.Errors.Add($"License type with code '{dto.LicenseTypeCode}' not found");
+                continue;
+            }
+
+            var existing = await _context.ProfessionTypeLicenseRequirements
+                .FirstOrDefaultAsync(lr => lr.ProfessionTypeId == professionType.Id && 
+                                          lr.LicenseTypeId == licenseType.Id, cancellationToken);
+            if (existing != null)
+            {
+                existing.IsRequired = dto.IsRequired;
+                existing.Notes = dto.Notes;
+                result.LicenseRequirementsUpdated++;
+            }
+            else
+            {
+                var requirement = new ProfessionTypeLicenseRequirement
+                {
+                    ProfessionTypeId = professionType.Id,
+                    LicenseTypeId = licenseType.Id,
+                    IsRequired = dto.IsRequired,
+                    Notes = dto.Notes
+                };
+
+                _context.ProfessionTypeLicenseRequirements.Add(requirement);
+                result.LicenseRequirementsCreated++;
+            }
+        }
+    }
+
+    #endregion
 }

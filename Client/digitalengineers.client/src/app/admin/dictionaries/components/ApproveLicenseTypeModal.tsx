@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Spinner } from 'react-bootstrap';
+import { Modal, Button, Form, Spinner, Badge } from 'react-bootstrap';
 import type { LicenseTypeManagementDto } from '@/types/lookup';
 
 interface ApproveLicenseTypeModalProps {
@@ -68,18 +68,36 @@ const ApproveLicenseTypeModal: React.FC<ApproveLicenseTypeModalProps> = ({
 				</Modal.Header>
 				<Modal.Body>
 					<div className="mb-3">
-						<strong>License Type:</strong> {licenseType.name}
+						<div className="d-flex align-items-center gap-2">
+							<strong>License Type:</strong> 
+							<span>{licenseType.name}</span>
+							<Badge bg="info" className="font-monospace">{licenseType.code}</Badge>
+						</div>
 					</div>
-					<div className="mb-3">
-						<small className="text-muted">Profession: <strong>{licenseType.professionName}</strong></small>
-					</div>
-					<div className="mb-3 text-muted">
-						<small>{licenseType.description}</small>
-					</div>
-					{licenseType.createdByName && (
+					{licenseType.isStateSpecific && (
+						<div className="mb-3">
+							<Badge bg="warning" text="dark">
+								<i className="mdi mdi-map-marker-outline me-1"></i>
+								State-Specific
+							</Badge>
+						</div>
+					)}
+					{licenseType.description && (
+						<div className="mb-3 text-muted">
+							<small>{licenseType.description}</small>
+						</div>
+					)}
+					{licenseType.usageCount > 0 && (
 						<div className="mb-3">
 							<small className="text-muted">
-								Created by: <strong>{licenseType.createdByName}</strong>
+								Used in {licenseType.usageCount} profession type{licenseType.usageCount > 1 ? 's' : ''}
+							</small>
+						</div>
+					)}
+					{licenseType.createdByUserName && (
+						<div className="mb-3">
+							<small className="text-muted">
+								Created by: <strong>{licenseType.createdByUserName}</strong>
 								<br />
 								Created at: {new Date(licenseType.createdAt).toLocaleDateString()}
 							</small>

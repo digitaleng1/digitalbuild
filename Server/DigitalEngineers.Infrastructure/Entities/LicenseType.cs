@@ -6,8 +6,9 @@ public class LicenseType
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public int ProfessionId { get; set; }
+    public bool IsStateSpecific { get; set; }
     
     // Approval workflow fields
     public bool IsApproved { get; set; } = true;
@@ -17,6 +18,6 @@ public class LicenseType
     public string? RejectionReason { get; set; }
     
     // Navigation properties
-    public Profession Profession { get; set; } = null!;
+    public ICollection<ProfessionTypeLicenseRequirement> ProfessionTypeLicenseRequirements { get; set; } = new List<ProfessionTypeLicenseRequirement>();
     public ApplicationUser? CreatedBy { get; set; }
 }

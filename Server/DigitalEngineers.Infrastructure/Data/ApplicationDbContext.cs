@@ -17,7 +17,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Profession> Professions => Set<Profession>();
+    public DbSet<ProfessionType> ProfessionTypes => Set<ProfessionType>();
     public DbSet<LicenseType> LicenseTypes => Set<LicenseType>();
+    public DbSet<ProfessionTypeLicenseRequirement> ProfessionTypeLicenseRequirements => Set<ProfessionTypeLicenseRequirement>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectLicenseType> ProjectLicenseTypes => Set<ProjectLicenseType>();
     public DbSet<ProjectFile> ProjectFiles => Set<ProjectFile>();
