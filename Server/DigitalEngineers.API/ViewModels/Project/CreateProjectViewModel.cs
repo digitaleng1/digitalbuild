@@ -35,6 +35,9 @@ public class CreateProjectViewModel
     [Range(1, 3, ErrorMessage = "Invalid project scope")]
     public int ProjectScope { get; set; }
 
+    [Required(ErrorMessage = "Management type is required")]
+    public string ManagementType { get; set; } = "DigitalEngineersManaged";
+
     [Required(ErrorMessage = "Project description is required")]
     [StringLength(5000, MinimumLength = 50, ErrorMessage = "Description must be between 50 and 5000 characters")]
     public string Description { get; set; } = string.Empty;

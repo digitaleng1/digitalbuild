@@ -6,8 +6,10 @@ interface ClientManagedAlertProps {
 }
 
 const ClientManagedAlert = ({ project }: ClientManagedAlertProps) => {
-	console.log(project);
-	// Show alert only for QuotePending + ClientManaged
+	// NOTE: This component is no longer needed as ClientManaged projects skip QuotePending status
+	// Kept for backward compatibility with existing projects that might still be in QuotePending
+	
+	// Show alert only for QuotePending + ClientManaged (should not happen for new projects)
 	if (project.status !== ProjectStatus.QuotePending || 
 	    project.managementType !== ProjectManagementType.ClientManaged) {
 		return null;

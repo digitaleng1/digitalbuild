@@ -250,6 +250,58 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendClientManagedProjectCreatedNotificationAsync(
+        string toEmail,
+        string clientName,
+        string projectName,
+        string description,
+        string address,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "ClientName", clientName },
+            { "ProjectName", projectName },
+            { "Description", description },
+            { "Address", address },
+            { "ProjectUrl", $"{GetBaseUrl()}/client/projects" }
+        };
+
+        var emailDto = new EmailDto
+        {
+            To = toEmail,
+            Subject = $"Project '{projectName}' is Ready to Use",
+            Body = $@"
+                <h2>Hello {clientName},</h2>
+                <p>Your self-managed project <strong>{projectName}</strong> has been successfully created and is ready to use!</p>
+                <p><strong>Project Details:</strong></p>
+                <ul>
+                    <li><strong>Name:</strong> {projectName}</li>
+                    <li><strong>Description:</strong> {description}</li>
+                    <li><strong>Location:</strong> {address}</li>
+                    <li><strong>Management Type:</strong> Client Managed (Self-Managed)</li>
+                </ul>
+                <p><strong>What you can do now:</strong></p>
+                <ul>
+                    <li>Invite specialists to your project</li>
+                    <li>Create and manage tasks</li>
+                    <li>Upload project files</li>
+                    <li>Track project progress</li>
+                </ul>
+                <p>
+                    <a href='{placeholders["ProjectUrl"]}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                        Go to Your Projects
+                    </a>
+                </p>
+                <p>No approval is needed - you can start working on your project right away!</p>
+                <p>Best regards,<br/>The Novobid Team</p>
+            ",
+            IsHtml = true
+        };
+
+        await SendEmailAsync(emailDto, cancellationToken);
+    }
+
     public async Task SendProjectStatusChangedNotificationAsync(
         string toEmail,
         string clientName,

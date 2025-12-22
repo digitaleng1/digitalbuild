@@ -158,8 +158,8 @@ const Step2LocationScope = () => {
 									</strong>
 									<span className="text-muted small">
 										{managementType === ProjectManagementType.DigitalEngineersManaged 
-											? 'Our admin team manages the project and specialists' 
-											: 'You manage the project and specialists yourself'
+											? 'Our admin team manages the project and specialists (requires quote approval)' 
+											: 'You manage the project and specialists yourself (no approval needed - ready instantly!)'
 										}
 									</span>
 								</div>

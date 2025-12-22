@@ -67,10 +67,18 @@ public class ProjectService : IProjectService
             
             if (licenseTypeIds.Count == 0)
             {
-                _logger.LogWarning("No license types found for profession type IDs: {ProfessionTypeIds}", 
-                    string.Join(", ", dto.ProfessionTypeIds));
+                // Get profession type names for better error message
+                var professionTypeNames = await _context.Set<ProfessionType>()
+                    .Where(pt => dto.ProfessionTypeIds.Contains(pt.Id))
+                    .Select(pt => pt.Name)
+                    .ToListAsync(cancellationToken);
+                
+                _logger.LogWarning("No license types found for profession types: {ProfessionTypeNames}", 
+                    string.Join(", ", professionTypeNames));
+                
                 throw new ArgumentException(
-                    $"No license types found for the selected profession types. Please ensure the profession types have associated licenses.",
+                    $"No required licenses found for the selected profession types: {string.Join(", ", professionTypeNames)}. " +
+                    "Please contact administrator to configure license requirements for these profession types.",
                     nameof(dto.ProfessionTypeIds));
             }
         }
@@ -113,7 +121,10 @@ public class ProjectService : IProjectService
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                Status = ProjectStatus.QuotePending,
+                // Set status based on management type
+                Status = dto.ManagementType == ProjectManagementType.ClientManaged 
+                    ? ProjectStatus.InProgress 
+                    : ProjectStatus.QuotePending,
                 ClientId = clientId,
                 StreetAddress = dto.StreetAddress,
                 City = dto.City,
@@ -298,13 +309,18 @@ public class ProjectService : IProjectService
                 clientProfilePictureUrl = client.ProfilePictureUrl;
             }
 
+            // NEW: Send different notifications based on management type
+            var notificationBody = dto.ManagementType == ProjectManagementType.ClientManaged
+                ? $"Your project '{project.Name}' is ready to use. You can invite specialists and manage tasks."
+                : $"Your project '{project.Name}' has been successfully created and is awaiting a quote.";
+
             // Send push notification to client
             await _notificationService.SendPushNotificationAsync(
                 receiverUserId: clientId,
                 type: NotificationType.Project,
                 subType: NotificationSubType.Created,
                 title: "Project Created",
-                body: $"Your project '{project.Name}' has been successfully created and is awaiting a quote.",
+                body: notificationBody,
                 additionalData: new Dictionary<string, string>
                 {
                     { "projectId", project.Id.ToString() },
@@ -320,14 +336,27 @@ public class ProjectService : IProjectService
 
             await transaction.CommitAsync(cancellationToken);
 
-            // Send project created email to client
-            await _emailService.SendProjectCreatedNotificationAsync(
-                client!.Email!,
-                clientName!,
-                project.Name,
-                project.Description,
-                $"{project.StreetAddress}, {project.City}, {project.State}",
-                cancellationToken);
+            // NEW: Send different email based on management type
+            if (dto.ManagementType == ProjectManagementType.ClientManaged)
+            {
+                await _emailService.SendClientManagedProjectCreatedNotificationAsync(
+                    client!.Email!,
+                    clientName!,
+                    project.Name,
+                    project.Description,
+                    $"{project.StreetAddress}, {project.City}, {project.State}",
+                    cancellationToken);
+            }
+            else
+            {
+                await _emailService.SendProjectCreatedNotificationAsync(
+                    client!.Email!,
+                    clientName!,
+                    project.Name,
+                    project.Description,
+                    $"{project.StreetAddress}, {project.City}, {project.State}",
+                    cancellationToken);
+            }
 
             return new ProjectDto
             {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardBody, Button, Form, Alert, Spinner, Table } from 'react-bootstrap';
 import CardTitle from '@/components/CardTitle';
 import { useProjectQuote } from '@/app/shared/hooks/useProjectQuote';
-import { ProjectStatus, type ProjectDetailsDto } from '@/types/project';
+import { ProjectStatus, ProjectManagementType, type ProjectDetailsDto } from '@/types/project';
 
 interface QuoteCreationCardProps {
 	projectId: number;
@@ -11,6 +11,11 @@ interface QuoteCreationCardProps {
 }
 
 const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreationCardProps) => {
+	// Don't show for ClientManaged projects
+	if (project.managementType === ProjectManagementType.ClientManaged) {
+		return null;
+	}
+
 	const { quote, loading, fetchQuote, submitQuote } = useProjectQuote();
 	const [quotedAmount, setQuotedAmount] = useState<string>('');
 	const [quoteNotes, setQuoteNotes] = useState<string>('');

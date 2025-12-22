@@ -1,12 +1,15 @@
 import { Alert } from 'react-bootstrap';
 import type { ProjectDetailsDto } from '@/types/project';
+import { ProjectManagementType } from '@/types/project';
 
 interface PendingAlertProps {
 	project: ProjectDetailsDto;
 }
 
 const PendingAlert = ({ project }: PendingAlertProps) => {
-	if (project.status !== 'QuotePending') {
+	// Don't show for ClientManaged projects or if status is not QuotePending
+	if (project.status !== 'QuotePending' || 
+	    project.managementType === ProjectManagementType.ClientManaged) {
 		return null;
 	}
 

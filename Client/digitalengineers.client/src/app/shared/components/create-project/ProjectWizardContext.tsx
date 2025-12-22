@@ -63,10 +63,20 @@ export const ProjectWizardProvider = ({ children }: ProjectWizardProviderProps) 
 			const dataToSubmit = finalData ? { ...formData, ...finalData } : formData;
 			const result = await projectService.createProject(dataToSubmit);
 			console.log('Project created:', result);
-			showSuccess(
-				'Project Submitted Successfully',
-				'Your project has been submitted and is now under review by our specialists. We will contact you shortly.'
-			);
+			
+			// Show different success message based on management type
+			if (dataToSubmit.managementType === ProjectManagementType.ClientManaged) {
+				showSuccess(
+					'Project Created',
+					'Your project is ready to use! You can now invite specialists and start managing tasks.'
+				);
+			} else {
+				showSuccess(
+					'Project Created',
+					'Your project has been submitted and is awaiting a quote from our team.'
+				);
+			}
+			
 			resetForm();
 			navigate('/client/projects');
 		} catch (error: any) {

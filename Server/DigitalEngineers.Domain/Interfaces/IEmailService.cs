@@ -66,6 +66,14 @@ public interface IEmailService
         string address,
         CancellationToken cancellationToken = default);
 
+    Task SendClientManagedProjectCreatedNotificationAsync(
+        string toEmail,
+        string clientName,
+        string projectName,
+        string description,
+        string address,
+        CancellationToken cancellationToken = default);
+
     Task SendProjectStatusChangedNotificationAsync(
         string toEmail,
         string clientName,
