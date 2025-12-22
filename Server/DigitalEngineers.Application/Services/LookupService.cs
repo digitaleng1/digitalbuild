@@ -106,7 +106,7 @@ public class LookupService : ILookupService
         return professions;
     }
 
-    public async Task<ProfessionDto> CreateProfessionAsync(CreateProfessionDto dto, string userId, CancellationToken cancellationToken = default)
+    public async Task<ProfessionDto> CreateProfessionAsync(CreateProfessionDto dto, CancellationToken cancellationToken = default)
     {
         var existsByName = await _context.Professions
             .AnyAsync(p => p.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
@@ -127,7 +127,6 @@ public class LookupService : ILookupService
             Description = dto.Description,
             DisplayOrder = dto.DisplayOrder,
             IsApproved = true,
-            CreatedByUserId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -225,65 +224,6 @@ public class LookupService : ILookupService
         };
     }
 
-    public async Task<ProfessionManagementDto> ApproveProfessionAsync(int id, ApproveProfessionDto dto, CancellationToken cancellationToken = default)
-    {
-        var profession = await _context.Professions
-            .Include(p => p.CreatedBy)
-            .Include(p => p.ProfessionTypes)
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
-        
-        if (profession == null)
-            throw new ProfessionNotFoundException(id);
-        
-        if (!dto.IsApproved && string.IsNullOrWhiteSpace(dto.RejectionReason))
-            throw new ValidationException("Rejection reason is required when rejecting a profession");
-        
-        profession.IsApproved = dto.IsApproved;
-        profession.RejectionReason = dto.IsApproved ? null : dto.RejectionReason;
-        profession.UpdatedAt = DateTime.UtcNow;
-        
-        await _context.SaveChangesAsync(cancellationToken);
-
-        if (profession.CreatedBy != null)
-        {
-            if (dto.IsApproved)
-            {
-                await _emailService.SendProfessionApprovalNotificationAsync(
-                    profession.CreatedBy.Email!,
-                    $"{profession.CreatedBy.FirstName} {profession.CreatedBy.LastName}",
-                    profession.Name,
-                    cancellationToken);
-            }
-            else
-            {
-                await _emailService.SendProfessionRejectionNotificationAsync(
-                    profession.CreatedBy.Email!,
-                    $"{profession.CreatedBy.FirstName} {profession.CreatedBy.LastName}",
-                    profession.Name,
-                    dto.RejectionReason!,
-                    cancellationToken);
-            }
-        }
-        
-        return new ProfessionManagementDto
-        {
-            Id = profession.Id,
-            Name = profession.Name,
-            Code = profession.Code,
-            Description = profession.Description,
-            DisplayOrder = profession.DisplayOrder,
-            IsApproved = profession.IsApproved,
-            CreatedByUserId = profession.CreatedByUserId,
-            CreatedByUserName = profession.CreatedBy != null 
-                ? $"{profession.CreatedBy.FirstName} {profession.CreatedBy.LastName}" 
-                : "System",
-            CreatedAt = profession.CreatedAt,
-            UpdatedAt = profession.UpdatedAt,
-            RejectionReason = profession.RejectionReason,
-            ProfessionTypesCount = profession.ProfessionTypes.Count
-        };
-    }
-
     public async Task DeleteProfessionAsync(int id, CancellationToken cancellationToken = default)
     {
         var profession = await _context.Professions
@@ -344,7 +284,7 @@ public class LookupService : ILookupService
         return licenseTypes;
     }
 
-    public async Task<LicenseTypeDto> CreateLicenseTypeAsync(CreateLicenseTypeDto dto, string userId, CancellationToken cancellationToken = default)
+    public async Task<LicenseTypeDto> CreateLicenseTypeAsync(CreateLicenseTypeDto dto, CancellationToken cancellationToken = default)
     {
         var existsByName = await _context.LicenseTypes
             .AnyAsync(lt => lt.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
@@ -365,7 +305,6 @@ public class LookupService : ILookupService
             Description = dto.Description,
             IsStateSpecific = dto.IsStateSpecific,
             IsApproved = true,
-            CreatedByUserId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -442,67 +381,6 @@ public class LookupService : ILookupService
         licenseType.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
-        
-        return new LicenseTypeManagementDto
-        {
-            Id = licenseType.Id,
-            Name = licenseType.Name,
-            Code = licenseType.Code,
-            Description = licenseType.Description,
-            IsStateSpecific = licenseType.IsStateSpecific,
-            IsApproved = licenseType.IsApproved,
-            CreatedByUserId = licenseType.CreatedByUserId,
-            CreatedByUserName = licenseType.CreatedBy != null 
-                ? $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}" 
-                : "System",
-            CreatedAt = licenseType.CreatedAt,
-            UpdatedAt = licenseType.UpdatedAt,
-            RejectionReason = licenseType.RejectionReason,
-            UsageCount = licenseType.ProfessionTypeLicenseRequirements.Count
-        };
-    }
-
-    public async Task<LicenseTypeManagementDto> ApproveLicenseTypeAsync(int id, ApproveLicenseTypeDto dto, CancellationToken cancellationToken = default)
-    {
-        var licenseType = await _context.LicenseTypes
-            .Include(lt => lt.CreatedBy)
-            .Include(lt => lt.ProfessionTypeLicenseRequirements)
-            .FirstOrDefaultAsync(lt => lt.Id == id, cancellationToken);
-        
-        if (licenseType == null)
-            throw new LicenseTypeNotFoundException(id);
-        
-        if (!dto.IsApproved && string.IsNullOrWhiteSpace(dto.RejectionReason))
-            throw new ValidationException("Rejection reason is required when rejecting a license type");
-        
-        licenseType.IsApproved = dto.IsApproved;
-        licenseType.RejectionReason = dto.IsApproved ? null : dto.RejectionReason;
-        licenseType.UpdatedAt = DateTime.UtcNow;
-        
-        await _context.SaveChangesAsync(cancellationToken);
-
-        if (licenseType.CreatedBy != null)
-        {
-            if (dto.IsApproved)
-            {
-                await _emailService.SendLicenseTypeApprovalNotificationAsync(
-                    licenseType.CreatedBy.Email!,
-                    $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}",
-                    licenseType.Name,
-                    "General", // No longer profession-specific
-                    cancellationToken);
-            }
-            else
-            {
-                await _emailService.SendLicenseTypeRejectionNotificationAsync(
-                    licenseType.CreatedBy.Email!,
-                    $"{licenseType.CreatedBy.FirstName} {licenseType.CreatedBy.LastName}",
-                    licenseType.Name,
-                    "General",
-                    dto.RejectionReason!,
-                    cancellationToken);
-            }
-        }
         
         return new LicenseTypeManagementDto
         {

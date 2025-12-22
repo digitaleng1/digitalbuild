@@ -86,12 +86,6 @@ class LookupService {
 		return response as ProfessionManagementDto;
 	}
 
-	async approveProfession(id: number, dto: ApproveProfessionDto): Promise<ProfessionManagementDto> {
-		const response = await httpClient.put<ProfessionManagementDto>(`/api/lookup/professions/${id}/approve`, dto);
-		this.clearCache();
-		return response as ProfessionManagementDto;
-	}
-
 	async deleteProfession(id: number): Promise<void> {
 		await httpClient.delete(`/api/lookup/professions/${id}`);
 		this.clearCache();
@@ -99,7 +93,14 @@ class LookupService {
 
 	// ==================== PROFESSION TYPES ====================
 
-	async getProfessionTypes(professionId: number): Promise<ProfessionType[]> {
+	async getProfessionTypes(params?: { professionId?: number }): Promise<ProfessionType[]> {
+		const professionId = params?.professionId;
+		
+		if (!professionId) {
+			// If no professionId provided, return empty array or fetch all
+			return [];
+		}
+		
 		const cacheKey = `profession-types-${professionId}`;
 		const cached = this.getCachedData<ProfessionType[]>(cacheKey);
 
@@ -134,12 +135,6 @@ class LookupService {
 
 	async updateProfessionType(id: number, dto: UpdateProfessionTypeDto): Promise<ProfessionTypeManagementDto> {
 		const response = await httpClient.put<ProfessionTypeManagementDto>(`/api/profession-types/${id}`, dto);
-		this.clearCache();
-		return response as ProfessionTypeManagementDto;
-	}
-
-	async approveProfessionType(id: number, dto: ApproveProfessionTypeDto): Promise<ProfessionTypeManagementDto> {
-		const response = await httpClient.put<ProfessionTypeManagementDto>(`/api/profession-types/${id}/approve`, dto);
 		this.clearCache();
 		return response as ProfessionTypeManagementDto;
 	}
@@ -183,12 +178,6 @@ class LookupService {
 		return response as LicenseTypeManagementDto;
 	}
 
-	async approveLicenseType(id: number, dto: ApproveLicenseTypeDto): Promise<LicenseTypeManagementDto> {
-		const response = await httpClient.put<LicenseTypeManagementDto>(`/api/lookup/license-types/${id}/approve`, dto);
-		this.clearCache();
-		return response as LicenseTypeManagementDto;
-	}
-
 	async deleteLicenseType(id: number): Promise<void> {
 		await httpClient.delete(`/api/lookup/license-types/${id}`);
 		this.clearCache();
@@ -212,14 +201,21 @@ class LookupService {
 		return response as LicenseRequirement;
 	}
 
-	async updateLicenseRequirement(id: number, dto: UpdateLicenseRequirementDto): Promise<LicenseRequirement> {
-		const response = await httpClient.put<LicenseRequirement>(`/api/license-requirements/${id}`, dto);
+	async updateLicenseRequirement(
+		professionTypeId: number, 
+		licenseTypeId: number, 
+		dto: UpdateLicenseRequirementDto
+	): Promise<LicenseRequirement> {
+		const response = await httpClient.put<LicenseRequirement>(
+			`/api/profession-types/${professionTypeId}/license-requirements/${licenseTypeId}`, 
+			dto
+		);
 		this.clearCache();
 		return response as LicenseRequirement;
 	}
 
-	async deleteLicenseRequirement(id: number): Promise<void> {
-		await httpClient.delete(`/api/license-requirements/${id}`);
+	async deleteLicenseRequirement(professionTypeId: number, licenseTypeId: number): Promise<void> {
+		await httpClient.delete(`/api/profession-types/${professionTypeId}/license-requirements/${licenseTypeId}`);
 		this.clearCache();
 	}
 
@@ -278,3 +274,24 @@ class LookupService {
 }
 
 export default new LookupService();
+
+// Admin operations
+export const createProfession = async (
+  dto: CreateProfessionDto
+): Promise<ProfessionDto> => {
+  const response = await apiClient.post<ProfessionDto>(
+    `${BASE_URL}/professions`,
+    dto
+  );
+  return response.data;
+};
+
+export const createLicenseType = async (
+  dto: CreateLicenseTypeDto
+): Promise<LicenseTypeDto> => {
+  const response = await apiClient.post<LicenseTypeDto>(
+    `${BASE_URL}/license-types`,
+    dto
+  );
+  return response.data;
+};

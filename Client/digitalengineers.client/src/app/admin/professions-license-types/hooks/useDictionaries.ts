@@ -4,14 +4,13 @@ import { useToast } from '@/contexts/ToastContext';
 import type { 
 	ProfessionManagementDto, 
 	LicenseTypeManagementDto,
-	ProfessionTypeManagementDto,
+	ProfessionTypeDetailDto,
+	CreateProfessionDto,
 	UpdateProfessionDto, 
+	CreateLicenseTypeDto,
 	UpdateLicenseTypeDto, 
-	ApproveProfessionDto, 
-	ApproveLicenseTypeDto,
 	CreateProfessionTypeDto,
 	UpdateProfessionTypeDto,
-	ApproveProfessionTypeDto,
 	LicenseRequirement,
 	CreateLicenseRequirementDto,
 	UpdateLicenseRequirementDto
@@ -19,7 +18,7 @@ import type {
 
 export const useDictionaries = () => {
 	const [professions, setProfessions] = useState<ProfessionManagementDto[]>([]);
-	const [professionTypes, setProfessionTypes] = useState<ProfessionTypeManagementDto[]>([]);
+	const [professionTypes, setProfessionTypes] = useState<ProfessionTypeDetailDto[]>([]);
 	const [licenseTypes, setLicenseTypes] = useState<LicenseTypeManagementDto[]>([]);
 	const [licenseRequirements, setLicenseRequirements] = useState<Map<number, LicenseRequirement[]>>(new Map());
 	const [loading, setLoading] = useState(true);
@@ -53,6 +52,19 @@ export const useDictionaries = () => {
 
 	// ==================== PROFESSIONS ====================
 
+	const createProfession = useCallback(async (dto: CreateProfessionDto) => {
+		try {
+			const created = await lookupService.createProfession(dto);
+			await loadData();
+			showSuccess('Success', 'Profession created successfully');
+			return created;
+		} catch (err: any) {
+			const errorMessage = err.response?.data?.message || 'Failed to create profession';
+			showError('Error', errorMessage);
+			throw err;
+		}
+	}, [showSuccess, showError, loadData]);
+
 	const updateProfession = useCallback(async (id: number, dto: UpdateProfessionDto) => {
 		try {
 			const updated = await lookupService.updateProfession(id, dto);
@@ -61,20 +73,6 @@ export const useDictionaries = () => {
 			return updated;
 		} catch (err: any) {
 			const errorMessage = err.response?.data?.message || 'Failed to update profession';
-			showError('Error', errorMessage);
-			throw err;
-		}
-	}, [showSuccess, showError]);
-
-	const approveProfession = useCallback(async (id: number, dto: ApproveProfessionDto) => {
-		try {
-			const updated = await lookupService.approveProfession(id, dto);
-			setProfessions(prev => prev.map(p => p.id === id ? updated : p));
-			const message = dto.isApproved ? 'Profession approved successfully' : 'Profession rejected';
-			showSuccess('Success', message);
-			return updated;
-		} catch (err: any) {
-			const errorMessage = err.response?.data?.message || 'Failed to approve/reject profession';
 			showError('Error', errorMessage);
 			throw err;
 		}
@@ -126,20 +124,6 @@ export const useDictionaries = () => {
 		}
 	}, [showSuccess, showError]);
 
-	const approveProfessionType = useCallback(async (id: number, dto: ApproveProfessionTypeDto) => {
-		try {
-			const updated = await lookupService.approveProfessionType(id, dto);
-			setProfessionTypes(prev => prev.map(pt => pt.id === id ? updated : pt));
-			const message = dto.isApproved ? 'Profession type approved successfully' : 'Profession type rejected';
-			showSuccess('Success', message);
-			return updated;
-		} catch (err: any) {
-			const errorMessage = err.response?.data?.message || 'Failed to approve/reject profession type';
-			showError('Error', errorMessage);
-			throw err;
-		}
-	}, [showSuccess, showError]);
-
 	const deleteProfessionType = useCallback(async (id: number, professionId: number) => {
 		try {
 			await lookupService.deleteProfessionType(id);
@@ -164,6 +148,19 @@ export const useDictionaries = () => {
 
 	// ==================== LICENSE TYPES ====================
 
+	const createLicenseType = useCallback(async (dto: CreateLicenseTypeDto) => {
+		try {
+			const created = await lookupService.createLicenseType(dto);
+			await loadData();
+			showSuccess('Success', 'License type created successfully');
+			return created;
+		} catch (err: any) {
+			const errorMessage = err.response?.data?.message || 'Failed to create license type';
+			showError('Error', errorMessage);
+			throw err;
+		}
+	}, [showSuccess, showError, loadData]);
+
 	const updateLicenseType = useCallback(async (id: number, dto: UpdateLicenseTypeDto) => {
 		try {
 			const updated = await lookupService.updateLicenseType(id, dto);
@@ -172,20 +169,6 @@ export const useDictionaries = () => {
 			return updated;
 		} catch (err: any) {
 			const errorMessage = err.response?.data?.message || 'Failed to update license type';
-			showError('Error', errorMessage);
-			throw err;
-		}
-	}, [showSuccess, showError]);
-
-	const approveLicenseType = useCallback(async (id: number, dto: ApproveLicenseTypeDto) => {
-		try {
-			const updated = await lookupService.approveLicenseType(id, dto);
-			setLicenseTypes(prev => prev.map(lt => lt.id === id ? updated : lt));
-			const message = dto.isApproved ? 'License type approved successfully' : 'License type rejected';
-			showSuccess('Success', message);
-			return updated;
-		} catch (err: any) {
-			const errorMessage = err.response?.data?.message || 'Failed to approve/reject license type';
 			showError('Error', errorMessage);
 			throw err;
 		}
@@ -232,25 +215,32 @@ export const useDictionaries = () => {
 			});
 			setProfessionTypes(prev => prev.map(pt => 
 				pt.id === professionTypeId 
-					? { ...pt, licenseRequirementsCount: pt.licenseRequirementsCount + 1 }
+					? { ...pt, licenseRequirements: [...(pt.licenseRequirements || []), created] }
 					: pt
 			));
 			showSuccess('Success', 'License requirement added successfully');
 			return created;
 		} catch (err: any) {
-			const errorMessage = err.response?.data?.message || 'Failed to add license requirement';
+			// httpClient already extracted and threw the message as string
+			const errorMessage = typeof err === 'string' ? err : (err.message || 'Failed to add license requirement');
 			showError('Error', errorMessage);
-			throw err;
+			throw new Error(errorMessage);
 		}
 	}, [showSuccess, showError]);
 
-	const updateLicenseRequirement = useCallback(async (id: number, professionTypeId: number, dto: UpdateLicenseRequirementDto) => {
+	const updateLicenseRequirement = useCallback(async (
+		professionTypeId: number, 
+		licenseTypeId: number, 
+		dto: UpdateLicenseRequirementDto
+	) => {
 		try {
-			const updated = await lookupService.updateLicenseRequirement(id, dto);
+			const updated = await lookupService.updateLicenseRequirement(professionTypeId, licenseTypeId, dto);
 			setLicenseRequirements(prev => {
 				const newMap = new Map(prev);
 				const existing = newMap.get(professionTypeId) || [];
-				newMap.set(professionTypeId, existing.map(r => r.id === id ? updated : r));
+				newMap.set(professionTypeId, existing.map(r => 
+					r.licenseTypeId === licenseTypeId ? updated : r
+				));
 				return newMap;
 			});
 			showSuccess('Success', 'License requirement updated successfully');
@@ -262,18 +252,24 @@ export const useDictionaries = () => {
 		}
 	}, [showSuccess, showError]);
 
-	const deleteLicenseRequirement = useCallback(async (id: number, professionTypeId: number) => {
+	const deleteLicenseRequirement = useCallback(async (
+		professionTypeId: number, 
+		licenseTypeId: number
+	) => {
 		try {
-			await lookupService.deleteLicenseRequirement(id);
+			await lookupService.deleteLicenseRequirement(professionTypeId, licenseTypeId);
 			setLicenseRequirements(prev => {
 				const newMap = new Map(prev);
 				const existing = newMap.get(professionTypeId) || [];
-				newMap.set(professionTypeId, existing.filter(r => r.id !== id));
+				newMap.set(professionTypeId, existing.filter(r => r.licenseTypeId !== licenseTypeId));
 				return newMap;
 			});
 			setProfessionTypes(prev => prev.map(pt => 
 				pt.id === professionTypeId 
-					? { ...pt, licenseRequirementsCount: Math.max(0, pt.licenseRequirementsCount - 1) }
+					? { 
+						...pt, 
+						licenseRequirements: (pt.licenseRequirements || []).filter(r => r.licenseTypeId !== licenseTypeId) 
+					  }
 					: pt
 			));
 			showSuccess('Success', 'License requirement deleted successfully');
@@ -293,17 +289,16 @@ export const useDictionaries = () => {
 		error,
 		refresh: loadData,
 		// Professions
+		createProfession,
 		updateProfession,
-		approveProfession,
 		deleteProfession,
 		// Profession Types
 		createProfessionType,
 		updateProfessionType,
-		approveProfessionType,
 		deleteProfessionType,
 		// License Types
+		createLicenseType,
 		updateLicenseType,
-		approveLicenseType,
 		deleteLicenseType,
 		// License Requirements
 		loadLicenseRequirements,

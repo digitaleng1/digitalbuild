@@ -1,3 +1,5 @@
+import type { ProfessionType, LicenseRequirement } from './lookup';
+
 // Project Status Enum
 export enum ProjectStatus {
 	QuotePending = 'QuotePending',
@@ -28,7 +30,10 @@ export enum ProjectManagementType {
 export interface ProjectFormData {
 	// Step 1
 	name: string;
-	licenseTypeIds: number[];
+	professionTypeIds: number[]; // NEW: Replace licenseTypeIds
+	
+	// Deprecated - keep for backward compatibility
+	licenseTypeIds?: number[];
 
 	// Step 2
 	streetAddress: string;
@@ -46,7 +51,8 @@ export interface ProjectFormData {
 
 export interface CreateProjectRequest {
 	name: string;
-	licenseTypeIds: number[];
+	professionTypeIds: number[]; // NEW
+	licenseTypeIds?: number[]; // Deprecated
 	streetAddress: string;
 	city: string;
 	state: string;
@@ -146,4 +152,10 @@ export interface ProjectSpecialistDto {
 	isAnonymized: boolean; // true = hide real data (DE managed), false = show real data
 	assignedOrBidSentAt: string;
 	licenseTypes: SpecialistLicenseInfo[];
+}
+
+// NEW: For displaying selected profession types
+export interface SelectedProfessionType {
+	professionType: ProfessionType;
+	licenseRequirements: LicenseRequirement[];
 }

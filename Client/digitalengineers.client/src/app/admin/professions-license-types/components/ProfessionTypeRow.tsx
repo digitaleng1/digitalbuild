@@ -9,7 +9,6 @@ interface ProfessionTypeRowProps {
 	isExpanded: boolean;
 	onToggle: () => void;
 	onEdit: () => void;
-	onApprove: () => void;
 	onDelete: () => void;
 	onAddRequirement: () => void;
 	onEditRequirement: (requirement: LicenseRequirement) => void;
@@ -22,7 +21,6 @@ const ProfessionTypeRow: React.FC<ProfessionTypeRowProps> = React.memo(({
 	isExpanded,
 	onToggle,
 	onEdit,
-	onApprove,
 	onDelete,
 	onAddRequirement,
 	onEditRequirement,
@@ -37,11 +35,6 @@ const ProfessionTypeRow: React.FC<ProfessionTypeRowProps> = React.memo(({
 		e.stopPropagation();
 		onEdit();
 	}, [onEdit]);
-
-	const handleApprove = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-		onApprove();
-	}, [onApprove]);
 
 	const handleDelete = useCallback((e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -75,9 +68,6 @@ const ProfessionTypeRow: React.FC<ProfessionTypeRowProps> = React.memo(({
 									State License
 								</Badge>
 							)}
-							{!professionType.isApproved && (
-								<Badge bg="warning" text="dark">Pending</Badge>
-							)}
 							{!professionType.isActive && (
 								<Badge bg="secondary">Inactive</Badge>
 							)}
@@ -107,16 +97,6 @@ const ProfessionTypeRow: React.FC<ProfessionTypeRowProps> = React.memo(({
 					>
 						<i className="mdi mdi-pencil"></i>
 					</Button>
-					{!professionType.isApproved && (
-						<Button 
-							variant="outline-success" 
-							size="sm"
-							onClick={handleApprove}
-							title="Review profession type"
-						>
-							<i className="mdi mdi-check"></i>
-						</Button>
-					)}
 					<Button 
 						variant="outline-danger" 
 						size="sm"

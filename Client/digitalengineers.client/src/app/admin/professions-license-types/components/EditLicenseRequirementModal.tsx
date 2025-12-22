@@ -7,7 +7,7 @@ interface EditLicenseRequirementModalProps {
 	onHide: () => void;
 	professionType: ProfessionTypeManagementDto | null;
 	requirement: LicenseRequirement | null;
-	onUpdate: (id: number, professionTypeId: number, dto: UpdateLicenseRequirementDto) => Promise<LicenseRequirement>;
+	onUpdate: (professionTypeId: number, licenseTypeId: number, dto: UpdateLicenseRequirementDto) => Promise<LicenseRequirement>;
 }
 
 const EditLicenseRequirementModal: React.FC<EditLicenseRequirementModalProps> = ({ 
@@ -59,7 +59,7 @@ const EditLicenseRequirementModal: React.FC<EditLicenseRequirementModalProps> = 
 		setLoading(true);
 		
 		try {
-			await onUpdate(requirement.id, professionType.id, formData);
+			await onUpdate(professionType.id, requirement.licenseTypeId, formData);
 			handleClose();
 		} catch (err) {
 			setErrors({ submit: 'Failed to update license requirement' });

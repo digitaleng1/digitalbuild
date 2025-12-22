@@ -1,22 +1,20 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ProfessionRow from './ProfessionRow';
-import type { ProfessionManagementDto, ProfessionTypeManagementDto, LicenseRequirement } from '@/types/lookup';
+import type { ProfessionManagementDto, ProfessionTypeDetailDto, LicenseRequirement } from '@/types/lookup';
 
 interface ProfessionsTreeProps {
 	professions: ProfessionManagementDto[];
-	professionTypes: ProfessionTypeManagementDto[];
+	professionTypes: ProfessionTypeDetailDto[];
 	licenseRequirements: Map<number, LicenseRequirement[]>;
 	onLoadLicenseRequirements: (professionTypeId: number) => Promise<LicenseRequirement[]>;
 	onEditProfession: (profession: ProfessionManagementDto) => void;
-	onApproveProfession: (profession: ProfessionManagementDto) => void;
 	onDeleteProfession: (profession: ProfessionManagementDto) => void;
 	onAddProfessionType: (profession: ProfessionManagementDto) => void;
-	onEditProfessionType: (professionType: ProfessionTypeManagementDto) => void;
-	onApproveProfessionType: (professionType: ProfessionTypeManagementDto) => void;
-	onDeleteProfessionType: (professionType: ProfessionTypeManagementDto) => void;
-	onAddLicenseRequirement: (professionType: ProfessionTypeManagementDto) => void;
-	onEditLicenseRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
-	onDeleteLicenseRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
+	onEditProfessionType: (professionType: ProfessionTypeDetailDto) => void;
+	onDeleteProfessionType: (professionType: ProfessionTypeDetailDto) => void;
+	onAddLicenseRequirement: (professionType: ProfessionTypeDetailDto) => void;
+	onEditLicenseRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
+	onDeleteLicenseRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
 }
 
 const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({ 
@@ -25,11 +23,9 @@ const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({
 	licenseRequirements,
 	onLoadLicenseRequirements,
 	onEditProfession, 
-	onApproveProfession, 
 	onDeleteProfession,
 	onAddProfessionType,
 	onEditProfessionType,
-	onApproveProfessionType,
 	onDeleteProfessionType,
 	onAddLicenseRequirement,
 	onEditLicenseRequirement,
@@ -66,7 +62,7 @@ const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({
 	}, [licenseRequirements, onLoadLicenseRequirements]);
 
 	const professionTypesMap = useMemo(() => {
-		const map = new Map<number, ProfessionTypeManagementDto[]>();
+		const map = new Map<number, ProfessionTypeDetailDto[]>();
 		professionTypes.forEach(pt => {
 			const existing = map.get(pt.professionId) || [];
 			existing.push(pt);
@@ -113,11 +109,9 @@ const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({
 					onToggle={() => toggleProfession(profession.id)}
 					onToggleType={toggleProfessionType}
 					onEdit={() => onEditProfession(profession)}
-					onApprove={() => onApproveProfession(profession)}
 					onDelete={() => onDeleteProfession(profession)}
 					onAddType={() => onAddProfessionType(profession)}
 					onEditType={onEditProfessionType}
-					onApproveType={onApproveProfessionType}
 					onDeleteType={onDeleteProfessionType}
 					onAddRequirement={onAddLicenseRequirement}
 					onEditRequirement={onEditLicenseRequirement}

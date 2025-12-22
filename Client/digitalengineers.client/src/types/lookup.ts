@@ -32,19 +32,14 @@ export interface CreateProfessionDto {
 	name: string;
 	code: string;
 	description: string;
-	displayOrder?: number;
+	displayOrder: number;
 }
 
 export interface UpdateProfessionDto {
 	name: string;
 	code: string;
 	description: string;
-	displayOrder?: number;
-}
-
-export interface ApproveProfessionDto {
-	isApproved: boolean;
-	rejectionReason?: string;
+	displayOrder: number;
 }
 
 // ================== PROFESSION TYPE (Subtype - Level 2) ==================
@@ -105,11 +100,6 @@ export interface UpdateProfessionTypeDto {
 	isActive?: boolean;
 }
 
-export interface ApproveProfessionTypeDto {
-	isApproved: boolean;
-	rejectionReason?: string;
-}
-
 // ================== LICENSE TYPE (License - Level 3) ==================
 
 export interface LicenseType {
@@ -147,11 +137,6 @@ export interface UpdateLicenseTypeDto {
 	code: string;
 	description: string;
 	isStateSpecific: boolean;
-}
-
-export interface ApproveLicenseTypeDto {
-	isApproved: boolean;
-	rejectionReason?: string;
 }
 
 // ================== LICENSE REQUIREMENT (Relation - Level 3) ==================

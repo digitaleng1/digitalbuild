@@ -16,6 +16,7 @@ interface ProjectWizardContextType {
 
 const initialFormData: ProjectFormData = {
 	name: '',
+	professionTypeIds: [], // NEW
 	licenseTypeIds: [],
 	streetAddress: '',
 	city: '',

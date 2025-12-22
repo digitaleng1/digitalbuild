@@ -9,7 +9,7 @@ const Tasks = lazy(() => import('./tasks'));
 const ProvidersPage = lazy(() => import('./providers/page'));
 const ClientsPage = lazy(() => import('./clients/page'));
 const Licenses = lazy(() => import('./licenses'));
-const Dictionaries = lazy(() => import('./dictionaries'));
+const ProfessionsLicenseTypes = lazy(() => import('./professions-license-types'));
 
 export default function Admin() {
     return (
@@ -22,7 +22,7 @@ export default function Admin() {
                 <Route path="providers" element={<ProvidersPage />} />
                 <Route path="clients" element={<ClientsPage />} />
                 <Route path="licenses/*" element={<Licenses />} />
-                <Route path="dictionaries/*" element={<Dictionaries />} />
+                <Route path="professions-license-types/*" element={<ProfessionsLicenseTypes />} />
                 <Route path="*" element={<Error404Alt />} />
             </Route>
         </Routes>

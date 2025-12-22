@@ -1,26 +1,24 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { Badge, Button, Collapse } from 'react-bootstrap';
 import ProfessionTypeRow from './ProfessionTypeRow';
-import type { ProfessionManagementDto, ProfessionTypeManagementDto, LicenseRequirement } from '@/types/lookup';
+import type { ProfessionManagementDto, ProfessionTypeDetailDto, LicenseRequirement } from '@/types/lookup';
 
 interface ProfessionRowProps {
 	profession: ProfessionManagementDto;
-	professionTypes: ProfessionTypeManagementDto[];
+	professionTypes: ProfessionTypeDetailDto[];
 	licenseRequirements: Map<number, LicenseRequirement[]>;
 	isExpanded: boolean;
 	expandedTypeIds: Set<number>;
 	onToggle: () => void;
 	onToggleType: (typeId: number) => void;
 	onEdit: () => void;
-	onApprove: () => void;
 	onDelete: () => void;
 	onAddType: () => void;
-	onEditType: (professionType: ProfessionTypeManagementDto) => void;
-	onApproveType: (professionType: ProfessionTypeManagementDto) => void;
-	onDeleteType: (professionType: ProfessionTypeManagementDto) => void;
-	onAddRequirement: (professionType: ProfessionTypeManagementDto) => void;
-	onEditRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
-	onDeleteRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
+	onEditType: (professionType: ProfessionTypeDetailDto) => void;
+	onDeleteType: (professionType: ProfessionTypeDetailDto) => void;
+	onAddRequirement: (professionType: ProfessionTypeDetailDto) => void;
+	onEditRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
+	onDeleteRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
 }
 
 const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
@@ -32,11 +30,9 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 	onToggle,
 	onToggleType,
 	onEdit,
-	onApprove,
 	onDelete,
 	onAddType,
 	onEditType,
-	onApproveType,
 	onDeleteType,
 	onAddRequirement,
 	onEditRequirement,
@@ -52,11 +48,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 		onEdit();
 	}, [onEdit]);
 
-	const handleApprove = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-		onApprove();
-	}, [onApprove]);
-
 	const handleDelete = useCallback((e: React.MouseEvent) => {
 		e.stopPropagation();
 		onDelete();
@@ -66,11 +57,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 		e.stopPropagation();
 		onAddType();
 	}, [onAddType]);
-
-	const pendingTypesCount = useMemo(() => 
-		professionTypes.filter(pt => !pt.isApproved).length, 
-		[professionTypes]
-	);
 
 	return (
 		<div className="border rounded mb-2">
@@ -92,12 +78,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 						<div className="d-flex align-items-center flex-wrap gap-2">
 							<strong className="fs-5">{profession.name}</strong>
 							<Badge bg="secondary" className="font-monospace">{profession.code}</Badge>
-							{!profession.isApproved && (
-								<Badge bg="warning" text="dark">Pending</Badge>
-							)}
-							{profession.rejectionReason && (
-								<Badge bg="danger">Rejected</Badge>
-							)}
 						</div>
 						{profession.description && (
 							<div className="text-muted small mt-1">{profession.description}</div>
@@ -108,11 +88,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 					<Badge bg="primary" pill>
 						{profession.professionTypesCount} {profession.professionTypesCount === 1 ? 'type' : 'types'}
 					</Badge>
-					{pendingTypesCount > 0 && (
-						<Badge bg="warning" text="dark" pill>
-							{pendingTypesCount} pending
-						</Badge>
-					)}
 					<Button 
 						variant="outline-success" 
 						size="sm"
@@ -129,16 +104,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 					>
 						<i className="mdi mdi-pencil"></i>
 					</Button>
-					{!profession.isApproved && (
-						<Button 
-							variant="outline-success" 
-							size="sm"
-							onClick={handleApprove}
-							title="Review profession"
-						>
-							<i className="mdi mdi-check-circle"></i>
-						</Button>
-					)}
 					<Button 
 						variant="outline-danger" 
 						size="sm"
@@ -166,7 +131,6 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 									isExpanded={expandedTypeIds.has(pt.id)}
 									onToggle={() => onToggleType(pt.id)}
 									onEdit={() => onEditType(pt)}
-									onApprove={() => onApproveType(pt)}
 									onDelete={() => onDeleteType(pt)}
 									onAddRequirement={() => onAddRequirement(pt)}
 									onEditRequirement={(req) => onEditRequirement(pt, req)}

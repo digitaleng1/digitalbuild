@@ -4,12 +4,14 @@ import { useWizard } from 'react-use-wizard';
 import { Form as RHForm } from '@/components/Form';
 import * as yup from 'yup';
 import { useProjectWizard } from './ProjectWizardContext';
-import ProfessionalTypeSelector from './ProfessionalTypeSelector';
+import ProfessionTypeSelector from './ProfessionTypeSelector';
 
 const Step1TitleProfessionals = () => {
 	const { nextStep } = useWizard();
 	const { formData, updateFormData } = useProjectWizard();
-	const [selectedTypes, setSelectedTypes] = useState<number[]>(formData.licenseTypeIds);
+	const [selectedProfessionTypeIds, setSelectedProfessionTypeIds] = useState<number[]>(
+		formData.professionTypeIds || []
+	);
 	const [showError, setShowError] = useState(false);
 
 	const schema = useMemo(
@@ -19,24 +21,25 @@ const Step1TitleProfessionals = () => {
 	);
 
 	useEffect(() => {
-		if (selectedTypes.length > 0) {
+		if (selectedProfessionTypeIds.length > 0) {
 			setShowError(false);
 		}
-	}, [selectedTypes]);
+	}, [selectedProfessionTypeIds]);
 
 	const handleSubmit = useCallback(
 		() => {
-			if (selectedTypes.length === 0) {
+			if (selectedProfessionTypeIds.length === 0) {
 				setShowError(true);
 				return;
 			}
 			setShowError(false);
+			
 			updateFormData({
-				licenseTypeIds: selectedTypes,
+				professionTypeIds: selectedProfessionTypeIds,
 			});
 			nextStep();
 		},
-		[selectedTypes, nextStep, updateFormData]
+		[selectedProfessionTypeIds, nextStep, updateFormData]
 	);
 
 	return (
@@ -50,7 +53,10 @@ const Step1TitleProfessionals = () => {
 									<FormLabel>
 										Types of Professionals Needed <span className="text-danger">*</span>
 									</FormLabel>
-									<ProfessionalTypeSelector value={selectedTypes} onChange={setSelectedTypes} />
+									<ProfessionTypeSelector 
+										value={selectedProfessionTypeIds} 
+										onChange={setSelectedProfessionTypeIds} 
+									/>
 								</FormGroup>
 
 								{showError && (

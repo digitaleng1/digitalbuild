@@ -9,8 +9,10 @@ public class CreateProjectViewModel
     [StringLength(200, MinimumLength = 3, ErrorMessage = "Project name must be between 3 and 200 characters")]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "At least one license type is required")]
-    [MinLength(1, ErrorMessage = "At least one license type must be selected")]
+    [Required(ErrorMessage = "At least one profession type is required")]
+    [MinLength(1, ErrorMessage = "At least one profession type must be selected")]
+    public int[] ProfessionTypeIds { get; set; } = [];
+
     public int[] LicenseTypeIds { get; set; } = [];
 
     [Required(ErrorMessage = "Street address is required")]

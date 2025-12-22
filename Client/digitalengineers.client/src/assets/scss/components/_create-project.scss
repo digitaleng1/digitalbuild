@@ -1,0 +1,69 @@
+// Create Project Wizard Styles
+
+// Profession Type Selector
+.profession-type-selector {
+  .professions-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .selected-profession-types {
+    margin-top: 1rem;
+  }
+}
+
+// Profession Type Modal - List Group with Switch
+.modal-body {
+  .list-group-item {
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    &.border-start-3 {
+      border-left-width: 3px !important;
+    }
+    
+    .form-switch {
+      margin-bottom: 0;
+      padding-left: 2.5rem;
+      
+      .form-check-input {
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+// Profession Type Badge with Popover
+.profession-type-badge {
+  .btn-close-white {
+    opacity: 0.8;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Popover improvements
+.popover {
+  max-width: 350px;
+  
+  .popover-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  
+  .list-group-item {
+    border: none;
+    padding: 0.5rem 0.75rem;
+    
+    &:first-child {
+      border-top: none;
+    }
+  }
+}

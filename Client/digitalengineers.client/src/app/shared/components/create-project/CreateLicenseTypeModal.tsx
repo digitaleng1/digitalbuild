@@ -2,22 +2,22 @@ import { useState, useCallback, useMemo } from 'react';
 import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
 import { useToast } from '@/contexts';
 import lookupService from '@/services/lookupService';
-import type { CreateLicenseTypeDto, LicenseTypeViewModel, Profession } from '@/types/lookup';
+import type { CreateLicenseTypeDto, LicenseTypeViewModel } from '@/types/lookup';
 
 interface CreateLicenseTypeModalProps {
 	show: boolean;
 	onHide: () => void;
-	profession: Profession;
 	onSuccess: (newLicenseType: LicenseTypeViewModel) => void;
 }
 
-const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateLicenseTypeModalProps) => {
+const CreateLicenseTypeModal = ({ show, onHide, onSuccess }: CreateLicenseTypeModalProps) => {
 	const { showSuccess, showError } = useToast();
 	const [loading, setLoading] = useState(false);
 	const [formData, setFormData] = useState<CreateLicenseTypeDto>({
 		name: '',
+		code: '',
 		description: '',
-		professionId: profession.id,
+		isStateSpecific: false,
 	});
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -30,6 +30,12 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 			newErrors.name = 'License type name must not exceed 100 characters';
 		}
 
+		if (!formData.code.trim()) {
+			newErrors.code = 'Code is required';
+		} else if (formData.code.length > 20) {
+			newErrors.code = 'Code must not exceed 20 characters';
+		}
+
 		if (!formData.description.trim()) {
 			newErrors.description = 'Description is required';
 		} else if (formData.description.length > 500) {
@@ -40,7 +46,7 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 		return Object.keys(newErrors).length === 0;
 	}, [formData]);
 
-	const handleInputChange = useCallback((field: keyof CreateLicenseTypeDto, value: string | number) => {
+	const handleInputChange = useCallback((field: keyof CreateLicenseTypeDto, value: string | boolean) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 		setErrors((prev) => ({ ...prev, [field]: '' }));
 	}, []);
@@ -56,7 +62,7 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 			
 			showSuccess(
 				'License Type Created',
-				`Your license type has been created successfully and is now available for selection under ${profession.name}.`
+				'Your license type has been created successfully and is now available for selection.'
 			);
 			
 			onSuccess(result);
@@ -68,7 +74,7 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 		} finally {
 			setLoading(false);
 		}
-	}, [formData, validateForm, profession.name, showSuccess, showError, onSuccess, onHide]);
+	}, [formData, validateForm, showSuccess, showError, onSuccess, onHide]);
 
 	const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
@@ -80,11 +86,12 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 	const resetForm = useCallback(() => {
 		setFormData({ 
 			name: '', 
+			code: '',
 			description: '', 
-			professionId: profession.id 
+			isStateSpecific: false 
 		});
 		setErrors({});
-	}, [profession.id]);
+	}, []);
 
 	const handleClose = useCallback(() => {
 		if (!loading) {
@@ -94,13 +101,15 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 	}, [loading, resetForm, onHide]);
 
 	const isFormValid = useMemo(() => {
-		return formData.name.trim() !== '' && formData.description.trim() !== '';
+		return formData.name.trim() !== '' && 
+		       formData.code.trim() !== '' && 
+		       formData.description.trim() !== '';
 	}, [formData]);
 
 	return (
 		<Modal show={show} onHide={handleClose} size="lg" centered>
 			<Modal.Header closeButton={!loading}>
-				<Modal.Title>Create New License Type for {profession.name}</Modal.Title>
+				<Modal.Title>Create New License Type</Modal.Title>
 			</Modal.Header>
 			<Modal.Body>
 				<Form.Group className="mb-3">
@@ -125,6 +134,26 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 
 				<Form.Group className="mb-3">
 					<Form.Label>
+						Code <span className="text-danger">*</span>
+					</Form.Label>
+					<Form.Control
+						type="text"
+						placeholder="e.g., PE, RA, EIT"
+						value={formData.code}
+						onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
+						onKeyDown={handleKeyDown}
+						isInvalid={!!errors.code}
+						disabled={loading}
+						maxLength={20}
+					/>
+					<Form.Control.Feedback type="invalid">{errors.code}</Form.Control.Feedback>
+					<Form.Text className="text-muted">
+						Unique code for this license type (will be uppercase)
+					</Form.Text>
+				</Form.Group>
+
+				<Form.Group className="mb-3">
+					<Form.Label>
 						Description <span className="text-danger">*</span>
 					</Form.Label>
 					<Form.Control
@@ -143,9 +172,19 @@ const CreateLicenseTypeModal = ({ show, onHide, profession, onSuccess }: CreateL
 					</Form.Text>
 				</Form.Group>
 
-				<Alert variant="secondary" className="mb-0">
-					<strong>Profession:</strong> {profession.name}
-				</Alert>
+				<Form.Group className="mb-3">
+					<Form.Check
+						type="checkbox"
+						id="isStateSpecific"
+						label="State Specific License"
+						checked={formData.isStateSpecific}
+						onChange={(e) => handleInputChange('isStateSpecific', e.target.checked)}
+						disabled={loading}
+					/>
+					<Form.Text className="text-muted">
+						Check if this license type requires separate licenses for each state
+					</Form.Text>
+				</Form.Group>
 			</Modal.Body>
 			<Modal.Footer>
 				<Button variant="secondary" onClick={handleClose} disabled={loading}>

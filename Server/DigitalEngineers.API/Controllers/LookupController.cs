@@ -69,43 +69,11 @@ public class LookupController : ControllerBase
         var viewModels = _mapper.Map<IEnumerable<LicenseTypeViewModel>>(dtos);
         return Ok(viewModels);
     }
-
-    // ==================== CLIENT ENDPOINTS ====================
-    
-    /// <summary>
-    /// Client creates a new profession (pending approval)
-    /// </summary>
-    [HttpPost("professions")]
-    [Authorize(Roles = "Client")]
-    public async Task<IActionResult> CreateProfession(
-        [FromBody] CreateProfessionDto dto, 
-        CancellationToken cancellationToken)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var result = await _lookupService.CreateProfessionAsync(dto, userId, cancellationToken);
-        var viewModel = _mapper.Map<ProfessionViewModel>(result);
-        return CreatedAtAction(nameof(GetProfessions), new { id = result.Id }, viewModel);
-    }
-    
-    /// <summary>
-    /// Client creates a new license type (pending approval)
-    /// </summary>
-    [HttpPost("license-types")]
-    [Authorize(Roles = "Client")]
-    public async Task<IActionResult> CreateLicenseType(
-        [FromBody] CreateLicenseTypeDto dto, 
-        CancellationToken cancellationToken)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var result = await _lookupService.CreateLicenseTypeAsync(dto, userId, cancellationToken);
-        var viewModel = _mapper.Map<LicenseTypeViewModel>(result);
-        return CreatedAtAction(nameof(GetLicenseTypes), new { id = result.Id }, viewModel);
-    }
     
     // ==================== ADMIN ENDPOINTS ====================
     
     /// <summary>
-    /// Admin gets all professions with management info (including pending)
+    /// Admin gets all professions with management info
     /// </summary>
     [HttpGet("professions/management")]
     [Authorize(Roles = "Admin,SuperAdmin")]
@@ -116,7 +84,7 @@ public class LookupController : ControllerBase
     }
     
     /// <summary>
-    /// Admin gets all license types with management info (including pending)
+    /// Admin gets all license types with management info
     /// </summary>
     [HttpGet("license-types/management")]
     [Authorize(Roles = "Admin,SuperAdmin")]
@@ -124,6 +92,34 @@ public class LookupController : ControllerBase
     {
         var result = await _lookupService.GetAllLicenseTypesForManagementAsync(cancellationToken);
         return Ok(result);
+    }
+    
+    /// <summary>
+    /// Admin creates a new profession
+    /// </summary>
+    [HttpPost("professions")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateProfession(
+        [FromBody] CreateProfessionDto dto, 
+        CancellationToken cancellationToken)
+    {
+        var result = await _lookupService.CreateProfessionAsync(dto, cancellationToken);
+        var viewModel = _mapper.Map<ProfessionViewModel>(result);
+        return CreatedAtAction(nameof(GetProfessions), new { id = result.Id }, viewModel);
+    }
+    
+    /// <summary>
+    /// Admin creates a new license type
+    /// </summary>
+    [HttpPost("license-types")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateLicenseType(
+        [FromBody] CreateLicenseTypeDto dto, 
+        CancellationToken cancellationToken)
+    {
+        var result = await _lookupService.CreateLicenseTypeAsync(dto, cancellationToken);
+        var viewModel = _mapper.Map<LicenseTypeViewModel>(result);
+        return CreatedAtAction(nameof(GetLicenseTypes), new { id = result.Id }, viewModel);
     }
     
     /// <summary>
@@ -137,20 +133,6 @@ public class LookupController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _lookupService.UpdateProfessionAsync(id, dto, cancellationToken);
-        return Ok(result);
-    }
-    
-    /// <summary>
-    /// Admin approves/rejects a profession
-    /// </summary>
-    [HttpPut("professions/{id}/approve")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<IActionResult> ApproveProfession(
-        int id, 
-        [FromBody] ApproveProfessionDto dto, 
-        CancellationToken cancellationToken)
-    {
-        var result = await _lookupService.ApproveProfessionAsync(id, dto, cancellationToken);
         return Ok(result);
     }
     
@@ -176,20 +158,6 @@ public class LookupController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _lookupService.UpdateLicenseTypeAsync(id, dto, cancellationToken);
-        return Ok(result);
-    }
-    
-    /// <summary>
-    /// Admin approves/rejects a license type
-    /// </summary>
-    [HttpPut("license-types/{id}/approve")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<IActionResult> ApproveLicenseType(
-        int id, 
-        [FromBody] ApproveLicenseTypeDto dto, 
-        CancellationToken cancellationToken)
-    {
-        var result = await _lookupService.ApproveLicenseTypeAsync(id, dto, cancellationToken);
         return Ok(result);
     }
     

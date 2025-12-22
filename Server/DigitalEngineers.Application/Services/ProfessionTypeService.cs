@@ -78,7 +78,7 @@ public class ProfessionTypeService : IProfessionTypeService
         return professionTypes;
     }
 
-    public async Task<ProfessionTypeDetailDto?> GetProfessionTypeByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<ProfessionTypeDetailDto> GetProfessionTypeByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var professionType = await _context.ProfessionTypes
             .AsNoTracking()
@@ -89,7 +89,7 @@ public class ProfessionTypeService : IProfessionTypeService
             .FirstOrDefaultAsync(pt => pt.Id == id, cancellationToken);
 
         if (professionType == null)
-            return null;
+            throw new ProfessionTypeNotFoundException(id);
 
         return new ProfessionTypeDetailDto
         {
@@ -127,7 +127,56 @@ public class ProfessionTypeService : IProfessionTypeService
         };
     }
 
-    public async Task<ProfessionTypeDto> CreateProfessionTypeAsync(CreateProfessionTypeDto dto, string userId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProfessionTypeDetailDto>> GetAllProfessionTypesForManagementAsync(CancellationToken cancellationToken = default)
+    {
+        var professionTypes = await _context.ProfessionTypes
+            .AsNoTracking()
+            .Include(pt => pt.Profession)
+            .Include(pt => pt.CreatedBy)
+            .Include(pt => pt.LicenseRequirements)
+            .OrderBy(pt => pt.Profession.DisplayOrder)
+            .ThenBy(pt => pt.DisplayOrder)
+            .ThenBy(pt => pt.Name)
+            .Select(pt => new ProfessionTypeDetailDto
+            {
+                Id = pt.Id,
+                Name = pt.Name,
+                Code = pt.Code,
+                Description = pt.Description,
+                ProfessionId = pt.ProfessionId,
+                ProfessionName = pt.Profession.Name,
+                ProfessionCode = pt.Profession.Code,
+                RequiresStateLicense = pt.RequiresStateLicense,
+                DisplayOrder = pt.DisplayOrder,
+                IsActive = pt.IsActive,
+                IsApproved = pt.IsApproved,
+                CreatedByUserId = pt.CreatedByUserId,
+                CreatedByUserName = pt.CreatedBy != null
+                    ? $"{pt.CreatedBy.FirstName} {pt.CreatedBy.LastName}"
+                    : "System",
+                CreatedAt = pt.CreatedAt,
+                UpdatedAt = pt.UpdatedAt,
+                RejectionReason = pt.RejectionReason,
+                LicenseRequirements = pt.LicenseRequirements
+                    .Select(lr => new LicenseRequirementDto
+                    {
+                        Id = lr.Id,
+                        ProfessionTypeId = lr.ProfessionTypeId,
+                        LicenseTypeId = lr.LicenseTypeId,
+                        LicenseTypeName = lr.LicenseType.Name,
+                        LicenseTypeCode = lr.LicenseType.Code,
+                        IsRequired = lr.IsRequired,
+                        IsStateSpecific = lr.LicenseType.IsStateSpecific,
+                        Notes = lr.Notes
+                    })
+                    .ToList()
+            })
+            .ToListAsync(cancellationToken);
+
+        return professionTypes;
+    }
+
+    public async Task<ProfessionTypeDetailDto> CreateProfessionTypeAsync(CreateProfessionTypeDto dto, CancellationToken cancellationToken = default)
     {
         var profession = await _context.Professions
             .FirstOrDefaultAsync(p => p.Id == dto.ProfessionId, cancellationToken);
@@ -159,7 +208,6 @@ public class ProfessionTypeService : IProfessionTypeService
             DisplayOrder = dto.DisplayOrder,
             IsActive = true,
             IsApproved = true,
-            CreatedByUserId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -167,7 +215,7 @@ public class ProfessionTypeService : IProfessionTypeService
         _context.ProfessionTypes.Add(professionType);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return new ProfessionTypeDto
+        return new ProfessionTypeDetailDto
         {
             Id = professionType.Id,
             Name = professionType.Name,
@@ -179,15 +227,23 @@ public class ProfessionTypeService : IProfessionTypeService
             RequiresStateLicense = professionType.RequiresStateLicense,
             DisplayOrder = professionType.DisplayOrder,
             IsActive = professionType.IsActive,
-            LicenseRequirementsCount = 0
+            IsApproved = professionType.IsApproved,
+            CreatedByUserId = professionType.CreatedByUserId,
+            CreatedByUserName = null,
+            CreatedAt = professionType.CreatedAt,
+            UpdatedAt = professionType.UpdatedAt,
+            RejectionReason = professionType.RejectionReason,
+            LicenseRequirements = []
         };
     }
 
-    public async Task<ProfessionTypeDto> UpdateProfessionTypeAsync(int id, UpdateProfessionTypeDto dto, CancellationToken cancellationToken = default)
+    public async Task<ProfessionTypeDetailDto> UpdateProfessionTypeAsync(int id, UpdateProfessionTypeDto dto, CancellationToken cancellationToken = default)
     {
         var professionType = await _context.ProfessionTypes
             .Include(pt => pt.Profession)
+            .Include(pt => pt.CreatedBy)
             .Include(pt => pt.LicenseRequirements)
+                .ThenInclude(lr => lr.LicenseType)
             .FirstOrDefaultAsync(pt => pt.Id == id, cancellationToken);
 
         if (professionType == null)
@@ -219,7 +275,7 @@ public class ProfessionTypeService : IProfessionTypeService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return new ProfessionTypeDto
+        return new ProfessionTypeDetailDto
         {
             Id = professionType.Id,
             Name = professionType.Name,
@@ -231,42 +287,27 @@ public class ProfessionTypeService : IProfessionTypeService
             RequiresStateLicense = professionType.RequiresStateLicense,
             DisplayOrder = professionType.DisplayOrder,
             IsActive = professionType.IsActive,
-            LicenseRequirementsCount = professionType.LicenseRequirements.Count
-        };
-    }
-
-    public async Task<ProfessionTypeDto> ApproveProfessionTypeAsync(int id, ApproveProfessionTypeDto dto, CancellationToken cancellationToken = default)
-    {
-        var professionType = await _context.ProfessionTypes
-            .Include(pt => pt.Profession)
-            .Include(pt => pt.LicenseRequirements)
-            .FirstOrDefaultAsync(pt => pt.Id == id, cancellationToken);
-
-        if (professionType == null)
-            throw new ProfessionTypeNotFoundException(id);
-
-        if (!dto.IsApproved && string.IsNullOrWhiteSpace(dto.RejectionReason))
-            throw new ValidationException("Rejection reason is required when rejecting");
-
-        professionType.IsApproved = dto.IsApproved;
-        professionType.RejectionReason = dto.IsApproved ? null : dto.RejectionReason;
-        professionType.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return new ProfessionTypeDto
-        {
-            Id = professionType.Id,
-            Name = professionType.Name,
-            Code = professionType.Code,
-            Description = professionType.Description,
-            ProfessionId = professionType.ProfessionId,
-            ProfessionName = professionType.Profession.Name,
-            ProfessionCode = professionType.Profession.Code,
-            RequiresStateLicense = professionType.RequiresStateLicense,
-            DisplayOrder = professionType.DisplayOrder,
-            IsActive = professionType.IsActive,
-            LicenseRequirementsCount = professionType.LicenseRequirements.Count
+            IsApproved = professionType.IsApproved,
+            CreatedByUserId = professionType.CreatedByUserId,
+            CreatedByUserName = professionType.CreatedBy != null
+                ? $"{professionType.CreatedBy.FirstName} {professionType.CreatedBy.LastName}"
+                : "System",
+            CreatedAt = professionType.CreatedAt,
+            UpdatedAt = professionType.UpdatedAt,
+            RejectionReason = professionType.RejectionReason,
+            LicenseRequirements = professionType.LicenseRequirements
+                .Select(lr => new LicenseRequirementDto
+                {
+                    Id = lr.Id,
+                    ProfessionTypeId = lr.ProfessionTypeId,
+                    LicenseTypeId = lr.LicenseTypeId,
+                    LicenseTypeName = lr.LicenseType.Name,
+                    LicenseTypeCode = lr.LicenseType.Code,
+                    IsRequired = lr.IsRequired,
+                    IsStateSpecific = lr.LicenseType.IsStateSpecific,
+                    Notes = lr.Notes
+                })
+                .ToList()
         };
     }
 
@@ -282,9 +323,39 @@ public class ProfessionTypeService : IProfessionTypeService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<LicenseRequirementDto>> GetLicenseRequirementsAsync(int professionTypeId, CancellationToken cancellationToken = default)
+    {
+        var professionTypeExists = await _context.ProfessionTypes
+            .AnyAsync(pt => pt.Id == professionTypeId, cancellationToken);
+
+        if (!professionTypeExists)
+            throw new ProfessionTypeNotFoundException(professionTypeId);
+
+        var requirements = await _context.ProfessionTypeLicenseRequirements
+            .AsNoTracking()
+            .Include(lr => lr.LicenseType)
+            .Where(lr => lr.ProfessionTypeId == professionTypeId)
+            .OrderBy(lr => lr.LicenseType.Name)
+            .Select(lr => new LicenseRequirementDto
+            {
+                Id = lr.Id,
+                ProfessionTypeId = lr.ProfessionTypeId,
+                LicenseTypeId = lr.LicenseTypeId,
+                LicenseTypeName = lr.LicenseType.Name,
+                LicenseTypeCode = lr.LicenseType.Code,
+                IsRequired = lr.IsRequired,
+                IsStateSpecific = lr.LicenseType.IsStateSpecific,
+                Notes = lr.Notes
+            })
+            .ToListAsync(cancellationToken);
+
+        return requirements;
+    }
+
     public async Task<LicenseRequirementDto> AddLicenseRequirementAsync(int professionTypeId, CreateLicenseRequirementDto dto, CancellationToken cancellationToken = default)
     {
         var professionType = await _context.ProfessionTypes
+            .Include(pt => pt.Profession)
             .FirstOrDefaultAsync(pt => pt.Id == professionTypeId, cancellationToken);
 
         if (professionType == null)
@@ -301,7 +372,13 @@ public class ProfessionTypeService : IProfessionTypeService
                            lr.LicenseTypeId == dto.LicenseTypeId, cancellationToken);
 
         if (exists)
-            throw new DuplicateLicenseRequirementException(professionTypeId, dto.LicenseTypeId);
+            throw new DuplicateLicenseRequirementException(
+                professionTypeId, 
+                dto.LicenseTypeId,
+                professionType.Name,
+                professionType.Code,
+                licenseType.Name,
+                licenseType.Code);
 
         var requirement = new ProfessionTypeLicenseRequirement
         {

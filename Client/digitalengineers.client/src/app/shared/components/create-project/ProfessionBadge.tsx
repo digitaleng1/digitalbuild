@@ -1,53 +1,26 @@
-import { Badge, Button } from 'react-bootstrap';
-import type { Profession, LicenseType } from '@/types/lookup';
+import { Badge } from 'react-bootstrap';
+import type { Profession } from '@/types/lookup';
 
 interface ProfessionBadgeProps {
 	profession: Profession;
-	selectedLicenseTypes: LicenseType[];
+	selectedCount: number;
 	onClick: () => void;
-	onRemove?: () => void;
-	onCreateNew?: () => void; // NEW: callback for creating new profession
 }
 
-const ProfessionBadge = ({ profession, selectedLicenseTypes, onClick, onRemove, onCreateNew }: ProfessionBadgeProps) => {
-	const count = selectedLicenseTypes.length;
-
-	// Special badge for "Create New" action
-	if (profession.id === -1 && onCreateNew) {
-		return (
-			<Badge
-				bg="success"
-				className="me-2 mb-2 d-inline-flex align-items-center"
-				style={{ cursor: 'pointer', fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
-				onClick={onCreateNew}
-			>
-				<i className="mdi mdi-plus-circle me-1"></i>
-				<span>Create New Profession</span>
-			</Badge>
-		);
-	}
-
+const ProfessionBadge = ({ profession, selectedCount, onClick }: ProfessionBadgeProps) => {
 	return (
 		<Badge
-			bg="primary"
+			bg={selectedCount > 0 ? 'primary' : 'secondary'}
 			className="me-2 mb-2 d-inline-flex align-items-center"
 			style={{ cursor: 'pointer', fontSize: '0.875rem', padding: '0.5rem 0.75rem' }}
+			onClick={onClick}
 		>
-			<span onClick={onClick} className="me-2">
-				{profession.name} {count > 0 && `(${count})`}
-			</span>
-			{onRemove && (
-				<Button
-					size="sm"
-					variant="link"
-					className="p-0 text-white"
-					onClick={(e) => {
-						e.stopPropagation();
-						onRemove();
-					}}
-				>
-					<i className="mdi mdi-close"></i>
-				</Button>
+			<span className="fw-bold">{profession.name}</span>
+			{profession.code && (
+				<span className="ms-1 opacity-75">[{profession.code}]</span>
+			)}
+			{selectedCount > 0 && (
+				<span className="ms-2 badge bg-light text-dark">{selectedCount}</span>
 			)}
 		</Badge>
 	);

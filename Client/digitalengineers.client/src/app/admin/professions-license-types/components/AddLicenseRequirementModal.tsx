@@ -11,8 +11,9 @@ interface AddLicenseRequirementModalProps {
 	show: boolean;
 	onHide: () => void;
 	professionType: ProfessionTypeManagementDto | null;
-	licenseTypes: LicenseTypeManagementDto[];
+	availableLicenseTypes: LicenseTypeManagementDto[];
 	existingRequirements: LicenseRequirement[];
+	onSuccess: () => void;
 	onCreate: (professionTypeId: number, dto: CreateLicenseRequirementDto) => Promise<LicenseRequirement>;
 }
 
@@ -20,8 +21,9 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 	show, 
 	onHide, 
 	professionType, 
-	licenseTypes,
+	availableLicenseTypes,
 	existingRequirements,
+	onSuccess,
 	onCreate 
 }) => {
 	const [formData, setFormData] = useState<Omit<CreateLicenseRequirementDto, 'professionTypeId'>>({
@@ -32,10 +34,11 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 	const [loading, setLoading] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
-	const availableLicenseTypes = useMemo(() => {
+	const filteredLicenseTypes = useMemo(() => {
+		if (!availableLicenseTypes || !existingRequirements) return [];
 		const existingIds = new Set(existingRequirements.map(r => r.licenseTypeId));
-		return licenseTypes.filter(lt => lt.isApproved && !existingIds.has(lt.id));
-	}, [licenseTypes, existingRequirements]);
+		return availableLicenseTypes.filter(lt => lt.isApproved && !existingIds.has(lt.id));
+	}, [availableLicenseTypes, existingRequirements]);
 
 	useEffect(() => {
 		if (show) {
@@ -82,9 +85,13 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 				...formData,
 				professionTypeId: professionType.id,
 			});
+			onSuccess();
 			handleClose();
-		} catch (err) {
-			setErrors({ submit: 'Failed to add license requirement' });
+		} catch (error: any) {
+			// Error already extracted in useDictionaries and re-thrown as Error with message
+			const errorMessage = typeof error === 'string' ? error : (error.message || 'Failed to create profession');
+
+			setErrors({ submit: errorMessage });
 		} finally {
 			setLoading(false);
 		}
@@ -92,7 +99,7 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 
 	if (!professionType) return null;
 
-	const selectedLicenseType = licenseTypes.find(lt => lt.id === formData.licenseTypeId);
+	const selectedLicenseType = availableLicenseTypes.find(lt => lt.id === formData.licenseTypeId);
 
 	return (
 		<Modal show={show} onHide={handleClose} centered>
@@ -117,14 +124,14 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 							disabled={loading}
 						>
 							<option value="">Select license type...</option>
-							{availableLicenseTypes.map((lt) => (
+							{filteredLicenseTypes.map((lt) => (
 								<option key={lt.id} value={lt.id}>
 									{lt.code} — {lt.name} {lt.isStateSpecific ? '(State-Specific)' : ''}
 								</option>
 							))}
 						</Form.Select>
 						<Form.Control.Feedback type="invalid">{errors.licenseTypeId}</Form.Control.Feedback>
-						{availableLicenseTypes.length === 0 && (
+						{filteredLicenseTypes.length === 0 && (
 							<Form.Text className="text-warning">
 								<i className="mdi mdi-alert-outline me-1"></i>
 								No available license types. All approved types are already assigned.
@@ -193,7 +200,7 @@ const AddLicenseRequirementModal: React.FC<AddLicenseRequirementModalProps> = ({
 					<Button 
 						variant="primary" 
 						type="submit" 
-						disabled={loading || availableLicenseTypes.length === 0}
+						disabled={loading || filteredLicenseTypes.length === 0}
 					>
 						{loading ? (
 							<>

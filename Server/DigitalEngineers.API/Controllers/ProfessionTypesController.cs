@@ -57,12 +57,11 @@ public class ProfessionTypesController : ControllerBase
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<ActionResult<ProfessionTypeDto>> CreateProfessionType(
+    public async Task<ActionResult<ProfessionTypeDetailDto>> CreateProfessionType(
         [FromBody] CreateProfessionTypeDto dto,
         CancellationToken cancellationToken)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var result = await _professionTypeService.CreateProfessionTypeAsync(dto, userId, cancellationToken);
+        var result = await _professionTypeService.CreateProfessionTypeAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(GetProfessionType), new { id = result.Id }, result);
     }
 
@@ -71,26 +70,12 @@ public class ProfessionTypesController : ControllerBase
     /// </summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<ActionResult<ProfessionTypeDto>> UpdateProfessionType(
+    public async Task<ActionResult<ProfessionTypeDetailDto>> UpdateProfessionType(
         int id,
         [FromBody] UpdateProfessionTypeDto dto,
         CancellationToken cancellationToken)
     {
         var result = await _professionTypeService.UpdateProfessionTypeAsync(id, dto, cancellationToken);
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// Approve or reject a profession type (Admin only)
-    /// </summary>
-    [HttpPut("{id}/approve")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<ActionResult<ProfessionTypeDto>> ApproveProfessionType(
-        int id,
-        [FromBody] ApproveProfessionTypeDto dto,
-        CancellationToken cancellationToken)
-    {
-        var result = await _professionTypeService.ApproveProfessionTypeAsync(id, dto, cancellationToken);
         return Ok(result);
     }
 
@@ -106,6 +91,18 @@ public class ProfessionTypesController : ControllerBase
     }
 
     // ==================== LICENSE REQUIREMENTS ====================
+
+    /// <summary>
+    /// Get license requirements for a profession type
+    /// </summary>
+    [HttpGet("{professionTypeId}/license-requirements")]
+    public async Task<ActionResult<IEnumerable<LicenseRequirementDto>>> GetLicenseRequirements(
+        int professionTypeId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _professionTypeService.GetLicenseRequirementsAsync(professionTypeId, cancellationToken);
+        return Ok(result);
+    }
 
     /// <summary>
     /// Add a license requirement to a profession type (Admin only)

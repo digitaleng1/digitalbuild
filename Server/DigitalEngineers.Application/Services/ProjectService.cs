@@ -53,14 +53,47 @@ public class ProjectService : IProjectService
             throw new ArgumentException($"Client with ID {clientId} not found", nameof(clientId));
         }
 
+        // Extract license types from profession types
+        var licenseTypeIds = new List<int>();
+        
+        if (dto.ProfessionTypeIds.Length > 0)
+        {
+            // NEW: Extract license types from profession types via LicenseRequirements
+            licenseTypeIds = await _context.Set<ProfessionTypeLicenseRequirement>()
+                .Where(ptlr => dto.ProfessionTypeIds.Contains(ptlr.ProfessionTypeId))
+                .Select(ptlr => ptlr.LicenseTypeId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+            
+            if (licenseTypeIds.Count == 0)
+            {
+                _logger.LogWarning("No license types found for profession type IDs: {ProfessionTypeIds}", 
+                    string.Join(", ", dto.ProfessionTypeIds));
+                throw new ArgumentException(
+                    $"No license types found for the selected profession types. Please ensure the profession types have associated licenses.",
+                    nameof(dto.ProfessionTypeIds));
+            }
+        }
+#pragma warning disable CS0618 // Type or member is obsolete
+        else if (dto.LicenseTypeIds.Length > 0) // Fallback for backward compatibility
+        {
+            licenseTypeIds = dto.LicenseTypeIds.ToList();
+        }
+#pragma warning restore CS0618 // Type or member is obsolete
+        else
+        {
+            throw new ArgumentException("Either ProfessionTypeIds or LicenseTypeIds must be provided");
+        }
+
+        // Validate license types exist
         var existingLicenseTypeIds = await _context.LicenseTypes
-            .Where(lt => dto.LicenseTypeIds.Contains(lt.Id))
+            .Where(lt => licenseTypeIds.Contains(lt.Id))
             .Select(lt => lt.Id)
             .ToListAsync(cancellationToken);
 
-        if (existingLicenseTypeIds.Count != dto.LicenseTypeIds.Length)
+        if (existingLicenseTypeIds.Count != licenseTypeIds.Count)
         {
-            var invalidIds = dto.LicenseTypeIds.Except(existingLicenseTypeIds);
+            var invalidIds = licenseTypeIds.Except(existingLicenseTypeIds);
             _logger.LogWarning("Invalid license type IDs: {InvalidIds}", string.Join(", ", invalidIds));
             throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
         }
@@ -229,7 +262,7 @@ public class ProjectService : IProjectService
                 }
             }
 
-            var projectLicenseTypes = dto.LicenseTypeIds
+            var projectLicenseTypes = licenseTypeIds
                 .Select(ltId => new ProjectLicenseType
                 {
                     ProjectId = project.Id,
@@ -313,7 +346,7 @@ public class ProjectService : IProjectService
                 ZipCode = project.ZipCode,
                 ProjectScope = (int)project.ProjectScope,
                 ManagementType = project.ManagementType.ToString(),
-                LicenseTypeIds = dto.LicenseTypeIds,
+                LicenseTypeIds = licenseTypeIds.ToArray(),
                 QuotedAmount = project.QuotedAmount,
                 TaskCount = 0
             };

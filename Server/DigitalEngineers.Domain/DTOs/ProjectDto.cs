@@ -5,7 +5,14 @@ namespace DigitalEngineers.Domain.DTOs;
 public class CreateProjectDto
 {
     public string Name { get; init; } = string.Empty;
+    
+    // NEW: Replace licenseTypeIds with professionTypeIds
+    public int[] ProfessionTypeIds { get; init; } = [];
+    
+    // DEPRECATED: Keep for backward compatibility during migration
+    [Obsolete("Use ProfessionTypeIds instead")]
     public int[] LicenseTypeIds { get; init; } = [];
+    
     public string StreetAddress { get; init; } = string.Empty;
     public string City { get; init; } = string.Empty;
     public string State { get; init; } = string.Empty;

@@ -82,11 +82,11 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		url: '/licenses',
 	},
 	{
-		key: 'dictionaries',
+		key: 'professions-license-types',
 		label: 'Professions & Licenses',
 		isTitle: false,
 		icon: 'uil-book-alt',
-		url: '/dictionaries',
+		url: '/professions-license-types',
 	},
 	{
 		key: 'projects-tasks',

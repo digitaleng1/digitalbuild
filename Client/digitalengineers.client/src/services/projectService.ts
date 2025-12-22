@@ -69,10 +69,17 @@ class ProjectService {
 		formData.append('projectScope', data.projectScope.toString());
 		formData.append('managementType', data.managementType);
 		
-		// Append license type IDs
-		data.licenseTypeIds.forEach(id => {
-			formData.append('licenseTypeIds', id.toString());
+		// Append profession type IDs
+		data.professionTypeIds.forEach(id => {
+			formData.append('professionTypeIds', id.toString());
 		});
+		
+		// Append license type IDs for backward compatibility
+		if (data.licenseTypeIds && data.licenseTypeIds.length > 0) {
+			data.licenseTypeIds.forEach(id => {
+				formData.append('licenseTypeIds', id.toString());
+			});
+		}
 		
 		// Append files
 		if (data.files && data.files.length > 0) {
