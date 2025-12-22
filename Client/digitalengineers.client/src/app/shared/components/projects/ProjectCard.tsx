@@ -187,7 +187,7 @@ export default function ProjectCard({
 						<span className="text-primary">
 							<i className="mdi mdi-format-list-checks me-1"></i>
 							<strong>{project.taskCount}</strong>
-							{' '}{project.taskCount === 1 ? 'Task' : 'Tasks'}
+							{' '}{project.taskCount === 1 ? 'Manage Task' : 'Manage Tasks'}
 						</span>
 					</Link>
 				</div>
