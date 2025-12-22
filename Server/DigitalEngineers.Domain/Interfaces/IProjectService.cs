@@ -65,28 +65,37 @@ public interface IProjectService
     /// Gets project quote data with accepted bids and suggested amount
     /// </summary>
     /// <param name="projectId">Project ID</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Project quote data</returns>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
-    Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, CancellationToken cancellationToken = default);
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized to access quote data</exception>
+    Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, string? userId, string[] userRoles, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Submits quote to client
     /// </summary>
     /// <param name="dto">Quote data</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
-    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuotePending</exception>
-    Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default);
+    /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not valid</exception>
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized to submit quote</exception>
+    Task SubmitQuoteToClientAsync(CreateQuoteDto dto, string? userId, string[] userRoles, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Updates existing quote (Admin can edit submitted quote)
     /// </summary>
     /// <param name="dto">Updated quote data</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
     /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuoteSubmitted</exception>
-    Task UpdateQuoteAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default);
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized to update quote</exception>
+    Task UpdateQuoteAsync(CreateQuoteDto dto, string? userId, string[] userRoles, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Client accepts quote

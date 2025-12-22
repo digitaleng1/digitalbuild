@@ -441,6 +441,18 @@ const ProjectDetailsPage = () => {
 						/>
 					)}
 
+					{/* Client: Quote Creation for ClientManaged projects */}
+					{isClient && 
+						project.managementType === ProjectManagementType.ClientManaged && 
+						project.status === ProjectStatus.InProgress && (
+						<QuoteCreationCard
+							projectId={project.id}
+							project={project}
+							onQuoteSubmitted={refetch}
+							hideMargin={true}
+						/>
+					)}
+
 					{/* Client: Quote Review (when status = QuoteSubmitted) */}
 					{isClient && project.status === ProjectStatus.QuoteSubmitted && (
 						<QuoteReviewCard

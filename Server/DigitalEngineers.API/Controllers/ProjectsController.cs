@@ -220,62 +220,74 @@ public class ProjectsController : ControllerBase
     }
     
     /// <summary>
-    /// Get project quote data (Admin/SuperAdmin only)
+    /// Get project quote data (Admin/SuperAdmin or Client for ClientManaged projects)
     /// </summary>
     [HttpGet("{id}/quote-data")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(typeof(ProjectQuoteViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ProjectQuoteViewModel>> GetProjectQuoteData(
         int id,
         CancellationToken cancellationToken)
     {
-        var quoteData = await _projectService.GetProjectQuoteDataAsync(id, cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
+        var quoteData = await _projectService.GetProjectQuoteDataAsync(id, userId, roles, cancellationToken);
         var viewModel = _mapper.Map<ProjectQuoteViewModel>(quoteData);
         return Ok(viewModel);
     }
     
     /// <summary>
-    /// Submit quote to client (Admin/SuperAdmin only)
+    /// Submit quote to client (Admin/SuperAdmin or Client for ClientManaged projects)
     /// </summary>
     [HttpPost("{id}/quote/submit")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SubmitQuote(
         int id,
         [FromBody] CreateQuoteViewModel model,
         CancellationToken cancellationToken)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
         var dto = _mapper.Map<CreateQuoteDto>(model);
         dto.ProjectId = id;
         
-        await _projectService.SubmitQuoteToClientAsync(dto, cancellationToken);
+        await _projectService.SubmitQuoteToClientAsync(dto, userId, roles, cancellationToken);
         return NoContent();
     }
     
     /// <summary>
-    /// Update existing quote (Admin/SuperAdmin only)
+    /// Update existing quote (Admin/SuperAdmin or Client for ClientManaged projects)
     /// </summary>
     [HttpPut("{id}/quote")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateQuote(
         int id,
         [FromBody] CreateQuoteViewModel model,
         CancellationToken cancellationToken)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
         var dto = _mapper.Map<CreateQuoteDto>(model);
         dto.ProjectId = id;
         
-        await _projectService.UpdateQuoteAsync(dto, cancellationToken);
+        await _projectService.UpdateQuoteAsync(dto, userId, roles, cancellationToken);
         return NoContent();
     }
     

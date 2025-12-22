@@ -856,7 +856,7 @@ public class ProjectService : IProjectService
                          .ThenByDescending(s => s.AssignedOrBidSentAt);
     }
 
-    public async Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, CancellationToken cancellationToken = default)
+    public async Task<ProjectQuoteDto> GetProjectQuoteDataAsync(int projectId, string? userId, string[] userRoles, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
             .AsNoTracking()
@@ -865,6 +865,18 @@ public class ProjectService : IProjectService
         if (project == null)
         {
             throw new ProjectNotFoundException(projectId);
+        }
+        
+        // Authorization check: Admin/SuperAdmin can access all, Client can only access their ClientManaged projects
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+        
+        if (!isAdmin)
+        {
+            if (!isClient || project.ClientId != userId || project.ManagementType != ProjectManagementType.ClientManaged)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to access quote data for this project");
+            }
         }
         
         var acceptedBids = await _context.BidResponses
@@ -912,7 +924,7 @@ public class ProjectService : IProjectService
         };
     }
     
-    public async Task SubmitQuoteToClientAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
+    public async Task SubmitQuoteToClientAsync(CreateQuoteDto dto, string? userId, string[] userRoles, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
             .Include(p => p.Client)
@@ -923,38 +935,73 @@ public class ProjectService : IProjectService
             throw new ProjectNotFoundException(dto.ProjectId);
         }
         
-        if (project.Status != ProjectStatus.QuotePending && project.Status != ProjectStatus.QuoteRejected)
+        // Authorization check: Admin/SuperAdmin can submit for all, Client can only submit for their ClientManaged projects
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+        
+        if (!isAdmin)
         {
-            throw new InvalidProjectStatusForQuoteException(
-                dto.ProjectId, 
-                project.Status.ToString(), 
-                "submit quote");
+            if (!isClient || project.ClientId != userId || project.ManagementType != ProjectManagementType.ClientManaged)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to submit quote for this project");
+            }
+        }
+        
+        // For ClientManaged projects, status should be InProgress (not QuotePending)
+        if (project.ManagementType == ProjectManagementType.ClientManaged)
+        {
+            if (project.Status != ProjectStatus.InProgress)
+            {
+                throw new InvalidProjectStatusForQuoteException(
+                    dto.ProjectId, 
+                    project.Status.ToString(), 
+                    "set project price");
+            }
+        }
+        else
+        {
+            if (project.Status != ProjectStatus.QuotePending && project.Status != ProjectStatus.QuoteRejected)
+            {
+                throw new InvalidProjectStatusForQuoteException(
+                    dto.ProjectId, 
+                    project.Status.ToString(), 
+                    "submit quote");
+            }
         }
         
         project.QuotedAmount = dto.QuotedAmount;
         project.QuoteNotes = dto.QuoteNotes;
         project.QuoteSubmittedAt = DateTime.UtcNow;
-        project.Status = ProjectStatus.QuoteSubmitted;
+        
+        // For ClientManaged: keep status as InProgress, for DigitalEngineersManaged: change to QuoteSubmitted
+        if (project.ManagementType == ProjectManagementType.DigitalEngineersManaged)
+        {
+            project.Status = ProjectStatus.QuoteSubmitted;
+        }
+        
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Send quote submitted email to client
-        var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
-        var baseUrl = _urlProvider.GetBaseUrl();
-        var quoteUrl = $"{baseUrl}/client/projects/{project.Id}";
-        
-        await _emailService.SendQuoteSubmittedNotificationAsync(
-            project.Client.Email!,
-            clientName,
-            project.Name,
-            dto.QuotedAmount,
-            dto.QuoteNotes,
-            quoteUrl,
-            cancellationToken);
+        // Send quote submitted email only for DigitalEngineersManaged projects
+        if (project.ManagementType == ProjectManagementType.DigitalEngineersManaged)
+        {
+            var clientName = $"{project.Client.FirstName} {project.Client.LastName}";
+            var baseUrl = _urlProvider.GetBaseUrl();
+            var quoteUrl = $"{baseUrl}/client/projects/{project.Id}";
+            
+            await _emailService.SendQuoteSubmittedNotificationAsync(
+                project.Client.Email!,
+                clientName,
+                project.Name,
+                dto.QuotedAmount,
+                dto.QuoteNotes,
+                quoteUrl,
+                cancellationToken);
+        }
     }
     
-    public async Task UpdateQuoteAsync(CreateQuoteDto dto, CancellationToken cancellationToken = default)
+    public async Task UpdateQuoteAsync(CreateQuoteDto dto, string? userId, string[] userRoles, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
             .FirstOrDefaultAsync(p => p.Id == dto.ProjectId, cancellationToken);
@@ -964,12 +1011,38 @@ public class ProjectService : IProjectService
             throw new ProjectNotFoundException(dto.ProjectId);
         }
         
-        if (project.Status != ProjectStatus.QuoteSubmitted)
+        // Authorization check: Admin/SuperAdmin can update all, Client can only update their ClientManaged projects
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+        
+        if (!isAdmin)
         {
-            throw new InvalidProjectStatusForQuoteException(
-                dto.ProjectId, 
-                project.Status.ToString(), 
-                "update quote");
+            if (!isClient || project.ClientId != userId || project.ManagementType != ProjectManagementType.ClientManaged)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to update quote for this project");
+            }
+        }
+        
+        // For ClientManaged: allow update in InProgress, for DigitalEngineersManaged: only in QuoteSubmitted
+        if (project.ManagementType == ProjectManagementType.ClientManaged)
+        {
+            if (project.Status != ProjectStatus.InProgress)
+            {
+                throw new InvalidProjectStatusForQuoteException(
+                    dto.ProjectId, 
+                    project.Status.ToString(), 
+                    "update project price");
+            }
+        }
+        else
+        {
+            if (project.Status != ProjectStatus.QuoteSubmitted)
+            {
+                throw new InvalidProjectStatusForQuoteException(
+                    dto.ProjectId, 
+                    project.Status.ToString(), 
+                    "update quote");
+            }
         }
         
         project.QuotedAmount = dto.QuotedAmount;

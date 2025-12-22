@@ -8,14 +8,10 @@ interface QuoteCreationCardProps {
 	projectId: number;
 	project: ProjectDetailsDto;
 	onQuoteSubmitted?: () => void;
+	hideMargin?: boolean; // Hide margin fields for client view
 }
 
-const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreationCardProps) => {
-	// Don't show for ClientManaged projects
-	if (project.managementType === ProjectManagementType.ClientManaged) {
-		return null;
-	}
-
+const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted, hideMargin = false }: QuoteCreationCardProps) => {
 	const { quote, loading, fetchQuote, submitQuote } = useProjectQuote();
 	const [quotedAmount, setQuotedAmount] = useState<string>('');
 	const [quoteNotes, setQuoteNotes] = useState<string>('');
@@ -26,7 +22,10 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 	const isQuoteSubmitted = project.status === ProjectStatus.QuoteSubmitted;
 	const isQuoteRejected = project.status === ProjectStatus.QuoteRejected;
 	const isQuoteAccepted = project.status === ProjectStatus.QuoteAccepted;
-	const canEdit = isQuotePending || isQuoteRejected;
+	const isInProgress = project.status === ProjectStatus.InProgress;
+	
+	// For ClientManaged projects in InProgress status, allow editing
+	const canEdit = isQuotePending || isQuoteRejected || (hideMargin && isInProgress);
 
 	useEffect(() => {
 		fetchQuote(projectId);
@@ -118,7 +117,13 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 					title={
 						<h4 className="header-title mb-0">
 							<i className="mdi mdi-file-document-outline me-2"></i>
-							{isQuotePending ? 'Create Quote for Client' : isQuoteRejected ? 'Resubmit Quote to Client' : 'Project Quote'}
+							{hideMargin 
+								? 'Set Project Price'
+								: isQuotePending 
+									? 'Create Quote for Client' 
+									: isQuoteRejected 
+										? 'Resubmit Quote to Client' 
+										: 'Project Quote'}
 						</h4>
 					}
 				/>
@@ -126,7 +131,9 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 				{isQuotePending && (
 					<Alert variant="info" className="mb-3">
 						<i className="mdi mdi-information-outline me-2"></i>
-						Review accepted bids and create a quote to send to the client
+						{hideMargin 
+							? 'Set a price for your project based on accepted bids' 
+							: 'Review accepted bids and create a quote to send to the client'}
 					</Alert>
 				)}
 
@@ -161,8 +168,8 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 									<th>Specialist</th>
 									<th>Role</th>
 									<th className="text-end">Base Price</th>
-									<th className="text-center">Markup</th>
-									<th className="text-end">Final Price</th>
+									{!hideMargin && <th className="text-center">Markup</th>}
+									<th className="text-end">{hideMargin ? 'Price' : 'Final Price'}</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -173,16 +180,18 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 											<small className="text-muted">{bid.role}</small>
 										</td>
 										<td className="text-end">{formatCurrency(bid.proposedPrice)}</td>
-										<td className="text-center">
-											<span className="badge bg-primary">+{bid.adminMarkupPercentage}%</span>
-										</td>
+										{!hideMargin && (
+											<td className="text-center">
+												<span className="badge bg-primary">+{bid.adminMarkupPercentage}%</span>
+											</td>
+										)}
 										<td className="text-end fw-semibold">{formatCurrency(bid.finalPrice)}</td>
 									</tr>
 								))}
 							</tbody>
 							<tfoot className="table-light">
 								<tr>
-									<td colSpan={4} className="text-end fw-bold">Suggested Total:</td>
+									<td colSpan={hideMargin ? 3 : 4} className="text-end fw-bold">Suggested Total:</td>
 									<td className="text-end fw-bold text-success">
 										{formatCurrency(quote.suggestedAmount)}
 									</td>
@@ -246,14 +255,14 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 						</Form.Group>
 
 						<Form.Group className="mb-3">
-							<Form.Label>Quote Notes (Optional)</Form.Label>
+							<Form.Label>{hideMargin ? 'Price Notes (Optional)' : 'Quote Notes (Optional)'}</Form.Label>
 							<Form.Control
 								as="textarea"
 								rows={3}
 								maxLength={1000}
 								value={quoteNotes}
 								onChange={(e) => setQuoteNotes(e.target.value)}
-								placeholder="Add any notes for the client..."
+								placeholder={hideMargin ? 'Add any notes about the project price...' : 'Add any notes for the client...'}
 								disabled={isSubmitting}
 							/>
 							<Form.Text className="text-muted">
@@ -290,12 +299,12 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted }: QuoteCreati
 											aria-hidden="true"
 											className="me-2"
 										/>
-										Submitting...
+										{hideMargin ? 'Setting Price...' : 'Submitting...'}
 									</>
 								) : (
 									<>
 										<i className="mdi mdi-send me-2"></i>
-										Submit Quote to Client
+										{hideMargin ? 'Set Project Price' : 'Submit Quote to Client'}
 									</>
 								)}
 							</Button>
