@@ -28,33 +28,33 @@ const SendBidsModal = ({
 	const { showSuccess, showError } = useToast();
 
 	const [selectedSpecialists, setSelectedSpecialists] = useState<Set<string>>(new Set());
-	const [selectedLicenseFilter, setSelectedLicenseFilter] = useState<number | null>(null);
+	const [selectedLicenseFilters, setSelectedLicenseFilters] = useState<Set<number>>(new Set());
 	const [formData, setFormData] = useState<BidFormData>({
 		description: '',
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
 
-	// Set first license type as default when modal opens
+	// Initialize with all licenses selected
 	useEffect(() => {
 		if (show && requiredLicenseTypes.length > 0) {
-			setSelectedLicenseFilter(requiredLicenseTypes[0].id);
+			setSelectedLicenseFilters(new Set(requiredLicenseTypes.map(lt => lt.id)));
 		}
 	}, [show, requiredLicenseTypes]);
 
 	const filteredSpecialists = useMemo(() => {
-		if (selectedLicenseFilter === null) {
+		if (selectedLicenseFilters.size === 0) {
 			return specialists;
 		}
 
 		return specialists.filter((specialist) =>
-			specialist.licenseTypes.some((lt) => lt.id === selectedLicenseFilter)
+			specialist.licenseTypes.some((lt) => selectedLicenseFilters.has(lt.id))
 		);
-	}, [specialists, selectedLicenseFilter]);
+	}, [specialists, selectedLicenseFilters]);
 
-	const selectedLicenseType = useMemo(() => {
-		return requiredLicenseTypes.find((lt) => lt.id === selectedLicenseFilter) || null;
-	}, [requiredLicenseTypes, selectedLicenseFilter]);
+	const selectedLicenseTypes = useMemo(() => {
+		return requiredLicenseTypes.filter((lt) => selectedLicenseFilters.has(lt.id));
+	}, [requiredLicenseTypes, selectedLicenseFilters]);
 
 	const handleToggleSpecialist = useCallback((userId: string) => {
 		setSelectedSpecialists((prev) => {
@@ -69,7 +69,15 @@ const SendBidsModal = ({
 	}, []);
 
 	const handleLicenseFilterChange = useCallback((licenseId: number) => {
-		setSelectedLicenseFilter((prev) => prev === licenseId ? null : licenseId);
+		setSelectedLicenseFilters((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(licenseId)) {
+				newSet.delete(licenseId);
+			} else {
+				newSet.add(licenseId);
+			}
+			return newSet;
+		});
 	}, []);
 
 	const handleSelectAll = useCallback(() => {
@@ -86,12 +94,8 @@ const SendBidsModal = ({
 	}, []);
 
 	const handleInvitationSent = useCallback(async (result: InviteSpecialistResult) => {
-		// Refresh specialists list
 		await refetch();
-		
-		// Auto-select newly invited specialist
 		setSelectedSpecialists(prev => new Set([...prev, result.specialistUserId]));
-		
 		showSuccess('Success', `Invitation sent to ${result.email}`);
 	}, [refetch, showSuccess]);
 
@@ -120,7 +124,7 @@ const SendBidsModal = ({
 			);
 
 			setSelectedSpecialists(new Set());
-			setSelectedLicenseFilter(null);
+			setSelectedLicenseFilters(new Set());
 			setFormData({ description: '' });
 
 			onSuccess?.();
@@ -224,7 +228,10 @@ const SendBidsModal = ({
 									<hr />
 
 									<div className="flex-grow-1">
-										<h6 className="mb-3">Filter by License Type:</h6>
+										<h6 className="mb-3">
+											<i className="mdi mdi-information-outline me-2"></i>
+											Filter by License Types (multiple selection):
+										</h6>
 										
 										{/* License Type Switches */}
 										<div className="d-flex flex-column gap-1">
@@ -234,7 +241,7 @@ const SendBidsModal = ({
 													type="switch"
 													id={`filter-switch-${lt.id}`}
 													label={lt.name}
-													checked={selectedLicenseFilter === lt.id}
+													checked={selectedLicenseFilters.has(lt.id)}
 													onChange={() => handleLicenseFilterChange(lt.id)}
 													className="user-select-none"
 												/>
@@ -257,7 +264,7 @@ const SendBidsModal = ({
 													variant="outline-success"
 													size="sm"
 													onClick={() => setShowInviteModal(true)}
-													disabled={!selectedLicenseType}
+													disabled={selectedLicenseTypes.length === 0}
 												>
 													<i className="mdi mdi-account-plus me-1"></i>
 													Invite New
@@ -391,11 +398,11 @@ const SendBidsModal = ({
 			</Modal>
 
 			{/* Invite Specialist Modal */}
-			{selectedLicenseType && (
+			{selectedLicenseTypes.length > 0 && (
 				<InviteSpecialistModal
 					show={showInviteModal}
 					onHide={() => setShowInviteModal(false)}
-					licenseType={selectedLicenseType}
+					licenseType={selectedLicenseTypes[0]}
 					onInvitationSent={handleInvitationSent}
 				/>
 			)}
