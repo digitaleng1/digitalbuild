@@ -112,16 +112,14 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 	{
 		key: 'account',
 		label: 'Account',
+		isTitle: true,
+	},
+	{
+		key: 'admin-profile',
+		label: 'My Profile',
 		isTitle: false,
-		icon: 'uil-copy-alt',
-		children: [
-			{
-				key: 'page-profile',
-				label: 'Profile',
-				url: '/profile',
-				parentKey: 'account',
-			},
-		],
+		icon: 'uil-user',
+		url: '/profile',
 	},
 ];
 // SuperAdmin - Full Access

@@ -10,6 +10,7 @@ const ProvidersPage = lazy(() => import('./providers/page'));
 const ClientsPage = lazy(() => import('./clients/page'));
 const Licenses = lazy(() => import('./licenses'));
 const ProfessionsLicenseTypes = lazy(() => import('./professions-license-types'));
+const ProfilePage = lazy(() => import('./profile/page'));
 
 export default function Admin() {
     return (
@@ -23,6 +24,7 @@ export default function Admin() {
                 <Route path="clients" element={<ClientsPage />} />
                 <Route path="licenses/*" element={<Licenses />} />
                 <Route path="professions-license-types/*" element={<ProfessionsLicenseTypes />} />
+                <Route path="profile" element={<ProfilePage />} />
                 <Route path="*" element={<Error404Alt />} />
             </Route>
         </Routes>
