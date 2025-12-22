@@ -90,6 +90,33 @@ const Step2LocationScope = () => {
 			<Row>
 				<Col>
 					<RHForm onSubmit={handleSubmit} schema={schema} defaultValues={defaultValues}>
+						<h5 className="mb-3 mt-4">Project Management Type</h5>
+						<div className="mb-4">
+							<div className="d-flex align-items-center justify-content-between">
+								<div>
+									<strong className="d-block mb-1">
+										{managementType === ProjectManagementType.DigitalEngineersManaged
+											? 'Novobid Managed'
+											: 'Client Managed (Self-Managed)'
+										}
+									</strong>
+									<span className="text-muted small">
+										{managementType === ProjectManagementType.DigitalEngineersManaged
+											? 'Our admin team manages the project and specialists (requires quote approval)'
+											: 'You manage the project and specialists yourself (no approval needed - ready instantly!)'
+										}
+									</span>
+								</div>
+								<Form.Check
+									type="switch"
+									id="management-type-switch"
+									checked={managementType === ProjectManagementType.ClientManaged}
+									onChange={handleManagementTypeChange}
+									label=""
+								/>
+							</div>
+						</div>
+
 						<h5 className="mb-3">Project Location</h5>
 
 						<Row>
@@ -145,33 +172,6 @@ const Step2LocationScope = () => {
 								/>
 							</Col>
 						</Row>
-
-						<h5 className="mb-3 mt-4">Project Management Type</h5>
-						<div className="mb-4">
-							<div className="d-flex align-items-center justify-content-between">
-								<div>
-									<strong className="d-block mb-1">
-										{managementType === ProjectManagementType.DigitalEngineersManaged 
-											? 'Novobid Managed' 
-											: 'Client Managed (Self-Managed)'
-										}
-									</strong>
-									<span className="text-muted small">
-										{managementType === ProjectManagementType.DigitalEngineersManaged 
-											? 'Our admin team manages the project and specialists (requires quote approval)' 
-											: 'You manage the project and specialists yourself (no approval needed - ready instantly!)'
-										}
-									</span>
-								</div>
-								<Form.Check
-									type="switch"
-									id="management-type-switch"
-									checked={managementType === ProjectManagementType.ClientManaged}
-									onChange={handleManagementTypeChange}
-									label=""
-								/>
-							</div>
-						</div>
 
 						<h5 className="mb-3 mt-4">Project Scope/Duration</h5>
 
