@@ -4,7 +4,16 @@ import BidsTable from '../BidsTable';
 import { useAdminBids } from '../hooks/useAdminBids';
 
 const AdminBidsListPage = () => {
-    const { bids, loading, error, refetch } = useAdminBids();
+    const { 
+        bids, 
+        loading, 
+        error, 
+        refetch, 
+        bidStatusFilter, 
+        setBidStatusFilter,
+        projectStatusFilter,
+        setProjectStatusFilter
+    } = useAdminBids();
 
     if (loading) {
         return (
@@ -47,7 +56,13 @@ const AdminBidsListPage = () => {
                                 </Col>
                             </Row>
 
-                            <BidsTable data={bids} />
+                            <BidsTable 
+                                data={bids}
+                                bidStatusFilter={bidStatusFilter}
+                                onBidStatusChange={setBidStatusFilter}
+                                projectStatusFilter={projectStatusFilter}
+                                onProjectStatusChange={setProjectStatusFilter}
+                            />
                         </CardBody>
                     </Card>
                 </Col>

@@ -1,7 +1,13 @@
+import { BidRequestStatus } from './bid';
+import { ProjectStatus } from './project';
+
+export type BidStatusFilter = 'All' | BidRequestStatus;
+export type ProjectStatusFilter = 'All' | ProjectStatus;
+
 export interface AdminBidListItem {
     projectId: number;
     projectName: string;
-    projectStatus: 'New' | 'Draft' | 'Published' | 'InProgress' | 'Completed' | 'Cancelled';
+    projectStatus: ProjectStatus;
     projectBudget: number;
     startDate: string | null;
     pendingBidsCount: number;
