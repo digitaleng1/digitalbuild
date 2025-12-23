@@ -358,7 +358,22 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
                             )}
                           </div>
                         ) : (
-                          renderTree(treeNodes)
+                          <>
+                            {/* Root drop zone - always visible at top */}
+                            {canEdit && (
+                              <div 
+                                className={`task-tree-root-drop-zone ${snapshot.isDraggingOver ? 'active' : ''}`}
+                                style={{ minHeight: '50px' }}
+                              >
+                                <div className="drop-zone-content">
+                                  <Icon icon="mdi:arrow-down" width={18} className="me-2" />
+                                  <span>Drop here to move to root level</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {renderTree(treeNodes)}
+                          </>
                         )}
                         {provided.placeholder}
                       </div>

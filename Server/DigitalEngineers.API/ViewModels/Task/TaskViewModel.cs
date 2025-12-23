@@ -17,6 +17,7 @@ public class TaskViewModel
     
     public string? AssignedToUserId { get; set; }
     public string? AssignedToUserName { get; set; }
+    public string? AssignedToUserAvatar { get; set; }
     public int ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string CreatedByUserId { get; set; } = string.Empty;

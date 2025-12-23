@@ -158,6 +158,9 @@ public class TaskService : ITaskService
             AssignedToUserId = task.AssignedToUserId,
             AssignedToUserName = task.AssignedToUser != null ? $"{task.AssignedToUser.FirstName} {task.AssignedToUser.LastName}" : null,
             AssignedToUserEmail = task.AssignedToUser?.Email,
+            AssignedToUserAvatar = task.AssignedToUser != null && !string.IsNullOrWhiteSpace(task.AssignedToUser.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(task.AssignedToUser.ProfilePictureUrl)
+                : null,
             ProjectId = task.ProjectId,
             ProjectName = task.Project.Name,
             CreatedByUserId = task.CreatedByUserId,
@@ -1127,6 +1130,9 @@ public class TaskService : ITaskService
             UpdatedAt = task.UpdatedAt,
             AssignedToUserId = task.AssignedToUserId,
             AssignedToUserName = task.AssignedToUser != null ? $"{task.AssignedToUser.FirstName} {task.AssignedToUser.LastName}" : null,
+            AssignedToUserAvatar = task.AssignedToUser != null && !string.IsNullOrWhiteSpace(task.AssignedToUser.ProfilePictureUrl)
+                ? _fileStorageService.GetPresignedUrl(task.AssignedToUser.ProfilePictureUrl)
+                : null,
             ProjectId = task.ProjectId,
             ProjectName = task.Project.Name,
             CreatedByUserId = task.CreatedByUserId,
