@@ -1,0 +1,261 @@
+/* Task Tree Styles */
+
+.task-tree-container {
+  background: #fff;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.task-tree-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.task-tree-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.task-tree-body {
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.task-tree-node {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.task-tree-node:hover {
+  background-color: #f8f9fa;
+}
+
+.task-tree-node.selected {
+  background-color: #e7f3ff;
+  border-left: 3px solid #0d6efd;
+}
+
+.task-tree-node-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 32px;
+}
+
+.task-tree-node-expander {
+  width: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-tree-node-expander .btn-link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.task-tree-node-expander .btn-link:hover {
+  color: #0d6efd !important;
+}
+
+.task-tree-node-expander .btn-link:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.task-tree-node-status {
+  width: 4px;
+  height: 24px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.task-tree-node-title {
+  font-weight: 500;
+  color: #212529;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.task-tree-node.selected .task-tree-node-title {
+  font-weight: 600;
+}
+
+.task-tree-node-metadata {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  margin-left: auto;
+  padding-left: 1rem;
+}
+
+.task-tree-node-metadata .badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-tree-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.task-tree-empty i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 1000px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+  }
+}
+
+.task-tree-node.expanding {
+  animation: slideDown 0.2s ease-out;
+}
+
+.task-tree-node.collapsing {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Loading state */
+.task-tree-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+/* Error state */
+.task-tree-error {
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Search highlight */
+.task-tree-highlight {
+  background-color: #fff3cd;
+  padding: 0 0.25rem;
+  border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-tree-node {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .task-tree-node-content {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .task-tree-node-metadata {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-left: 48px;
+    padding-left: 0;
+    gap: 0.5rem;
+  }
+
+  .task-tree-body {
+    max-height: calc(100vh - 450px);
+  }
+}
+
+@media (max-width: 576px) {
+  .task-tree-node-title {
+    flex-basis: 100%;
+  }
+  
+  .task-tree-node-metadata {
+    font-size: 0.8rem;
+  }
+}
+
+/* Scrollbar styling */
+.task-tree-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-tree-body::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.task-tree-body::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.task-tree-body::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Depth indicators */
+.task-tree-node[style*="padding-left: 24px"] {
+  /* Level 1 */
+  background: linear-gradient(90deg, transparent 0px, transparent 24px, #fff 24px);
+}
+
+.task-tree-node[style*="padding-left: 48px"] {
+  /* Level 2 */
+  background: linear-gradient(90deg, transparent 0px, transparent 48px, #fff 48px);
+}
+
+.task-tree-node[style*="padding-left: 72px"] {
+  /* Level 3 */
+  background: linear-gradient(90deg, transparent 0px, transparent 72px, #fff 72px);
+}
+
+/* Add subtle left border for nested items */
+.task-tree-node:not([style*="padding-left: 0px"])::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e9ecef;
+}
+
+.task-tree-node {
+  position: relative;
+}

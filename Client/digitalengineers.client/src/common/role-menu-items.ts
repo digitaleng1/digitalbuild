@@ -107,6 +107,12 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 				url: '/tasks/kanban',
 				parentKey: 'projects-tasks',
 			},
+			{
+				key: 'task-tree',
+				label: 'Task Tree',
+				url: '/tasks/tree',
+				parentKey: 'projects-tasks',
+			}
 		],
 	},
 	{
@@ -224,6 +230,12 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 				url: '/tasks/kanban',
 				parentKey: 'projects-tasks',
 			},
+			{
+				key: 'task-tree',
+				label: 'Task Tree',
+				url: '/tasks/tree',
+				parentKey: 'projects-tasks',
+			}
 		],
 	},
 	{
@@ -306,6 +318,12 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 				key: 'task-kanban',
 				label: 'Kanban Board',
 				url: '/tasks/kanban',
+				parentKey: 'projects-tasks',
+			},
+			{
+				key: 'task-tree',
+				label: 'Task Tree',
+				url: '/tasks/tree',
 				parentKey: 'projects-tasks',
 			},
 		],

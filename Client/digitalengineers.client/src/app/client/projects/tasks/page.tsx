@@ -5,11 +5,12 @@ import { Icon } from '@iconify/react';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import TaskKanbanBoard from '@/components/task/TaskKanbanBoard';
 import TaskListView from '@/components/task/TaskListView';
+import TaskTreeView from '@/components/task/TaskTreeView';
 import projectService from '@/services/projectService';
 import type { ProjectDetailsDto } from '@/types/project';
 import { canClientEditTasks } from '@/utils/projectUtils';
 
-type ViewMode = 'kanban' | 'list';
+type ViewMode = 'kanban' | 'list' | 'tree';
 
 const ProjectTasksPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -113,6 +114,14 @@ const ProjectTasksPage = () => {
                                         <Icon icon="mdi:view-list" width={18} />
                                         <span>List</span>
                                     </Button>
+                                    <Button
+                                        variant={viewMode === 'tree' ? 'primary' : 'outline-primary'}
+                                        onClick={() => setViewMode('tree')}
+                                        className="d-flex align-items-center gap-1"
+                                    >
+                                        <Icon icon="mdi:file-tree-outline" width={18} />
+                                        <span>Tree</span>
+                                    </Button>
                                 </ButtonGroup>
                             </div>
 
@@ -123,8 +132,14 @@ const ProjectTasksPage = () => {
                                     canEdit={canEdit}
                                     onTaskClick={(taskId) => console.log('Task clicked:', taskId)}
                                 />
-                            ) : (
+                            ) : viewMode === 'list' ? (
                                 <TaskListView
+                                    projectId={Number(id)}
+                                    project={project}
+                                    canEdit={canEdit}
+                                />
+                            ) : (
+                                <TaskTreeView 
                                     projectId={Number(id)}
                                     project={project}
                                     canEdit={canEdit}
