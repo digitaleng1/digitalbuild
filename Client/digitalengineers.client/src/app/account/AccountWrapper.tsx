@@ -22,10 +22,10 @@ export default function AccountWrapper({ bottomLinks, children }: AccountWrapper
 					<Row className="justify-content-center">
 						<Col md={8} lg={6} xl={5} xxl={4}>
 							<Card>
-								<Card.Header className="pt-4 pb-4 text-center bg-primary">
+								<Card.Header className="pt-1 pb-1 text-center bg-primary">
 									<Link to="/">
 										<span>
-											<img src={Logo} alt="" height="22" />
+											<img src={Logo} alt="" height="80" />
 										</span>
 									</Link>
 								</Card.Header>
