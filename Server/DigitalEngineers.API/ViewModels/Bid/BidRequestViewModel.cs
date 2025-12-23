@@ -15,4 +15,5 @@ public class BidRequestViewModel
     public int ResponseCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<BidRequestAttachmentViewModel>? Attachments { get; set; }
 }

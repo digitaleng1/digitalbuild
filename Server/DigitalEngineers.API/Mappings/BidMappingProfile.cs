@@ -36,5 +36,7 @@ public class BidMappingProfile : Profile
         CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
         
         CreateMap<ProjectBidStatisticsDto, ProjectBidStatisticsViewModel>();
+        
+        CreateMap<BidRequestAttachmentDto, BidRequestAttachmentViewModel>();
     }
 }

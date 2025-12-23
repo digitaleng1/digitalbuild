@@ -24,4 +24,5 @@ public class BidRequest
     
     public BidResponse? Response { get; set; }
     public ICollection<BidMessage> Messages { get; set; } = [];
+    public ICollection<BidRequestAttachment> Attachments { get; set; } = [];
 }

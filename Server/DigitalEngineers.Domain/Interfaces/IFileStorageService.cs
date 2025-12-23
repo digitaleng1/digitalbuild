@@ -8,6 +8,7 @@ public interface IFileStorageService
     Task<string> UploadPortfolioFileAsync(Stream fileStream, string fileName, string contentType, int specialistId, CancellationToken cancellationToken = default);
     Task<string> UploadLicenseFileAsync(Stream fileStream, string fileName, string contentType, int specialistId, CancellationToken cancellationToken = default);
     Task<string> UploadUserAvatarAsync(Stream fileStream, string fileName, string contentType, string userId, CancellationToken cancellationToken = default);
+    Task<string> UploadBidRequestFileAsync(Stream fileStream, string fileName, string contentType, int bidRequestId, CancellationToken cancellationToken = default);
     Task<bool> DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default);
     Task<Stream> DownloadFileAsync(string fileUrl, CancellationToken cancellationToken = default);
     Task<bool> EnsureBucketExistsAsync(CancellationToken cancellationToken = default);

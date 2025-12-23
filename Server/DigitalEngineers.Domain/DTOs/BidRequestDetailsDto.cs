@@ -18,4 +18,5 @@ public class BidRequestDetailsDto
     public string ClientName { get; set; } = string.Empty;
     public string ClientEmail { get; set; } = string.Empty;
     public BidResponseDto? Response { get; set; }
+    public List<BidRequestAttachmentDto> Attachments { get; set; } = new();
 }

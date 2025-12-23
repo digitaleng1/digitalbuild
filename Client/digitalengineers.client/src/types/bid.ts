@@ -1,4 +1,5 @@
 import type { LicenseType } from './lookup';
+import type { BidRequestAttachment } from './bid-attachment';
 
 export interface SpecialistForBid {
 	userId: string;
@@ -14,6 +15,11 @@ export interface SendBidDto {
 	projectId: number;
 	specialistUserIds: string[];
 	description: string;
+}
+
+export interface SendBidResponseDto {
+	message: string;
+	bidRequestIds: number[];
 }
 
 export interface BidFormData {
@@ -48,6 +54,7 @@ export interface BidRequestDto {
 	hasResponse: boolean;
 	createdAt: string;
 	updatedAt: string;
+	attachments?: BidRequestAttachment[];
 }
 
 export interface BidRequestDetailsDto {
@@ -76,6 +83,7 @@ export interface BidRequestDetailsDto {
 	clientEmail: string;
 	bidResponse?: BidResponseDto;
 	response?: BidResponseDto;
+	attachments: BidRequestAttachment[];
 }
 
 // Synchronized with server BidResponseDto

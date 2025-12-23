@@ -23,11 +23,15 @@ public interface IBidService
     Task<IEnumerable<BidMessageDto>> GetMessagesByBidRequestIdAsync(int requestId, CancellationToken cancellationToken = default);
     Task DeleteMessageAsync(int id, CancellationToken cancellationToken = default);
     
-    Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<int>> SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAsync(int specialistId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAndStatusAsync(int specialistId, BidRequestStatus? status, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<ProjectBidStatisticsDto>> GetProjectBidStatisticsAsync(string? clientId = null, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<BidResponseByProjectDto>> GetBidResponsesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
+    
+    Task<BidRequestAttachmentDto> UploadBidRequestAttachmentAsync(int bidRequestId, Stream fileStream, string fileName, string contentType, string userId, string? description, CancellationToken cancellationToken = default);
+    Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BidRequestAttachmentDto>> GetBidRequestAttachmentsAsync(int bidRequestId, CancellationToken cancellationToken = default);
 }

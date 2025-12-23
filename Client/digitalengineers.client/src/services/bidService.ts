@@ -1,6 +1,7 @@
 import httpClient from '@/common/helpers/httpClient';
 import type { 
-	SendBidDto, 
+	SendBidDto,
+	SendBidResponseDto,
 	BidRequestDto, 
 	BidRequestDetailsDto, 
 	CreateBidResponseDto,
@@ -9,13 +10,15 @@ import type {
 	BidMessageDto
 } from '@/types/bid';
 import type { AdminBidListItem, BidResponseDto as BidResponseByProjectDto } from '@/types/admin-bid';
+import type { BidRequestAttachment, UploadBidRequestAttachmentDto } from '@/types/bid-attachment';
 
 class BidService {
 	/**
 	 * Send bids to selected specialists
 	 */
-	async sendBids(bidData: SendBidDto): Promise<void> {
-		await httpClient.post('/api/bids/send', bidData);
+	async sendBids(bidData: SendBidDto): Promise<SendBidResponseDto> {
+		const data = await httpClient.post<SendBidResponseDto>('/api/bids/send', bidData);
+		return data as SendBidResponseDto;
 	}
 
 	// Provider Methods
@@ -91,6 +94,55 @@ class BidService {
 	async getMessages(bidRequestId: number): Promise<BidMessageDto[]> {
 		const data = await httpClient.get<BidMessageDto[]>(`/api/bids/requests/${bidRequestId}/messages`);
 		return data as BidMessageDto[];
+	}
+
+	/**
+	 * Upload attachment to bid request
+	 * @param bidRequestId - ID of the bid request
+	 * @param data - Upload data (file and optional description)
+	 * @returns Uploaded attachment details
+	 */
+	async uploadBidRequestAttachment(
+		bidRequestId: number,
+		data: UploadBidRequestAttachmentDto
+	): Promise<BidRequestAttachment> {
+		const formData = new FormData();
+		formData.append('file', data.file);
+		if (data.description) {
+			formData.append('description', data.description);
+		}
+
+		const response = await httpClient.post<BidRequestAttachment>(
+			`/api/bids/requests/${bidRequestId}/attachments`,
+			formData,
+			{
+				headers: {
+					'Content-Type': 'multipart/form-data'
+				}
+			}
+		);
+
+		return response as BidRequestAttachment;
+	}
+
+	/**
+	 * Get all attachments for a bid request
+	 * @param bidRequestId - ID of the bid request
+	 * @returns List of attachments
+	 */
+	async getBidRequestAttachments(bidRequestId: number): Promise<BidRequestAttachment[]> {
+		const data = await httpClient.get<BidRequestAttachment[]>(
+			`/api/bids/requests/${bidRequestId}/attachments`
+		);
+		return data as BidRequestAttachment[];
+	}
+
+	/**
+	 * Delete attachment from bid request
+	 * @param attachmentId - ID of the attachment to delete
+	 */
+	async deleteBidRequestAttachment(attachmentId: number): Promise<void> {
+		await httpClient.delete(`/api/bids/attachments/${attachmentId}`);
 	}
 }
 

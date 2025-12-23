@@ -83,6 +83,8 @@ public class BidService : IBidService
             .Include(br => br.Response)
                 .ThenInclude(r => r!.Specialist)
                     .ThenInclude(s => s.User)
+            .Include(br => br.Attachments)
+                .ThenInclude(a => a.UploadedByUser)
             .FirstOrDefaultAsync(br => br.Id == id, cancellationToken);
 
         if (bidRequest == null)
@@ -129,6 +131,20 @@ public class BidService : IBidService
             projectThumbnailPresignedUrl = _fileStorageService.GetPresignedUrl(bidRequest.Project.ThumbnailUrl);
         }
 
+        var attachments = bidRequest.Attachments.Select(a => new BidRequestAttachmentDto
+        {
+            Id = a.Id,
+            BidRequestId = a.BidRequestId,
+            FileName = a.FileName,
+            FileSize = a.FileSize,
+            FileType = a.FileType,
+            DownloadUrl = _fileStorageService.GetPresignedUrl(a.S3Key),
+            UploadedAt = a.UploadedAt,
+            UploadedByUserId = a.UploadedByUserId,
+            UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
+            Description = a.Description
+        }).ToList();
+
         return new BidRequestDetailsDto
         {
             Id = bidRequest.Id,
@@ -146,7 +162,8 @@ public class BidService : IBidService
             UpdatedAt = bidRequest.UpdatedAt,
             ClientName = clientName,
             ClientEmail = clientEmail,
-            Response = responseDto
+            Response = responseDto,
+            Attachments = attachments
         };
     }
 
@@ -668,7 +685,7 @@ public class BidService : IBidService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<int>> SendBidRequestAsync(SendBidRequestDto dto, string clientId, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects.FindAsync([dto.ProjectId], cancellationToken);
         if (project == null)
@@ -711,6 +728,8 @@ public class BidService : IBidService
             throw new BidRequestAlreadyExistsException(dto.ProjectId, firstDuplicate.SpecialistId, specialistName);
         }
 
+        var bidRequestIds = new List<int>();
+
         foreach (var specialist in specialists)
         {
             var bidRequest = new BidRequest
@@ -726,6 +745,17 @@ public class BidService : IBidService
             };
 
             _context.BidRequests.Add(bidRequest);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Collect IDs after saving (EF Core assigns them)
+        foreach (var specialist in specialists)
+        {
+            var savedBidRequest = await _context.BidRequests
+                .FirstAsync(br => br.ProjectId == dto.ProjectId && br.SpecialistId == specialist.Id, cancellationToken);
+            
+            bidRequestIds.Add(savedBidRequest.Id);
             
             await _emailService.SendBidRequestNotificationAsync(
                 specialist.User.Email!,
@@ -736,7 +766,7 @@ public class BidService : IBidService
                 cancellationToken);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        return bidRequestIds;
     }
 
     public async Task<IEnumerable<BidRequestDto>> GetBidRequestsBySpecialistIdAsync(int specialistId, CancellationToken cancellationToken = default)
@@ -914,6 +944,116 @@ public class BidService : IBidService
                 ClientName = clientName,
                 ClientProfilePictureUrl = clientProfilePictureUrl
             };
+        });
+    }
+
+    public async Task<BidRequestAttachmentDto> UploadBidRequestAttachmentAsync(
+        int bidRequestId,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        string userId,
+        string? description,
+        CancellationToken cancellationToken = default)
+    {
+        var bidRequest = await _context.BidRequests
+            .FirstOrDefaultAsync(br => br.Id == bidRequestId, cancellationToken);
+
+        if (bidRequest == null)
+            throw new BidRequestNotFoundException(bidRequestId);
+
+        var s3Key = await _fileStorageService.UploadBidRequestFileAsync(
+            fileStream,
+            fileName,
+            contentType,
+            bidRequestId,
+            cancellationToken);
+
+        var attachment = new BidRequestAttachment
+        {
+            BidRequestId = bidRequestId,
+            FileName = fileName,
+            FileSize = fileStream.Length,
+            FileType = contentType,
+            S3Key = s3Key,
+            UploadedAt = DateTime.UtcNow,
+            UploadedByUserId = userId,
+            Description = description
+        };
+
+        _context.BidRequestAttachments.Add(attachment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var user = await _context.Users.FindAsync(userId);
+        var downloadUrl = _fileStorageService.GetPresignedUrl(s3Key);
+
+        return new BidRequestAttachmentDto
+        {
+            Id = attachment.Id,
+            BidRequestId = attachment.BidRequestId,
+            FileName = attachment.FileName,
+            FileSize = attachment.FileSize,
+            FileType = attachment.FileType,
+            DownloadUrl = downloadUrl,
+            UploadedAt = attachment.UploadedAt,
+            UploadedByUserId = attachment.UploadedByUserId,
+            UploadedByName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown",
+            Description = attachment.Description
+        };
+    }
+
+    public async Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default)
+    {
+        var attachment = await _context.BidRequestAttachments
+            .Include(a => a.BidRequest)
+                .ThenInclude(br => br.Project)
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, cancellationToken);
+
+        if (attachment == null)
+            throw new ArgumentException($"Attachment with ID {attachmentId} not found");
+
+        var userRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
+        var isOwner = attachment.BidRequest.Project.ClientId == userId;
+
+        if (!isAdminOrSuperAdmin && !isOwner)
+            throw new UnauthorizedAccessException("You are not authorized to delete this attachment");
+
+        await _fileStorageService.DeleteFileAsync(attachment.S3Key, cancellationToken);
+        
+        _context.BidRequestAttachments.Remove(attachment);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<BidRequestAttachmentDto>> GetBidRequestAttachmentsAsync(int bidRequestId, CancellationToken cancellationToken = default)
+    {
+        var bidRequestExists = await _context.BidRequests.AnyAsync(br => br.Id == bidRequestId, cancellationToken);
+        
+        if (!bidRequestExists)
+            throw new BidRequestNotFoundException(bidRequestId);
+
+        var attachments = await _context.BidRequestAttachments
+            .Include(a => a.UploadedByUser)
+            .Where(a => a.BidRequestId == bidRequestId)
+            .OrderByDescending(a => a.UploadedAt)
+            .ToListAsync(cancellationToken);
+
+        return attachments.Select(a => new BidRequestAttachmentDto
+        {
+            Id = a.Id,
+            BidRequestId = a.BidRequestId,
+            FileName = a.FileName,
+            FileSize = a.FileSize,
+            FileType = a.FileType,
+            DownloadUrl = _fileStorageService.GetPresignedUrl(a.S3Key),
+            UploadedAt = a.UploadedAt,
+            UploadedByUserId = a.UploadedByUserId,
+            UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
+            Description = a.Description
         });
     }
 }

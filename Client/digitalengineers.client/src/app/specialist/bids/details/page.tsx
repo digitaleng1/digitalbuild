@@ -8,6 +8,7 @@ import { BidRequestStatus } from '@/types/bid';
 import BidStatusBadge from '../components/BidStatusBadge';
 import BidResponseForm from '../components/BidResponseForm';
 import BidChat from '@/components/modals/BidChatModal';
+import BidRequestAttachmentList from '@/app/shared/components/bids/BidRequestAttachmentList';
 import { useToast } from '@/contexts';
 
 const BidDetails = () => {
@@ -184,6 +185,21 @@ const BidDetails = () => {
 
                             <h5 className="mt-2">Bid Description</h5>
                             <p className="text-muted">{bid.description}</p>
+
+                            {/* Attachments Section */}
+                            {bid.attachments && bid.attachments.length > 0 && (
+                                <>
+                                    <hr className="my-4" />
+                                    <h5 className="mb-3">
+                                        <i className="mdi mdi-paperclip me-2"></i>
+                                        Attachments ({bid.attachments.length})
+                                    </h5>
+                                    <BidRequestAttachmentList
+                                        attachments={bid.attachments}
+                                        canDelete={false}
+                                    />
+                                </>
+                            )}
 
                         </Card.Body>
                     </Card>

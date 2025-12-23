@@ -18,4 +18,5 @@ public class BidRequestDetailsViewModel
     public string ClientName { get; set; } = string.Empty;
     public string ClientEmail { get; set; } = string.Empty;
     public BidResponseViewModel? Response { get; set; }
+    public List<BidRequestAttachmentViewModel> Attachments { get; set; } = new();
 }

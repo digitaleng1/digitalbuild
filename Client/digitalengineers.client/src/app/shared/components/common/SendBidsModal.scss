@@ -1,0 +1,35 @@
+// SendBidsModal custom styles
+
+// Override FileUploader drop zone height for compact layout
+.modal.show {
+	.file-uploader {
+		.file-drop-zone {
+			min-height: 100px !important;
+			padding: 1rem !important;
+
+			.mdi {
+				font-size: 2rem !important;
+				margin-bottom: 0.5rem !important;
+			}
+
+			p {
+				margin-bottom: 0.25rem !important;
+				font-size: 0.875rem !important;
+			}
+
+			small {
+				font-size: 0.75rem !important;
+			}
+		}
+		// Adjust file list height
+		.uploaded-files-container {
+			.list-group {
+				max-height: 200px !important;
+			}
+		}
+
+		.list-group-item {
+			padding: 0.25rem 0.75rem !important;
+		}
+	}
+}

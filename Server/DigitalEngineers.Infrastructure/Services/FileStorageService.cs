@@ -230,6 +230,29 @@ public class FileStorageService : IFileStorageService
         return key;
     }
 
+    public async Task<string> UploadBidRequestFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        int bidRequestId,
+        CancellationToken cancellationToken = default)
+    {
+        var key = $"bids/requests/{bidRequestId}/attachments/{Guid.NewGuid()}_{fileName}";
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
+
+        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+
+        return key;
+    }
+
     public async Task<bool> DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default)
     {
         try

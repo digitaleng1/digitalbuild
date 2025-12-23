@@ -263,11 +263,11 @@ public class BidsController : ControllerBase
 
     [HttpPost("send")]
     [Authorize(Roles = "Client,Admin,SuperAdmin")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SendBidResponseViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<int>> SendBidRequest(
+    public async Task<ActionResult<SendBidResponseViewModel>> SendBidRequest(
         [FromBody] SendBidRequestViewModel model,
         CancellationToken cancellationToken)
     {
@@ -277,9 +277,15 @@ public class BidsController : ControllerBase
             throw new UnauthorizedAccessException("User ID not found in token");
 
         var dto = _mapper.Map<SendBidRequestDto>(model);
-        await _bidService.SendBidRequestAsync(dto, clientId, cancellationToken);
+        var bidRequestIds = await _bidService.SendBidRequestAsync(dto, clientId, cancellationToken);
 
-        return Ok(new { message = $"Bid requests sent to {dto.SpecialistUserIds.Length} specialist(s)" });
+        var response = new SendBidResponseViewModel
+        {
+            Message = $"Bid requests sent to {dto.SpecialistUserIds.Length} specialist(s)",
+            BidRequestIds = bidRequestIds
+        };
+
+        return Ok(response);
     }
 
     [HttpGet("my-requests")]
@@ -347,5 +353,79 @@ public class BidsController : ControllerBase
         var dtos = await _bidService.GetBidResponsesByProjectIdAsync(projectId, cancellationToken);
         var viewModels = _mapper.Map<IEnumerable<BidResponseByProjectViewModel>>(dtos);
         return Ok(viewModels);
+    }
+
+    [HttpPost("requests/{bidRequestId}/attachments")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(BidRequestAttachmentViewModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<BidRequestAttachmentViewModel>> UploadBidRequestAttachment(
+        int bidRequestId,
+        IFormFile file,
+        string? description,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        const long maxFileSize = 10 * 1024 * 1024; // 10MB
+        if (file.Length > maxFileSize)
+            return BadRequest("File size exceeds 10MB limit");
+
+        var allowedContentTypes = new[]
+        {
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/dwg",
+            "application/dxf"
+        };
+
+        if (!allowedContentTypes.Contains(file.ContentType))
+            return BadRequest($"File type {file.ContentType} is not allowed");
+
+        using var stream = file.OpenReadStream();
+        var dto = await _bidService.UploadBidRequestAttachmentAsync(
+            bidRequestId,
+            stream,
+            file.FileName,
+            file.ContentType,
+            userId,
+            description,
+            cancellationToken);
+
+        var viewModel = _mapper.Map<BidRequestAttachmentViewModel>(dto);
+        return CreatedAtAction(nameof(GetBidRequestAttachments), new { bidRequestId }, viewModel);
+    }
+
+    [HttpGet("requests/{bidRequestId}/attachments")]
+    [ProducesResponseType(typeof(IEnumerable<BidRequestAttachmentViewModel>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<BidRequestAttachmentViewModel>>> GetBidRequestAttachments(
+        int bidRequestId,
+        CancellationToken cancellationToken)
+    {
+        var dtos = await _bidService.GetBidRequestAttachmentsAsync(bidRequestId, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<BidRequestAttachmentViewModel>>(dtos);
+        return Ok(viewModels);
+    }
+
+    [HttpDelete("attachments/{attachmentId}")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteBidRequestAttachment(
+        int attachmentId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException("User ID not found in token");
+
+        await _bidService.DeleteBidRequestAttachmentAsync(attachmentId, userId, cancellationToken);
+        return NoContent();
     }
 }

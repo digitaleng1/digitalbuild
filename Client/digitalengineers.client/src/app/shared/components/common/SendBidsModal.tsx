@@ -2,12 +2,14 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useAvailableSpecialists } from '@/app/shared/hooks';
 import { InviteSpecialistModal } from '@/app/shared/components/bids';
+import FileUploader from '@/components/FileUploader';
 import type { LicenseType } from '@/types/lookup';
 import type { BidFormData } from '@/types/bid';
 import type { InviteSpecialistResult } from '@/types/specialist-invitation';
 import bidService from '@/services/bidService';
 import { useToast } from '@/contexts';
 import { getErrorMessage, getErrorTitle } from '@/utils/errorHandler';
+import './SendBidsModal.scss';
 
 interface SendBidsModalProps {
 	show: boolean;
@@ -32,8 +34,10 @@ const SendBidsModal = ({
 	const [formData, setFormData] = useState<BidFormData>({
 		description: '',
 	});
+	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
+	const [uploadingFiles, setUploadingFiles] = useState(false);
 
 	// Initialize with all licenses selected
 	useEffect(() => {
@@ -112,20 +116,38 @@ const SendBidsModal = ({
 		try {
 			setIsSubmitting(true);
 
-			await bidService.sendBids({
+			// Step 1: Send bid requests and get created IDs
+			const response = await bidService.sendBids({
 				projectId,
 				specialistUserIds: Array.from(selectedSpecialists),
 				description: formData.description,
 			});
 
+			// Step 2: Upload files to each created bid request
+			if (selectedFiles.length > 0 && response.bidRequestIds.length > 0) {
+				setUploadingFiles(true);
+
+				for (const bidRequestId of response.bidRequestIds) {
+					for (const file of selectedFiles) {
+						await bidService.uploadBidRequestAttachment(bidRequestId, {
+							file,
+							description: undefined
+						});
+					}
+				}
+
+				setUploadingFiles(false);
+			}
+
 			showSuccess(
 				'Bid Requests Sent',
-				`${selectedSpecialists.size} bid request(s) have been sent to specialists.`
+				`${selectedSpecialists.size} bid request(s) with ${selectedFiles.length} file(s) have been sent to specialists.`
 			);
 
 			setSelectedSpecialists(new Set());
 			setSelectedLicenseFilters(new Set());
 			setFormData({ description: '' });
+			setSelectedFiles([]);
 
 			onSuccess?.();
 			onHide();
@@ -135,12 +157,14 @@ const SendBidsModal = ({
 			showError(errorTitle, errorMessage);
 		} finally {
 			setIsSubmitting(false);
+			setUploadingFiles(false);
 		}
 	}, [
 		isFormValid,
 		formData,
 		projectId,
 		selectedSpecialists,
+		selectedFiles,
 		showSuccess,
 		showError,
 		onSuccess,
@@ -172,7 +196,7 @@ const SendBidsModal = ({
 
 	return (
 		<>
-			<Modal show={show} onHide={onHide} size="xl" centered>
+			<Modal show={show} onHide={onHide} size="xl" centered style={{ maxWidth: '100%', width: '100%', margin: '0 auto' }}>
 				<Modal.Header closeButton>
 					<Modal.Title>Send Bids to Specialists</Modal.Title>
 				</Modal.Header>
@@ -197,8 +221,8 @@ const SendBidsModal = ({
 					{!loading && !error && (
 						<Row className="g-0 h-100">
 							{/* Left Column - Bid Details & Filters */}
-							<Col md={5} className="border-end">
-								<div className="px-4 py-2 h-100 d-flex flex-column">
+							<Col md={3} className="border-end">
+								<div className="px-3 py-2 h-100 d-flex flex-column" style={{ overflowY: 'auto' }}>
 									<h5 className="mb-3">Bid Details</h5>
 
 									<Form.Group className="mb-3">
@@ -230,7 +254,7 @@ const SendBidsModal = ({
 									<div className="flex-grow-1">
 										<h6 className="mb-3">
 											<i className="mdi mdi-information-outline me-2"></i>
-											Filter by License Types (multiple selection):
+											Filter by License Types:
 										</h6>
 										
 										{/* License Type Switches */}
@@ -251,8 +275,8 @@ const SendBidsModal = ({
 								</div>
 							</Col>
 
-							{/* Right Column - Specialists List */}
-							<Col md={7}>
+							{/* Middle Column - Specialists List */}
+							<Col md={6} className="border-end">
 								<div className="h-100 d-flex flex-column">
 									<div className="p-2 border-bottom bg-light">
 										<div className="d-flex justify-content-between align-items-center">
@@ -366,6 +390,33 @@ const SendBidsModal = ({
 									</div>
 								</div>
 							</Col>
+
+							{/* Right Column - File Uploader */}
+							<Col md={3}>
+								<div className="px-3 py-2 h-100 d-flex flex-column" style={{ overflowY: 'auto' }}>
+									<h5 className="mb-3">Attachments</h5>
+									
+									<Form.Group className="mb-3">
+										<FileUploader
+											label="Attach Files (Optional)"
+											helpText="Upload documents, drawings, or specifications"
+											maxFiles={5}
+											maxFileSize={10}
+											acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.dwg', '.dxf']}
+											onFilesChange={setSelectedFiles}
+											value={selectedFiles}
+											showFileList={true}
+										/>
+									</Form.Group>
+
+									{/*<div className="mt-auto">*/}
+									{/*	<div className="alert alert-info p-2" style={{ fontSize: '0.8rem' }}>*/}
+									{/*		<i className="mdi mdi-information-outline me-1"></i>*/}
+									{/*		Files will be attached to all bid requests*/}
+									{/*	</div>*/}
+									{/*</div>*/}
+								</div>
+							</Col>
 						</Row>
 					)}
 				</Modal.Body>
@@ -388,10 +439,13 @@ const SendBidsModal = ({
 									aria-hidden="true"
 									className="me-2"
 								/>
-								Sending...
+								{uploadingFiles ? 'Uploading Files...' : 'Sending...'}
 							</>
 						) : (
-							`Send Bids (${selectedSpecialists.size})`
+							<>
+								Send Bids ({selectedSpecialists.size}
+								{selectedFiles.length > 0 && `, ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`})
+							</>
 						)}
 					</Button>
 				</Modal.Footer>

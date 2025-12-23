@@ -13,4 +13,5 @@ public class BidRequestDto
     public bool HasResponse { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<BidRequestAttachmentDto>? Attachments { get; set; }
 }
