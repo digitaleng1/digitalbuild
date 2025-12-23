@@ -92,6 +92,13 @@ public class TasksController : ControllerBase
         return Ok(_mapper.Map<TaskViewModel>(task));
     }
 
+    [HttpPut("{id}/parent")]
+    public async Task<ActionResult<TaskViewModel>> UpdateTaskParent(int id, [FromBody] UpdateTaskParentViewModel viewModel, CancellationToken cancellationToken)
+    {
+        var task = await _taskService.UpdateTaskParentAsync(id, viewModel.ParentTaskId, GetUserId(), cancellationToken);
+        return Ok(_mapper.Map<TaskViewModel>(task));
+    }
+
     [HttpPatch("{id}/status")]
     public async Task<ActionResult<TaskViewModel>> UpdateTaskStatus(int id, [FromBody] UpdateTaskStatusOnlyViewModel viewModel, CancellationToken cancellationToken)
     {

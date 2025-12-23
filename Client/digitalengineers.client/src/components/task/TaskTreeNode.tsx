@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Badge } from 'react-bootstrap';
+import { Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import type { TaskViewModel } from '@/types/task';
 import { getPriorityColor, getPriorityLabel, isOverdue } from '@/utils/taskHelpers';
@@ -11,7 +11,9 @@ interface TaskTreeNodeProps {
   childrenCount: number;
   isExpanded: boolean;
   isSelected: boolean;
+  isDragging?: boolean;
   statusColor?: string;
+  statusName?: string;
   onToggleExpand: () => void;
   onSelectTask: () => void;
 }
@@ -23,7 +25,9 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
   childrenCount,
   isExpanded,
   isSelected,
+  isDragging,
   statusColor,
+  statusName,
   onToggleExpand,
   onSelectTask,
 }) => {
@@ -84,7 +88,7 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
 
   return (
     <div
-      className={`task-tree-node ${isSelected ? 'selected' : ''}`}
+      className={`task-tree-node ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{ paddingLeft: `${level * 24}px` }}
       onClick={onSelectTask}
     >
@@ -107,13 +111,18 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
           )}
         </div>
 
-        {/* Status indicator */}
-        {statusColor && (
-          <div
-            className="task-tree-node-status"
-            style={{ backgroundColor: statusColor }}
-            title={task.statusName}
-          />
+        {/* Status badge */}
+        {statusName && statusColor && (
+          <Badge
+            style={{
+              backgroundColor: statusColor,
+              color: '#fff',
+              fontSize: '0.7rem'
+            }}
+            className="me-2"
+          >
+            {statusName}
+          </Badge>
         )}
 
         {/* Priority badge */}
@@ -140,6 +149,22 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
 
         {/* Task metadata */}
         <div className="task-tree-node-metadata">
+          {/* Labels */}
+          {task.labels && task.labels.length > 0 && (
+            <div className="task-labels d-flex gap-1 me-2">
+              {task.labels.slice(0, 3).map((label, idx) => (
+                <Badge key={idx} bg="light" text="dark" className="small">
+                  {label}
+                </Badge>
+              ))}
+              {task.labels.length > 3 && (
+                <Badge bg="light" text="dark" className="small">
+                  +{task.labels.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+
           {/* Subtask count */}
           {hasChildren && (
             <span className="badge bg-secondary me-2" title="Subtasks">
@@ -173,10 +198,29 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
 
           {/* Assigned user */}
           {task.assignedToUserName && (
-            <span className="text-muted" title={`Assigned to ${task.assignedToUserName}`}>
-              <Icon icon="mdi:account-circle-outline" width={16} className="me-1" />
-              {task.assignedToUserName}
-            </span>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip>
+                  <div>
+                    <strong>Assigned to:</strong><br />
+                    {task.assignedToUserName}
+                  </div>
+                </Tooltip>
+              }
+            >
+              <span className="task-assignee">
+                {task.assignedToUserAvatar ? (
+                  <img
+                    src={task.assignedToUserAvatar}
+                    alt={task.assignedToUserName}
+                    className="assignee-avatar"
+                  />
+                ) : (
+                  <Icon icon="mdi:account-circle" width={20} className="text-primary" />
+                )}
+              </span>
+            </OverlayTrigger>
           )}
         </div>
       </div>

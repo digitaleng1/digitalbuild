@@ -405,6 +405,58 @@ public class TaskService : ITaskService
         return await MapToTaskDtoAsync(task.Id, cancellationToken);
     }
 
+    public async Task<TaskDto> UpdateTaskParentAsync(int id, int? parentTaskId, string updatedByUserId, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.Set<ProjectTask>().FindAsync([id], cancellationToken);
+
+        if (task == null)
+            throw new TaskNotFoundException(id);
+
+        // Validate parent task exists if provided
+        if (parentTaskId.HasValue)
+        {
+            var parentExists = await _context.Set<ProjectTask>().AnyAsync(t => t.Id == parentTaskId.Value, cancellationToken);
+            if (!parentExists)
+                throw new TaskNotFoundException(parentTaskId.Value);
+
+            // Prevent circular dependencies
+            if (id == parentTaskId.Value)
+                throw new ValidationException("Task cannot be its own parent");
+
+            // Check if parent would create a cycle
+            var currentParentId = parentTaskId.Value;
+            while (currentParentId != null)
+            {
+                var parent = await _context.Set<ProjectTask>().FindAsync([currentParentId], cancellationToken);
+                if (parent?.ParentTaskId == id)
+                    throw new ValidationException("Cannot create circular task dependencies");
+                currentParentId = parent?.ParentTaskId ?? 0;
+                if (currentParentId == 0) break;
+            }
+        }
+
+        var oldParentId = task.ParentTaskId;
+        task.ParentTaskId = parentTaskId;
+        task.UpdatedAt = DateTime.UtcNow;
+
+        // Audit log
+        var auditLog = new TaskAuditLog
+        {
+            TaskId = task.Id,
+            UserId = updatedByUserId,
+            Action = TaskAuditAction.Updated.ToString(),
+            FieldName = "ParentTask",
+            OldValue = oldParentId?.ToString(),
+            NewValue = parentTaskId?.ToString(),
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Set<TaskAuditLog>().Add(auditLog);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return await MapToTaskDtoAsync(task.Id, cancellationToken);
+    }
+
     public async Task DeleteTaskAsync(int id, string deletedByUserId, CancellationToken cancellationToken = default)
     {
         var task = await _context.Set<ProjectTask>().FindAsync([id], cancellationToken);

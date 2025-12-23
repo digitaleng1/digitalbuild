@@ -177,40 +177,6 @@
   border-radius: 2px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .task-tree-node {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .task-tree-node-content {
-    flex-wrap: wrap;
-    gap: 0.375rem;
-  }
-
-  .task-tree-node-metadata {
-    flex-basis: 100%;
-    justify-content: flex-start;
-    margin-left: 48px;
-    padding-left: 0;
-    gap: 0.5rem;
-  }
-
-  .task-tree-body {
-    max-height: calc(100vh - 450px);
-  }
-}
-
-@media (max-width: 576px) {
-  .task-tree-node-title {
-    flex-basis: 100%;
-  }
-  
-  .task-tree-node-metadata {
-    font-size: 0.8rem;
-  }
-}
-
 /* Scrollbar styling */
 .task-tree-body::-webkit-scrollbar {
   width: 8px;
@@ -227,6 +193,64 @@
 
 .task-tree-body::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+
+/* Task labels */
+.task-labels {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.task-labels .badge {
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.7rem;
+}
+
+/* Task assignee */
+.task-assignee {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.assignee-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Drag & Drop styles */
+.task-tree-node.dragging {
+  opacity: 0.5;
+  background-color: #e7f3ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.task-tree-node.drag-over,
+.task-tree-body.drag-over {
+  background-color: #d1e7fd;
+  border-left: 3px solid #0d6efd;
+}
+
+/* Drag handle indicator */
+.task-tree-node {
+  cursor: move;
+  position: relative;
+}
+
+.task-tree-node:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #0d6efd;
 }
 
 /* Depth indicators */

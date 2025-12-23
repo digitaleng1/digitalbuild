@@ -209,4 +209,11 @@ export const taskService = {
   async deleteTaskFile(fileId: number): Promise<void> {
     await httpClient.delete(`/api/tasks/files/${fileId}`);
   },
+
+  /**
+   * Update task parent (for drag & drop in tree view)
+   */
+  async updateTaskParent(taskId: number, parentTaskId: number | null): Promise<void> {
+    await httpClient.put(`${BASE_URL}/${taskId}/parent`, { parentTaskId });
+  },
 };

@@ -83,6 +83,7 @@ export interface TaskViewModel {
   updatedAt: string;
   assignedToUserId?: string;
   assignedToUserName?: string;
+  assignedToUserAvatar?: string;
   projectId: number;
   projectName: string;
   createdByUserId: string;

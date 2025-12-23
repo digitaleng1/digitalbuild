@@ -1,13 +1,17 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button, Spinner, Alert, InputGroup, FormControl, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Row, Col, Card } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import type { ProjectDto } from '@/types/project';
 import TaskTreeNode from './TaskTreeNode';
 import TaskModal from './TaskModal';
 import TaskSidePanel from './TaskSidePanel';
 import ProjectTaskStats from '@/components/project/ProjectTaskStats';
 import { useTaskList } from '@/hooks/useTaskList';
-import { buildTaskTree, filterTaskTree, countSubtasks, type TaskTreeNode as TreeNode } from '@/utils/taskTreeHelpers';
+import { buildTaskTree, filterTaskTree, countSubtasks, canMoveTask, type TaskTreeNode as TreeNode } from '@/utils/taskTreeHelpers';
+import { taskService } from '@/services/taskService';
+import { useToast } from '@/contexts/ToastContext';
 import './TaskTree.css';
 
 interface TaskTreeViewProps {
@@ -26,6 +30,8 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
+  const { showSuccess, showError } = useToast();
+
   // Use task list hook internally
   const {
     statuses,
@@ -85,6 +91,46 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
     return statuses.find(s => s.id === statusId)?.color;
   }, [statuses]);
 
+  // Get status name for task
+  const getStatusName = useCallback((statusId: number): string => {
+    return statuses.find(s => s.id === statusId)?.name || '';
+  }, [statuses]);
+
+  // Handle drag end
+  const handleDragEnd = useCallback(async (result: DropResult) => {
+    if (!canEdit) return;
+    
+    const { draggableId, destination } = result;
+    
+    if (!destination) return;
+    
+    const taskId = Number(draggableId.replace('task-', ''));
+    const newParentId = destination.droppableId === 'root' 
+      ? null 
+      : Number(destination.droppableId.replace('task-', ''));
+    
+    // Get current parent
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    // Skip if no change
+    if (task.parentTaskId === newParentId) return;
+    
+    // Validate
+    if (!canMoveTask(taskId, newParentId, tasks)) {
+      showError('Invalid Move', 'Cannot move task to selected parent');
+      return;
+    }
+    
+    try {
+      await taskService.updateTaskParent(taskId, newParentId);
+      showSuccess('Task Moved', 'Task parent updated successfully');
+      refresh();
+    } catch (error: any) {
+      showError('Move Failed', error.response?.data?.message || 'Failed to move task');
+    }
+  }, [canEdit, tasks, refresh, showSuccess, showError]);
+
   // Handle create task
   const handleAddNew = useCallback(() => {
     if (onCreateTask) {
@@ -107,7 +153,7 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
 
   // Render tree recursively
   const renderTree = useCallback((nodes: TreeNode[]): React.ReactNode => {
-    return nodes.map(node => {
+    return nodes.map((node, index) => {
       const isExpanded = expandedNodes.has(node.task.id);
       const isSelected = selectedTask?.id === node.task.id;
       const childrenCount = countSubtasks(node.task.id, tasks);
@@ -115,22 +161,56 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
       
       return (
         <React.Fragment key={node.task.id}>
-          <TaskTreeNode
-            task={node.task}
-            level={node.level}
-            hasChildren={hasChildren}
-            childrenCount={childrenCount}
-            isExpanded={isExpanded}
-            isSelected={isSelected}
-            statusColor={getStatusColor(node.task.statusId)}
-            onToggleExpand={() => toggleExpand(node.task.id)}
-            onSelectTask={() => selectTask(node.task)}
-          />
-          {isExpanded && hasChildren && renderTree(node.children)}
+          <Draggable
+            draggableId={`task-${node.task.id}`}
+            index={index}
+            isDragDisabled={!canEdit}
+          >
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+              >
+                {/* Droppable zone for this task - always present */}
+                <Droppable
+                  droppableId={`task-${node.task.id}`}
+                  type="TASK"
+                >
+                  {(dropProvided, dropSnapshot) => (
+                    <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+                      <TaskTreeNode
+                        task={node.task}
+                        level={node.level}
+                        hasChildren={hasChildren}
+                        childrenCount={childrenCount}
+                        isExpanded={isExpanded}
+                        isSelected={isSelected}
+                        isDragging={snapshot.isDragging}
+                        statusColor={getStatusColor(node.task.statusId)}
+                        statusName={getStatusName(node.task.statusId)}
+                        onToggleExpand={() => toggleExpand(node.task.id)}
+                        onSelectTask={() => selectTask(node.task)}
+                      />
+                      
+                      {/* Children - only when expanded */}
+                      {isExpanded && hasChildren && (
+                        <div className={dropSnapshot.isDraggingOver ? 'task-tree-drop-zone' : ''}>
+                          {renderTree(node.children)}
+                        </div>
+                      )}
+                      
+                      {dropProvided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            )}
+          </Draggable>
         </React.Fragment>
       );
     });
-  }, [expandedNodes, selectedTask, tasks, getStatusColor, toggleExpand, selectTask]);
+  }, [expandedNodes, selectedTask, tasks, canEdit, getStatusColor, getStatusName, toggleExpand, selectTask]);
 
   if (isLoading) {
     return (
@@ -259,21 +339,32 @@ const TaskTreeView: React.FC<TaskTreeViewProps> = ({
                   </div>
                 </div>
 
-                {/* Tree body */}
-                <div className="task-tree-body">
-                  {treeNodes.length === 0 ? (
-                    <div className="task-tree-empty">
-                      <Icon icon="mdi:file-tree-outline" width={64} className="d-block mx-auto mb-3 opacity-50" />
-                      {searchQuery ? (
-                        <p>No tasks found matching your search</p>
-                      ) : (
-                        <p>No tasks in this project yet</p>
-                      )}
-                    </div>
-                  ) : (
-                    renderTree(treeNodes)
-                  )}
-                </div>
+                {/* Tree body with DnD */}
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="root" type="TASK">
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`task-tree-body ${snapshot.isDraggingOver ? 'drag-over' : ''}`}
+                      >
+                        {treeNodes.length === 0 ? (
+                          <div className="task-tree-empty">
+                            <Icon icon="mdi:file-tree-outline" width={64} className="d-block mx-auto mb-3 opacity-50" />
+                            {searchQuery ? (
+                              <p>No tasks found matching your search</p>
+                            ) : (
+                              <p>No tasks in this project yet</p>
+                            )}
+                          </div>
+                        ) : (
+                          renderTree(treeNodes)
+                        )}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             </Card.Body>
           </Card>

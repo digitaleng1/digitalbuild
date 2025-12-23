@@ -16,6 +16,7 @@ public interface ITaskService
     Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     Task<IEnumerable<TaskDto>> GetTasksByAssignedUserIdAsync(string userId, CancellationToken cancellationToken = default);
     Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto, string updatedByUserId, CancellationToken cancellationToken = default);
+    Task<TaskDto> UpdateTaskParentAsync(int id, int? parentTaskId, string updatedByUserId, CancellationToken cancellationToken = default);
     Task<TaskDto> UpdateTaskStatusAsync(int id, int statusId, string updatedByUserId, CancellationToken cancellationToken = default);
     Task DeleteTaskAsync(int id, string deletedByUserId, CancellationToken cancellationToken = default);
     
