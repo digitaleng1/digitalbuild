@@ -138,12 +138,18 @@ const TaskTreeNode: React.FC<TaskTreeNodeProps> = ({
           
           {/* Milestone indicator */}
           {task.isMilestone && (
-            <Icon
-              icon="mdi:flag-variant"
-              width={16}
-              className="ms-2 text-primary"
-              title="Milestone"
-            />
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Milestone</Tooltip>}
+            >
+              <span>
+                <Icon
+                  icon="mdi:flag-variant"
+                  width={16}
+                  className="ms-2 text-primary"
+                />
+              </span>
+            </OverlayTrigger>
           )}
         </div>
 

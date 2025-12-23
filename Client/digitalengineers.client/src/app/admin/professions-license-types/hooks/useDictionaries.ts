@@ -4,7 +4,7 @@ import { useToast } from '@/contexts/ToastContext';
 import type { 
 	ProfessionManagementDto, 
 	LicenseTypeManagementDto,
-	ProfessionTypeDetailDto,
+	ProfessionTypeManagementDto,
 	CreateProfessionDto,
 	UpdateProfessionDto, 
 	CreateLicenseTypeDto,
@@ -18,7 +18,7 @@ import type {
 
 export const useDictionaries = () => {
 	const [professions, setProfessions] = useState<ProfessionManagementDto[]>([]);
-	const [professionTypes, setProfessionTypes] = useState<ProfessionTypeDetailDto[]>([]);
+	const [professionTypes, setProfessionTypes] = useState<ProfessionTypeManagementDto[]>([]);
 	const [licenseTypes, setLicenseTypes] = useState<LicenseTypeManagementDto[]>([]);
 	const [licenseRequirements, setLicenseRequirements] = useState<Map<number, LicenseRequirement[]>>(new Map());
 	const [loading, setLoading] = useState(true);
@@ -215,7 +215,7 @@ export const useDictionaries = () => {
 			});
 			setProfessionTypes(prev => prev.map(pt => 
 				pt.id === professionTypeId 
-					? { ...pt, licenseRequirements: [...(pt.licenseRequirements || []), created] }
+					? { ...pt, licenseRequirementsCount: pt.licenseRequirementsCount + 1 }
 					: pt
 			));
 			showSuccess('Success', 'License requirement added successfully');
@@ -266,10 +266,7 @@ export const useDictionaries = () => {
 			});
 			setProfessionTypes(prev => prev.map(pt => 
 				pt.id === professionTypeId 
-					? { 
-						...pt, 
-						licenseRequirements: (pt.licenseRequirements || []).filter(r => r.licenseTypeId !== licenseTypeId) 
-					  }
+					? { ...pt, licenseRequirementsCount: Math.max(0, pt.licenseRequirementsCount - 1) }
 					: pt
 			));
 			showSuccess('Success', 'License requirement deleted successfully');

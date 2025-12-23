@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Alert, Button, Form, Spinner } from 'react-bootstrap';
-import { FileUploader } from '@/components/FileUploader';
-import type { FileType } from '@/components/FileUploader';
+import FileUploader from '@/components/FileUploader';
 import bidService from '@/services/bidService';
 import type { BidRequestAttachment } from '@/types/bid-attachment';
 import { 
@@ -25,14 +24,18 @@ const BidRequestAttachmentUploader = ({
 }: BidRequestAttachmentUploaderProps) => {
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 	const [description, setDescription] = useState('');
 
-	const handleFileSelect = (files: FileType[]) => {
-		if (files.length === 0) return;
-
-		const file = files[0];
+	const handleFilesChange = (files: File[]) => {
 		setError(null);
+		
+		if (files.length === 0) {
+			setSelectedFiles([]);
+			return;
+		}
+
+		const file = files[0]; // Take only first file
 
 		// Validate file type
 		if (!validateFileType(file, ALLOWED_BID_ATTACHMENT_TYPES)) {
@@ -50,23 +53,23 @@ const BidRequestAttachmentUploader = ({
 			return;
 		}
 
-		setSelectedFile(file);
+		setSelectedFiles([file]);
 	};
 
 	const handleUpload = async () => {
-		if (!selectedFile) return;
+		if (selectedFiles.length === 0) return;
 
 		setUploading(true);
 		setError(null);
 
 		try {
 			const attachment = await bidService.uploadBidRequestAttachment(bidRequestId, {
-				file: selectedFile,
+				file: selectedFiles[0],
 				description: description || undefined
 			});
 
 			// Reset form
-			setSelectedFile(null);
+			setSelectedFiles([]);
 			setDescription('');
 			
 			onUploadSuccess?.(attachment);
@@ -80,7 +83,7 @@ const BidRequestAttachmentUploader = ({
 	};
 
 	const handleClear = () => {
-		setSelectedFile(null);
+		setSelectedFiles([]);
 		setDescription('');
 		setError(null);
 	};
@@ -96,11 +99,15 @@ const BidRequestAttachmentUploader = ({
 			)}
 
 			<FileUploader 
-				showPreview={true} 
-				onFileUpload={handleFileSelect} 
+				maxFiles={1}
+				maxFileSize={MAX_BID_ATTACHMENT_SIZE / (1024 * 1024)}
+				acceptedFileTypes={ALLOWED_BID_ATTACHMENT_TYPES}
+				onFilesChange={handleFilesChange}
+				value={selectedFiles}
+				showFileList={true}
 			/>
 
-			{selectedFile && (
+			{selectedFiles.length > 0 && (
 				<>
 					<Form.Group className="mt-3 mb-3">
 						<Form.Label>Description (Optional)</Form.Label>

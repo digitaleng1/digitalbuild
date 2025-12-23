@@ -12,7 +12,7 @@ import CreateProfessionModal from '@/app/shared/components/create-project/Create
 import CreateLicenseTypeModal from '@/app/shared/components/create-project/CreateLicenseTypeModal';
 import type { 
 	ProfessionManagementDto,
-	ProfessionTypeDetailDto,
+	ProfessionTypeManagementDto,
 	LicenseTypeManagementDto,
 	LicenseRequirement,
 	ProfessionViewModel,
@@ -61,7 +61,7 @@ const ProfessionsLicenseTypesPage = () => {
 		
 		const [editProfessionTypeModal, setEditProfessionTypeModal] = useState<{
 			show: boolean;
-			professionType: ProfessionTypeDetailDto | null;
+			professionType: ProfessionTypeManagementDto | null;
 		}>({ show: false, professionType: null });
 
 		// Edit License Type modal
@@ -73,12 +73,12 @@ const ProfessionsLicenseTypesPage = () => {
 		// Add/Edit License Requirement modals
 		const [addLicenseRequirementModal, setAddLicenseRequirementModal] = useState<{
 			show: boolean;
-			professionType: ProfessionTypeDetailDto | null;
+			professionType: ProfessionTypeManagementDto | null;
 		}>({ show: false, professionType: null });
 
 		const [editLicenseRequirementModal, setEditLicenseRequirementModal] = useState<{
 			show: boolean;
-			professionType: ProfessionTypeDetailDto | null;
+			professionType: ProfessionTypeManagementDto | null;
 			requirement: LicenseRequirement | null;
 		}>({ show: false, professionType: null, requirement: null });
 
@@ -121,11 +121,11 @@ const ProfessionsLicenseTypesPage = () => {
 			setAddProfessionTypeModal({ show: true, profession });
 		}, []);
 
-		const handleEditProfessionType = useCallback((professionType: ProfessionTypeDetailDto) => {
+		const handleEditProfessionType = useCallback((professionType: ProfessionTypeManagementDto) => {
 			setEditProfessionTypeModal({ show: true, professionType });
 		}, []);
 
-		const handleDeleteProfessionType = useCallback(async (professionType: ProfessionTypeDetailDto) => {
+		const handleDeleteProfessionType = useCallback(async (professionType: ProfessionTypeManagementDto) => {
 			if (window.confirm(`Are you sure you want to delete profession type "${professionType.name}"?`)) {
 				try {
 					await deleteProfessionType(professionType.id, professionType.professionId);
@@ -151,15 +151,15 @@ const ProfessionsLicenseTypesPage = () => {
 		}, [deleteLicenseType]);
 
 		// Handlers for License Requirements
-		const handleAddLicenseRequirement = useCallback((professionType: ProfessionTypeDetailDto) => {
+		const handleAddLicenseRequirement = useCallback((professionType: ProfessionTypeManagementDto) => {
 			setAddLicenseRequirementModal({ show: true, professionType });
 		}, []);
 
-		const handleEditLicenseRequirement = useCallback((professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => {
+		const handleEditLicenseRequirement = useCallback((professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => {
 			setEditLicenseRequirementModal({ show: true, professionType, requirement });
 		}, []);
 
-		const handleDeleteLicenseRequirement = useCallback(async (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => {
+		const handleDeleteLicenseRequirement = useCallback(async (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => {
 			if (window.confirm(`Are you sure you want to delete license requirement "${requirement.licenseTypeName}"?`)) {
 				try {
 					await deleteLicenseRequirement(professionType.id, requirement.licenseTypeId);
@@ -383,7 +383,6 @@ const ProfessionsLicenseTypesPage = () => {
 						show={editProfessionModal.show}
 						onHide={() => setEditProfessionModal({ show: false, profession: null })}
 						profession={editProfessionModal.profession}
-						onSuccess={refresh}
 						onUpdate={updateProfession}
 					/>
 				)}
@@ -393,7 +392,6 @@ const ProfessionsLicenseTypesPage = () => {
 						show={addProfessionTypeModal.show}
 						onHide={() => setAddProfessionTypeModal({ show: false, profession: null })}
 						profession={addProfessionTypeModal.profession}
-						onSuccess={refresh}
 						onCreate={createProfessionType}
 					/>
 				)}
@@ -403,7 +401,6 @@ const ProfessionsLicenseTypesPage = () => {
 						show={editProfessionTypeModal.show}
 						onHide={() => setEditProfessionTypeModal({ show: false, professionType: null })}
 						professionType={editProfessionTypeModal.professionType}
-						onSuccess={refresh}
 						onUpdate={updateProfessionType}
 					/>
 				)}
@@ -413,7 +410,6 @@ const ProfessionsLicenseTypesPage = () => {
 						show={editLicenseTypeModal.show}
 						onHide={() => setEditLicenseTypeModal({ show: false, licenseType: null })}
 						licenseType={editLicenseTypeModal.licenseType}
-						onSuccess={refresh}
 						onUpdate={updateLicenseType}
 					/>
 				)}
@@ -436,7 +432,6 @@ const ProfessionsLicenseTypesPage = () => {
 						onHide={() => setEditLicenseRequirementModal({ show: false, professionType: null, requirement: null })}
 						requirement={editLicenseRequirementModal.requirement}
 						professionType={editLicenseRequirementModal.professionType}
-						onSuccess={refresh}
 						onUpdate={(id, professionTypeId, dto) => updateLicenseRequirement(id, professionTypeId, dto)}
 					/>
 				)}

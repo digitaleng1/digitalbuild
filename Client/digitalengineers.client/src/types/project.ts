@@ -1,4 +1,7 @@
-import type { ProfessionType, LicenseRequirement } from './lookup';
+import type { ProfessionType, LicenseRequirement, LicenseType } from './lookup';
+
+// Re-export LicenseType for backward compatibility
+export type { LicenseType } from './lookup';
 
 // Project Status Enum
 export enum ProjectStatus {
@@ -62,13 +65,6 @@ export interface CreateProjectRequest {
 	description: string;
 	files: File[];
 	thumbnail: File | null;
-}
-
-export interface LicenseType {
-	id: number;
-	name: string;
-	description: string;
-	professionId: number;
 }
 
 // Synchronized with ProjectViewModel from server

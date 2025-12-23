@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react';
 import { Badge, Button, Collapse } from 'react-bootstrap';
 import ProfessionTypeRow from './ProfessionTypeRow';
-import type { ProfessionManagementDto, ProfessionTypeDetailDto, LicenseRequirement } from '@/types/lookup';
+import type { ProfessionManagementDto, ProfessionTypeManagementDto, LicenseRequirement } from '@/types/lookup';
 
 interface ProfessionRowProps {
 	profession: ProfessionManagementDto;
-	professionTypes: ProfessionTypeDetailDto[];
+	professionTypes: ProfessionTypeManagementDto[];
 	licenseRequirements: Map<number, LicenseRequirement[]>;
 	isExpanded: boolean;
 	expandedTypeIds: Set<number>;
@@ -14,11 +14,11 @@ interface ProfessionRowProps {
 	onEdit: () => void;
 	onDelete: () => void;
 	onAddType: () => void;
-	onEditType: (professionType: ProfessionTypeDetailDto) => void;
-	onDeleteType: (professionType: ProfessionTypeDetailDto) => void;
-	onAddRequirement: (professionType: ProfessionTypeDetailDto) => void;
-	onEditRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
-	onDeleteRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
+	onEditType: (professionType: ProfessionTypeManagementDto) => void;
+	onDeleteType: (professionType: ProfessionTypeManagementDto) => void;
+	onAddRequirement: (professionType: ProfessionTypeManagementDto) => void;
+	onEditRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
+	onDeleteRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
 }
 
 const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({

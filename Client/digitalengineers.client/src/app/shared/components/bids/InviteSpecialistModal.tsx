@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Modal, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import type { LicenseType } from '@/types/project';
+import type { LicenseType } from '@/types/lookup';
 import type { InviteSpecialistDto, InviteSpecialistResult } from '@/types/specialist-invitation';
 import specialistInvitationService from '@/services/specialistInvitationService';
 import { useToast } from '@/contexts/ToastContext';

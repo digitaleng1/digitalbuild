@@ -11,8 +11,6 @@ import type {
 	LicenseTypeManagementDto, 
 	UpdateProfessionDto, 
 	UpdateLicenseTypeDto, 
-	ApproveProfessionDto, 
-	ApproveLicenseTypeDto, 
 	ExportDictionaries, 
 	ImportDictionaries, 
 	ImportResult,
@@ -21,7 +19,6 @@ import type {
 	ProfessionTypeDetailDto,
 	CreateProfessionTypeDto,
 	UpdateProfessionTypeDto,
-	ApproveProfessionTypeDto,
 	LicenseRequirement,
 	CreateLicenseRequirementDto,
 	UpdateLicenseRequirementDto
@@ -274,24 +271,3 @@ class LookupService {
 }
 
 export default new LookupService();
-
-// Admin operations
-export const createProfession = async (
-  dto: CreateProfessionDto
-): Promise<ProfessionDto> => {
-  const response = await apiClient.post<ProfessionDto>(
-    `${BASE_URL}/professions`,
-    dto
-  );
-  return response.data;
-};
-
-export const createLicenseType = async (
-  dto: CreateLicenseTypeDto
-): Promise<LicenseTypeDto> => {
-  const response = await apiClient.post<LicenseTypeDto>(
-    `${BASE_URL}/license-types`,
-    dto
-  );
-  return response.data;
-};

@@ -1,20 +1,20 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ProfessionRow from './ProfessionRow';
-import type { ProfessionManagementDto, ProfessionTypeDetailDto, LicenseRequirement } from '@/types/lookup';
+import type { ProfessionManagementDto, ProfessionTypeManagementDto, LicenseRequirement } from '@/types/lookup';
 
 interface ProfessionsTreeProps {
 	professions: ProfessionManagementDto[];
-	professionTypes: ProfessionTypeDetailDto[];
+	professionTypes: ProfessionTypeManagementDto[];
 	licenseRequirements: Map<number, LicenseRequirement[]>;
 	onLoadLicenseRequirements: (professionTypeId: number) => Promise<LicenseRequirement[]>;
 	onEditProfession: (profession: ProfessionManagementDto) => void;
 	onDeleteProfession: (profession: ProfessionManagementDto) => void;
 	onAddProfessionType: (profession: ProfessionManagementDto) => void;
-	onEditProfessionType: (professionType: ProfessionTypeDetailDto) => void;
-	onDeleteProfessionType: (professionType: ProfessionTypeDetailDto) => void;
-	onAddLicenseRequirement: (professionType: ProfessionTypeDetailDto) => void;
-	onEditLicenseRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
-	onDeleteLicenseRequirement: (professionType: ProfessionTypeDetailDto, requirement: LicenseRequirement) => void;
+	onEditProfessionType: (professionType: ProfessionTypeManagementDto) => void;
+	onDeleteProfessionType: (professionType: ProfessionTypeManagementDto) => void;
+	onAddLicenseRequirement: (professionType: ProfessionTypeManagementDto) => void;
+	onEditLicenseRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
+	onDeleteLicenseRequirement: (professionType: ProfessionTypeManagementDto, requirement: LicenseRequirement) => void;
 }
 
 const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({ 
@@ -62,7 +62,7 @@ const ProfessionsTree: React.FC<ProfessionsTreeProps> = ({
 	}, [licenseRequirements, onLoadLicenseRequirements]);
 
 	const professionTypesMap = useMemo(() => {
-		const map = new Map<number, ProfessionTypeDetailDto[]>();
+		const map = new Map<number, ProfessionTypeManagementDto[]>();
 		professionTypes.forEach(pt => {
 			const existing = map.get(pt.professionId) || [];
 			existing.push(pt);
