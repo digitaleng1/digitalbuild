@@ -9,6 +9,7 @@ import PortfolioSection from './components/PortfolioSection';
 import ProjectsList from './components/ProjectsList';
 import ReviewsSection from './components/ReviewsSection';
 import SecuritySettings from '@/app/shared/components/SecuritySettings';
+import NotificationsCard from '@/app/shared/components/NotificationsCard';
 
 const SpecialistProfilePage = () => {
 	const { profile, loading, error, refetch } = useSpecialistProfile();
@@ -66,6 +67,7 @@ const SpecialistProfilePage = () => {
 				</Col>
 
 				<Col lg={8}>
+					<NotificationsCard />
 					<ReviewsSection reviews={profile.reviews} />
 					<ProjectsList projects={profile.assignedProjects} />
 					<PortfolioSection

@@ -10,7 +10,7 @@ export const notificationService = {
   },
 
   markAsRead: async (id: number) => {
-    return HttpClient.patch(`/api/notifications/${id}/read`, {});
+    return HttpClient.put(`/api/notifications/${id}/mark-read`, {});
   },
 
   markAllAsRead: async () => {
@@ -18,7 +18,7 @@ export const notificationService = {
   },
 
   markAsDelivered: async (id: number) => {
-    return HttpClient.patch(`/api/notifications/${id}/delivered`, {});
+    return HttpClient.put(`/api/notifications/${id}/mark-delivered`, {});
   },
 
   deleteNotification: async (id: number) => {

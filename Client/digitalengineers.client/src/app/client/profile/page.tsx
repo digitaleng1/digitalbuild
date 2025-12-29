@@ -7,6 +7,7 @@ import StatsCard from './components/StatsCard';
 import CompanyInfo from './components/CompanyInfo';
 import ContactInfo from './components/ContactInfo';
 import SecuritySettings from '@/app/shared/components/SecuritySettings';
+import NotificationsCard from '@/app/shared/components/NotificationsCard';
 
 const ClientProfilePage = () => {
 	const { profile, loading, error, refetch } = useClientProfile();
@@ -53,6 +54,7 @@ const ClientProfilePage = () => {
 				</Col>
 
 				<Col lg={8}>
+					<NotificationsCard />
 					<StatsCard stats={profile.stats} />
 				</Col>
 			</Row>

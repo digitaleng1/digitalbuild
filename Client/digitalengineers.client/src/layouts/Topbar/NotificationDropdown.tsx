@@ -2,11 +2,13 @@ import React, { useMemo, useCallback, useState } from 'react';
 import { Card, Col, Dropdown, Row, Spinner, Button } from 'react-bootstrap';
 import classNames from 'classnames';
 import { useToggle } from '@/hooks';
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import SimplebarReactClient from "@/components/wrappers/SimplebarReactClient";
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuthContext } from '@/common/context/useAuthContext';
 import type { Notification } from '@/types/notification';
 import { notificationService } from '@/services/notificationService';
+import { NotificationDetailsModal } from '@/components/Notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -55,9 +57,22 @@ const groupNotificationsByDay = (notifications: Notification[]) => {
 	return grouped;
 };
 
+// Get profile path based on user role
+const getProfilePath = (roles: string[] | undefined): string => {
+	if (!roles) return '/';
+	if (roles.includes('SuperAdmin') || roles.includes('Admin')) return '/admin/profile';
+	if (roles.includes('Client')) return '/client/profile';
+	if (roles.includes('Provider')) return '/specialist/profile';
+	return '/';
+};
+
 const NotificationDropdown = React.memo(() => {
 	const [isOpen, toggleDropdown] = useToggle();
 	const [isSendingTest, setIsSendingTest] = useState(false);
+	const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+	const [showModal, setShowModal] = useState(false);
+	const navigate = useNavigate();
+	const { user } = useAuthContext();
 	const { 
 		notifications, 
 		unreadCount, 
@@ -73,14 +88,25 @@ const NotificationDropdown = React.memo(() => {
 		[notifications]
 	);
 
-	// Handle mark as read
-	const handleMarkAsRead = useCallback(async (id: number, isRead: boolean) => {
-		if (!isRead) {
+	// Handle notification click - open modal
+	const handleNotificationClick = useCallback(async (notification: Notification) => {
+		setSelectedNotification(notification);
+		setShowModal(true);
+		if (!notification.isRead) {
 			try {
-				await markAsRead(id);
+				await markAsRead(notification.id);
 			} catch (error) {
 				console.error('Failed to mark as read:', error);
 			}
+		}
+	}, [markAsRead]);
+
+	// Handle mark as read from modal
+	const handleMarkAsRead = useCallback(async (id: number) => {
+		try {
+			await markAsRead(id);
+		} catch (error) {
+			console.error('Failed to mark as read:', error);
 		}
 	}, [markAsRead]);
 
@@ -89,6 +115,17 @@ const NotificationDropdown = React.memo(() => {
 		e.stopPropagation();
 		try {
 			await deleteNotification(id);
+		} catch (error) {
+			console.error('Failed to delete notification:', error);
+		}
+	}, [deleteNotification]);
+
+	// Handle delete from modal
+	const handleDeleteFromModal = useCallback(async (id: number) => {
+		try {
+			await deleteNotification(id);
+			setShowModal(false);
+			setSelectedNotification(null);
 		} catch (error) {
 			console.error('Failed to delete notification:', error);
 		}
@@ -117,134 +154,161 @@ const NotificationDropdown = React.memo(() => {
 		}
 	}, []);
 
-	return (
-		<Dropdown show={isOpen} onToggle={toggleDropdown}>
-			<Dropdown.Toggle variant="link" id="dropdown-notification" onClick={toggleDropdown} className="nav-link dropdown-toggle arrow-none">
-				<i className="ri-notification-3-line font-22"></i>
-				{unreadCount > 0 && (
-					<span className="noti-icon-badge">{unreadCount}</span>
-				)}
-			</Dropdown.Toggle>
-			<Dropdown.Menu className="dropdown-menu-animated dropdown-lg" align="end">
-				<div onClick={toggleDropdown}>
-					<div className="p-2 border-top-0 border-start-0 border-end-0 border-dashed border">
-						<Row className="align-items-center">
-							<Col>
-								<h6 className="m-0 font-16 fw-semibold">
-									Notifications
-									{unreadCount > 0 && (
-										<span className="badge bg-danger ms-2">{unreadCount}</span>
-									)}
-								</h6>
-							</Col>
-							<Col xs="auto" className="d-flex gap-1">
-								<Button 
-									size="sm" 
-									className="d-none"
-									variant="outline-primary" 
-									onClick={handleSendTest}
-									disabled={isSendingTest}
-								>
-									{isSendingTest ? (
-										<>
-											<Spinner size="sm" animation="border" className="me-1" />
-											Test
-										</>
-									) : (
-										<>
-											<i className="mdi mdi-send me-1"></i>
-											Test
-										</>
-									)}
-								</Button>
-								{notifications.length > 0 && (
-									<Link 
-										to="" 
-										onClick={handleMarkAllAsRead}
-										className="text-dark text-decoration-underline"
-									>
-										<small>Clear All</small>
-									</Link>
-								)}
-							</Col>
-						</Row>
-					</div>
-					<SimplebarReactClient className="p-2" style={notificationShowContainerStyle}>
-						{loading ? (
-							<div className="text-center py-3">
-								<Spinner animation="border" size="sm" />
-								<p className="mt-2 mb-0">Loading notifications...</p>
-							</div>
-						) : notifications.length === 0 ? (
-							<div className="text-center py-3">
-								<i className="mdi mdi-bell-off-outline text-muted" style={{ fontSize: '48px' }}></i>
-								<p className="text-muted mt-2 mb-0">No notifications</p>
-							</div>
-						) : (
-							Object.entries(groupedNotifications).map(([day, dayNotifications]) => (
-								<React.Fragment key={day}>
-									<h5 className="text-muted font-12 text-uppercase mt-0">{day}</h5>
-									{dayNotifications.map((notification) => {
-										const { icon, variant } = getNotificationStyle(notification.type);
-										const timeAgo = dayjs(notification.createdAt).fromNow();
+	// Handle View All click
+	const handleViewAll = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		toggleDropdown();
+		const profilePath = getProfilePath(user?.roles);
+		navigate(profilePath);
+	}, [navigate, toggleDropdown, user?.roles]);
 
-										return (
-											<Dropdown.Item
-												key={notification.id}
-												onClick={() => handleMarkAsRead(notification.id, notification.isRead)}
-												className={classNames(
-													'p-0 notify-item card shadow-none mb-2',
-													notification.isRead ? 'read-noti' : 'unread-noti'
-												)}
-											>
-												<Card.Body>
-													<span 
-														className="float-end noti-close-btn text-muted"
-														onClick={(e) => handleDelete(e, notification.id)}
-													>
-														<i className="mdi mdi-close"></i>
-													</span>
-													<div className="d-flex align-items-center">
-														<div className="flex-shrink-0">
-															<div className={classNames('notify-icon', `bg-${variant}`)}>
-																{notification.senderProfilePicture ? (
-																	<img 
-																		src={notification.senderProfilePicture} 
-																		className="img-fluid rounded-circle" 
-																		alt={notification.senderName} 
-																	/>
-																) : (
-																	<i className={icon}></i>
-																)}
+	// Handle modal close
+	const handleCloseModal = useCallback(() => {
+		setShowModal(false);
+		setSelectedNotification(null);
+	}, []);
+
+	return (
+		<>
+			<Dropdown show={isOpen} onToggle={toggleDropdown}>
+				<Dropdown.Toggle variant="link" id="dropdown-notification" onClick={toggleDropdown} className="nav-link dropdown-toggle arrow-none">
+					<i className="ri-notification-3-line font-22"></i>
+					{unreadCount > 0 && (
+						<span className="noti-icon-badge">{unreadCount}</span>
+					)}
+				</Dropdown.Toggle>
+				<Dropdown.Menu className="dropdown-menu-animated dropdown-lg" align="end">
+					<div onClick={(e) => e.stopPropagation()}>
+						<div className="p-2 border-top-0 border-start-0 border-end-0 border-dashed border">
+							<Row className="align-items-center">
+								<Col>
+									<h6 className="m-0 font-16 fw-semibold">
+										Notifications
+										{unreadCount > 0 && (
+											<span className="badge bg-danger ms-2">{unreadCount}</span>
+										)}
+									</h6>
+								</Col>
+								<Col xs="auto" className="d-flex gap-1">
+									<Button 
+										size="sm" 
+										className="d-none"
+										variant="outline-primary" 
+										onClick={handleSendTest}
+										disabled={isSendingTest}
+									>
+										{isSendingTest ? (
+											<>
+												<Spinner size="sm" animation="border" className="me-1" />
+												Test
+											</>
+										) : (
+											<>
+												<i className="mdi mdi-send me-1"></i>
+												Test
+											</>
+										)}
+									</Button>
+									{notifications.length > 0 && (
+										<Link 
+											to="" 
+											onClick={handleMarkAllAsRead}
+											className="text-dark text-decoration-underline"
+										>
+											<small>Read All</small>
+										</Link>
+									)}
+								</Col>
+							</Row>
+						</div>
+						<SimplebarReactClient className="p-2" style={notificationShowContainerStyle}>
+							{loading ? (
+								<div className="text-center py-3">
+									<Spinner animation="border" size="sm" />
+									<p className="mt-2 mb-0">Loading notifications...</p>
+								</div>
+							) : notifications.length === 0 ? (
+								<div className="text-center py-3">
+									<i className="mdi mdi-bell-off-outline text-muted" style={{ fontSize: '48px' }}></i>
+									<p className="text-muted mt-2 mb-0">No notifications</p>
+								</div>
+							) : (
+								Object.entries(groupedNotifications).map(([day, dayNotifications]) => (
+									<React.Fragment key={day}>
+										<h5 className="text-muted font-12 text-uppercase mt-0">{day}</h5>
+										{dayNotifications.map((notification) => {
+											const { icon, variant } = getNotificationStyle(notification.type);
+											const timeAgo = dayjs(notification.createdAt).fromNow();
+
+											return (
+												<div
+													key={notification.id}
+													onClick={() => handleNotificationClick(notification)}
+													className={classNames(
+														'p-0 notify-item card shadow-none mb-2 cursor-pointer',
+														notification.isRead ? 'read-noti' : 'unread-noti'
+													)}
+												>
+													<Card.Body>
+														<span 
+															className="float-end noti-close-btn text-muted"
+															onClick={(e) => handleDelete(e, notification.id)}
+														>
+															<i className="mdi mdi-close"></i>
+														</span>
+														<div className="d-flex align-items-center">
+															<div className="flex-shrink-0">
+																<div className={classNames('notify-icon', `bg-${variant}`)}>
+																	{notification.senderProfilePicture ? (
+																		<img 
+																			src={notification.senderProfilePicture} 
+																			className="img-fluid rounded-circle" 
+																			alt={notification.senderName} 
+																		/>
+																	) : (
+																		<i className={icon}></i>
+																	)}
+																</div>
+															</div>
+															<div className="flex-grow-1 text-truncate ms-2">
+																<h5 className="noti-item-title fw-semibold font-14">
+																	{notification.title}
+																	<small className="fw-normal text-muted ms-1">{timeAgo}</small>
+																</h5>
+																<small className="noti-item-subtitle text-muted">
+																	{notification.body}
+																</small>
 															</div>
 														</div>
-														<div className="flex-grow-1 text-truncate ms-2">
-															<h5 className="noti-item-title fw-semibold font-14">
-																{notification.title}
-																<small className="fw-normal text-muted ms-1">{timeAgo}</small>
-															</h5>
-															<small className="noti-item-subtitle text-muted">
-																{notification.body}
-															</small>
-														</div>
-													</div>
-												</Card.Body>
-											</Dropdown.Item>
-										);
-									})}
-								</React.Fragment>
-							))
-						)}
-					</SimplebarReactClient>
+													</Card.Body>
+												</div>
+											);
+										})}
+									</React.Fragment>
+								))
+							)}
+						</SimplebarReactClient>
 
-					{notifications.length > 0 && (
-						<Dropdown.Item className="text-center text-primary notify-item border-top border-light py-2">
-							View All
-						</Dropdown.Item>
-					)}
-				</div>
-			</Dropdown.Menu>
-		</Dropdown>
+						{notifications.length > 0 && (
+							<div 
+								className="text-center text-primary notify-item border-top border-light py-2 cursor-pointer"
+								onClick={handleViewAll}
+							>
+								View All
+							</div>
+						)}
+					</div>
+				</Dropdown.Menu>
+			</Dropdown>
+
+			<NotificationDetailsModal
+				show={showModal}
+				onHide={handleCloseModal}
+				notification={selectedNotification}
+				onMarkAsRead={handleMarkAsRead}
+				onDelete={handleDeleteFromModal}
+			/>
+		</>
 	);
 });
 

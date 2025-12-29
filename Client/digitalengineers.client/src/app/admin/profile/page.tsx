@@ -6,6 +6,7 @@ import ProfileHeader from './components/ProfileHeader';
 import BasicInfo from './components/BasicInfo';
 import AccountInfo from './components/AccountInfo';
 import SecuritySettings from '@/app/shared/components/SecuritySettings';
+import NotificationsCard from '@/app/shared/components/NotificationsCard';
 
 const AdminProfilePage = () => {
 	const { profile, loading, error, updateProfile, uploadAvatar, refetch } = useUserProfile();
@@ -83,6 +84,12 @@ const AdminProfilePage = () => {
 
 				<Col lg={4}>
 					<AccountInfo profile={profile} />
+				</Col>
+			</Row>
+
+			<Row>
+				<Col lg={12}>
+					<NotificationsCard />
 				</Col>
 			</Row>
 		</>
