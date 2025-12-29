@@ -18,6 +18,7 @@ import SimplebarReactClient from "@/components/wrappers/SimplebarReactClient";
 
 const UserBox = () => {
 	const { user } = useAuthContext();
+	const userRole = useUserRole();
 	
 	const username = user?.firstName && user?.lastName 
 		? `${user.firstName} ${user.lastName}` 
@@ -25,9 +26,18 @@ const UserBox = () => {
 	
 	const userImage = user?.profilePictureUrl || profileImg;
 	
+	const profilePath = 
+		userRole === 'SuperAdmin' || userRole === 'Admin'
+			? '/admin/profile'
+			: userRole === 'Client'
+			? '/client/profile'
+			: userRole === 'Provider'
+			? '/specialist/profile'
+			: '#';
+	
 	return (
 		<div className="leftbar-user">
-			<Link to="/pages/profile">
+			<Link to={profilePath}>
 				<img 
 					src={userImage} 
 					alt="user-image" 

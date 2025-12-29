@@ -1,5 +1,5 @@
 import AppsDropdown from './AppsDropdown';
-import { profileMenus, searchOptions } from './data';
+import { getProfileMenus, searchOptions } from './data';
 import LanguageDropdown from './LanguageDropdown';
 import MaximizeScreen from './MaximizeScreen';
 import NotificationDropdown from './NotificationDropdown';
@@ -44,6 +44,9 @@ const Topbar = ({ topbarDark, toggleMenu, navOpen }: TopbarProps) => {
 	
 	// Use user's profile picture or fallback to default
 	const userImage = user?.profilePictureUrl || defaultUserImage;
+
+	// Get dynamic profile menu based on user role
+	const profileMenuItems = getProfileMenus(userRole);
 
 	/**
 	 * Toggle the leftmenu when having mobile screen
@@ -171,7 +174,7 @@ const Topbar = ({ topbarDark, toggleMenu, navOpen }: TopbarProps) => {
 					<li className="dropdown">
 						<ProfileDropdown 
 							userImage={userImage} 
-							menuItems={profileMenus} 
+							menuItems={profileMenuItems} 
 							username={username} 
 							userTitle={userTitle} 
 						/>

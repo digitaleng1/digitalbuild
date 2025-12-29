@@ -148,7 +148,13 @@ const TopbarSearch = ({ options }: TopbarSearchProps) => {
 			isSearchable
 			isClearable
 			name="search-app"
-			className="app-search dropdown d-none d-lg-block"
+			className="app-search dropdown d-lg-block d-none"
+			styles={{
+				control: (base) => ({
+					...base,
+					display: 'none !important'
+				})
+			}}
 			classNamePrefix="react-select"
 		/>
 	);

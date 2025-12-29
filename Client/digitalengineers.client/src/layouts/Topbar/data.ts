@@ -3,6 +3,8 @@ import avatar1 from '@/assets/images/users/avatar-1.jpg';
 import avatar2 from '@/assets/images/users/avatar-2.jpg';
 import avatar5 from '@/assets/images/users/avatar-5.jpg';
 
+type UserRole = 'SuperAdmin' | 'Admin' | 'Client' | 'Provider' | null;
+
 // get the notifications
 const notifications: NotificationItem[] = [
 	{
@@ -63,34 +65,48 @@ const notifications: NotificationItem[] = [
 	},
 ];
 
-// get the profilemenu
-const profileMenus: ProfileOption[] = [
-	{
-		label: 'My Account',
-		icon: 'mdi mdi-account-circle',
-		redirectTo: '#',
-	},
-	{
-		label: 'Settings',
-		icon: 'mdi mdi-account-edit',
-		redirectTo: '#',
-	},
-	{
-		label: 'Support',
-		icon: 'mdi mdi-lifebuoy',
-		redirectTo: '#',
-	},
-	{
-		label: 'Lock Screen',
-		icon: 'mdi mdi-lock-outline',
-		redirectTo: '/account/lock-screen',
-	},
-	{
-		label: 'Logout',
-		icon: 'mdi mdi-logout',
-		redirectTo: '/account/logout',
-	},
-];
+// get the profilemenu with dynamic routes based on user role
+export const getProfileMenus = (role: UserRole): ProfileOption[] => {
+	const profilePath =
+		role === 'SuperAdmin' || role === 'Admin'
+			? '/admin/profile'
+			: role === 'Client'
+			? '/client/profile'
+			: role === 'Provider'
+			? '/specialist/profile'
+			: '#';
+
+	return [
+		{
+			label: 'My Account',
+			icon: 'mdi mdi-account-circle',
+			redirectTo: profilePath,
+		},
+		//{
+		//	label: 'Settings',
+		//	icon: 'mdi mdi-account-edit',
+		//	redirectTo: '#',
+		//},
+		//{
+		//	label: 'Support',
+		//	icon: 'mdi mdi-lifebuoy',
+		//	redirectTo: '#',
+		//},
+		//{
+		//	label: 'Lock Screen',
+		//	icon: 'mdi mdi-lock-outline',
+		//	redirectTo: '/account/lock-screen',
+		//},
+		{
+			label: 'Logout',
+			icon: 'mdi mdi-logout',
+			redirectTo: '/account/logout',
+		},
+	];
+};
+
+// Keep for backward compatibility
+const profileMenus: ProfileOption[] = getProfileMenus(null);
 
 const searchOptions: SearchOption[] = [
 	{ value: '1', label: 'Analytics Report', icon: 'uil-notes', type: 'report' },

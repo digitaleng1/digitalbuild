@@ -41,7 +41,7 @@ const LanguageDropdown = () => {
 
 	return (
 		<Dropdown show={isOpen} onToggle={toggleDropdown}>
-			<Dropdown.Toggle variant="link" id="dropdown-languages" onClick={toggleDropdown} className="nav-link dropdown-toggle arrow-none">
+			<Dropdown.Toggle variant="link" id="dropdown-languages" onClick={toggleDropdown} className="nav-link dropdown-toggle arrow-none d-none">
 				<img src={enLang.flag} alt={enLang.name} className="me-0 me-sm-1" height="12" />
 				<span className="align-middle d-none d-sm-inline-block">{enLang.name}</span>
 				<i className="mdi mdi-chevron-down d-none d-sm-inline-block align-middle"></i>
