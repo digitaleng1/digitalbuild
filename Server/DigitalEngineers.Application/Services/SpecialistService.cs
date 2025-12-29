@@ -114,6 +114,9 @@ public class SpecialistService : ISpecialistService
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
                 .ThenInclude(slt => slt.LicenseType)
+                    .ThenInclude(lt => lt.ProfessionTypeLicenseRequirements)
+                        .ThenInclude(ptlr => ptlr.ProfessionType)
+                            .ThenInclude(pt => pt.Profession)
             .Include(s => s.AssignedProjects)
                 .ThenInclude(ps => ps.Project)
             .Include(s => s.Portfolio)
@@ -131,6 +134,9 @@ public class SpecialistService : ISpecialistService
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
                 .ThenInclude(slt => slt.LicenseType)
+                    .ThenInclude(lt => lt.ProfessionTypeLicenseRequirements)
+                        .ThenInclude(ptlr => ptlr.ProfessionType)
+                            .ThenInclude(pt => pt.Profession)
             .Include(s => s.AssignedProjects)
                 .ThenInclude(ps => ps.Project)
             .Include(s => s.Portfolio)
@@ -354,6 +360,11 @@ public class SpecialistService : ISpecialistService
 
     private SpecialistDetailsDto MapToDetailsDto(Specialist specialist)
     {
+        // Only include approved licenses
+        var approvedLicenses = specialist.LicenseTypes
+            .Where(slt => slt.Status == LicenseRequestStatus.Approved)
+            .ToList();
+
         return new SpecialistDetailsDto
         {
             Id = specialist.Id,
@@ -372,14 +383,22 @@ public class SpecialistService : ISpecialistService
             Rating = specialist.Rating,
             IsAvailable = specialist.IsAvailable,
             Specialization = specialist.Specialization,
-            LicenseTypeIds = specialist.LicenseTypes.Select(slt => slt.LicenseTypeId).ToArray(),
-            LicenseTypes = specialist.LicenseTypes.Select(slt => new LicenseTypeDto
+            LicenseTypeIds = approvedLicenses.Select(slt => slt.LicenseTypeId).ToArray(),
+            LicenseTypes = approvedLicenses.Select(slt =>
             {
-                Id = slt.LicenseType.Id,
-                Name = slt.LicenseType.Name,
-                Code = slt.LicenseType.Code,
-                Description = slt.LicenseType.Description,
-                IsStateSpecific = slt.LicenseType.IsStateSpecific
+                var profession = slt.LicenseType.ProfessionTypeLicenseRequirements
+                    .FirstOrDefault()?.ProfessionType?.Profession;
+                
+                return new LicenseTypeDto
+                {
+                    Id = slt.LicenseType.Id,
+                    Name = slt.LicenseType.Name,
+                    Code = slt.LicenseType.Code,
+                    Description = slt.LicenseType.Description,
+                    IsStateSpecific = slt.LicenseType.IsStateSpecific,
+                    ProfessionId = profession?.Id,
+                    ProfessionName = profession?.Name
+                };
             }).ToArray(),
             Portfolio = specialist.Portfolio.Select(p => new PortfolioItemDto
             {

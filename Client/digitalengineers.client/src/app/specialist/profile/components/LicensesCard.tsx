@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Card, CardBody, Badge, Alert } from 'react-bootstrap';
+import { Card, CardBody, Badge, Alert, Button } from 'react-bootstrap';
 import CardTitle from '@/components/CardTitle';
 import type { LicenseType } from '@/types/project';
+import type { LicenseRequest } from '@/types/licenseRequest';
 import { useLicenseRequests } from '@/app/shared/hooks/useLicenseRequests';
 import { LicenseRequestStatus } from '@/types/licenseRequest';
 import AddLicenseRequestModal from './AddLicenseRequestModal';
+import EditLicenseRequestModal from './EditLicenseRequestModal';
 
 interface LicensesCardProps {
 	licenses: LicenseType[];
@@ -13,11 +15,18 @@ interface LicensesCardProps {
 }
 
 const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) => {
-	const { requests, loading: requestsLoading } = useLicenseRequests();
+	const { requests, loading: requestsLoading, refetch } = useLicenseRequests();
 	const [showAddModal, setShowAddModal] = useState(false);
+	const [editRequest, setEditRequest] = useState<LicenseRequest | null>(null);
 
 	const pendingRequests = requests.filter(r => r.status === LicenseRequestStatus.Pending);
 	const rejectedRequests = requests.filter(r => r.status === LicenseRequestStatus.Rejected);
+
+	const handleEditSuccess = () => {
+		refetch();
+		onRefresh();
+		setEditRequest(null);
+	};
 
 	if (!isOwnProfile && (!licenses || licenses.length === 0)) {
 		return null;
@@ -50,6 +59,9 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 								{licenses.map((license) => (
 									<Badge key={license.id} bg="success" className="p-2">
 										<i className="mdi mdi-check-decagram me-1"></i>
+										{license.professionName && (
+											<span className="me-1">{license.professionName} -</span>
+										)}
 										{license.name}
 									</Badge>
 								))}
@@ -65,7 +77,7 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 								Pending Verification ({pendingRequests.length})
 							</h6>
 							{pendingRequests.map((request) => (
-								<Alert key={request.id} variant="warning" className="mb-2 py-2">
+								<Alert key={`${request.specialistId}-${request.licenseTypeId}`} variant="warning" className="mb-2 py-2">
 									<div className="d-flex justify-content-between align-items-center">
 										<div>
 											<strong>{request.licenseTypeName}</strong>
@@ -89,13 +101,24 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 								Rejected ({rejectedRequests.length})
 							</h6>
 							{rejectedRequests.map((request) => (
-								<Alert key={request.id} variant="danger" className="mb-2 py-2">
-									<div>
-										<strong>{request.licenseTypeName}</strong>
-										<br />
-										<small className="text-muted">
-											Reason: {request.adminComment || 'No reason provided'}
-										</small>
+								<Alert key={`${request.specialistId}-${request.licenseTypeId}`} variant="danger" className="mb-2 py-2">
+									<div className="d-flex justify-content-between align-items-center">
+										<div>
+											<strong>{request.licenseTypeName}</strong>
+											<br />
+											<small className="text-muted">
+												Reason: {request.adminComment || 'No reason provided'}
+											</small>
+										</div>
+										<Button
+											variant="outline-primary"
+											size="sm"
+											onClick={() => setEditRequest(request)}
+											title="Edit and resubmit"
+										>
+											<i className="mdi mdi-pencil me-1"></i>
+											Edit
+										</Button>
 									</div>
 								</Alert>
 							))}
@@ -115,14 +138,26 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 			</Card>
 
 			{isOwnProfile && (
-				<AddLicenseRequestModal
-					show={showAddModal}
-					onHide={() => setShowAddModal(false)}
-					onSuccess={() => {
-						onRefresh();
-						setShowAddModal(false);
-					}}
-				/>
+				<>
+					<AddLicenseRequestModal
+						show={showAddModal}
+						onHide={() => setShowAddModal(false)}
+						onSuccess={() => {
+							refetch();
+							onRefresh();
+							setShowAddModal(false);
+						}}
+					/>
+
+					{editRequest && (
+						<EditLicenseRequestModal
+							show={!!editRequest}
+							onHide={() => setEditRequest(null)}
+							onSuccess={handleEditSuccess}
+							licenseRequest={editRequest}
+						/>
+					)}
+				</>
 			)}
 		</>
 	);

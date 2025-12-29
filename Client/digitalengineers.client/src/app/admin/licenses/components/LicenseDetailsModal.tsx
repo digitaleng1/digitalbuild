@@ -31,6 +31,8 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 			try {
 				setIsSubmitting(true);
 				await licenseRequestService.approveLicenseRequest(license.id, {
+					specialistId: license.specialistId,
+					licenseTypeId: license.licenseTypeId,
 					adminComment: approveComment || undefined,
 				});
 				showSuccess('Success', 'License request approved successfully');
@@ -42,7 +44,7 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 			} finally {
 				setIsSubmitting(false);
 			}
-		}, [approveComment, license.id, showSuccess, showError, onActionSuccess, onClose]);
+		}, [approveComment, license, showSuccess, showError, onActionSuccess, onClose]);
 
 		const handleReject = useCallback(async () => {
 			if (!rejectReason.trim()) {
@@ -53,6 +55,8 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 			try {
 				setIsSubmitting(true);
 				await licenseRequestService.rejectLicenseRequest(license.id, {
+					specialistId: license.specialistId,
+					licenseTypeId: license.licenseTypeId,
 					adminComment: rejectReason,
 				});
 				showSuccess('Success', 'License request rejected');
@@ -64,7 +68,7 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 			} finally {
 				setIsSubmitting(false);
 			}
-		}, [rejectReason, license.id, showSuccess, showError, onActionSuccess, onClose]);
+		}, [rejectReason, license, showSuccess, showError, onActionSuccess, onClose]);
 
 		const handleDownload = useCallback(() => {
 			if (license.licenseFileUrl) {

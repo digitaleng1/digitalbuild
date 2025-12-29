@@ -14,6 +14,15 @@ export interface CreateLicenseRequest {
 	file: File;
 }
 
+export interface ResubmitLicenseRequest {
+	state: string;
+	issuingAuthority: string;
+	issueDate: string;
+	expirationDate: string;
+	licenseNumber: string;
+	file?: File;
+}
+
 export interface LicenseRequest {
 	id: number;
 	specialistId: number;
@@ -36,5 +45,7 @@ export interface LicenseRequest {
 }
 
 export interface ReviewLicenseRequest {
+	specialistId: number;
+	licenseTypeId: number;
 	adminComment?: string;
 }

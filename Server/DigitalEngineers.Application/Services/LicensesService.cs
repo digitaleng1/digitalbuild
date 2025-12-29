@@ -129,20 +129,20 @@ public class LicensesService : ILicensesService
     }
 
     public async Task<LicenseRequestDto> ApproveLicenseRequestAsync(
-        int id,
+        int specialistId,
+        int licenseTypeId,
         string adminId,
         ReviewLicenseRequestDto dto,
         CancellationToken cancellationToken = default)
     {
-        // ID is actually SpecialistId (composite key)
         var request = await _context.SpecialistLicenseTypes
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
-            .FirstOrDefaultAsync(slt => slt.SpecialistId == id, cancellationToken);
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
 
         if (request == null)
-            throw new LicenseRequestNotFoundException(id);
+            throw new LicenseRequestNotFoundException(specialistId);
 
         if (request.Status != LicenseRequestStatus.Pending)
             throw new InvalidOperationException($"License request is already {request.Status}");
@@ -178,20 +178,20 @@ public class LicensesService : ILicensesService
     }
 
     public async Task<LicenseRequestDto> RejectLicenseRequestAsync(
-        int id,
+        int specialistId,
+        int licenseTypeId,
         string adminId,
         ReviewLicenseRequestDto dto,
         CancellationToken cancellationToken = default)
     {
-        // ID is actually SpecialistId (composite key)
         var request = await _context.SpecialistLicenseTypes
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
-            .FirstOrDefaultAsync(slt => slt.SpecialistId == id, cancellationToken);
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
 
         if (request == null)
-            throw new LicenseRequestNotFoundException(id);
+            throw new LicenseRequestNotFoundException(specialistId);
 
         if (request.Status != LicenseRequestStatus.Pending)
             throw new InvalidOperationException($"License request is already {request.Status}");
@@ -224,6 +224,63 @@ public class LicensesService : ILicensesService
         {
             _logger.LogError(ex, "Failed to send license rejection email to {Email}", request.Specialist.User.Email);
         }
+
+        return MapToDto(request, request.Specialist, request.LicenseType);
+    }
+
+    public async Task<LicenseRequestDto> ResubmitLicenseRequestAsync(
+        int specialistId,
+        int licenseTypeId,
+        ResubmitLicenseRequestDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await _context.SpecialistLicenseTypes
+            .Include(slt => slt.Specialist)
+                .ThenInclude(s => s.User)
+            .Include(slt => slt.LicenseType)
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
+
+        if (request == null)
+            throw new LicenseRequestNotFoundException(specialistId);
+
+        if (request.Status != LicenseRequestStatus.Rejected)
+            throw new InvalidOperationException("Only rejected license requests can be resubmitted");
+
+        // Update license request data
+        request.State = dto.State;
+        request.IssuingAuthority = dto.IssuingAuthority;
+        request.IssueDate = DateTime.SpecifyKind(dto.IssueDate, DateTimeKind.Utc);
+        request.ExpirationDate = DateTime.SpecifyKind(dto.ExpirationDate, DateTimeKind.Utc);
+        request.LicenseNumber = dto.LicenseNumber;
+        
+        // Update file if provided
+        if (!string.IsNullOrEmpty(dto.LicenseFileUrl))
+        {
+            // Delete old file if exists
+            if (!string.IsNullOrEmpty(request.LicenseFileUrl))
+            {
+                try
+                {
+                    await _fileStorageService.DeleteFileAsync(request.LicenseFileUrl, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete old license file from S3: {FileUrl}", request.LicenseFileUrl);
+                }
+            }
+            request.LicenseFileUrl = dto.LicenseFileUrl;
+        }
+
+        // Reset status to Pending
+        request.Status = LicenseRequestStatus.Pending;
+        request.AdminComment = null;
+        request.IsVerified = false;
+        request.VerifiedBy = null;
+        request.VerifiedAt = null;
+        request.ReviewedAt = null;
+        request.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return MapToDto(request, request.Specialist, request.LicenseType);
     }
@@ -264,7 +321,7 @@ public class LicensesService : ILicensesService
     {
         return new LicenseRequestDto
         {
-            Id = request.SpecialistId, // Using SpecialistId as ID for API
+            Id = request.SpecialistId, // Note: Using SpecialistId as Id for backward compatibility
             SpecialistId = request.SpecialistId,
             SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
             SpecialistEmail = specialist.User.Email ?? string.Empty,

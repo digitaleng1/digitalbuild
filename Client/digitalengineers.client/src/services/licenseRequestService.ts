@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { CreateLicenseRequest, LicenseRequest, ReviewLicenseRequest } from '@/types/licenseRequest';
+import type { CreateLicenseRequest, LicenseRequest, ResubmitLicenseRequest, ReviewLicenseRequest } from '@/types/licenseRequest';
 
 class LicenseRequestService {
 	async createLicenseRequest(data: CreateLicenseRequest): Promise<LicenseRequest> {
@@ -17,6 +17,33 @@ class LicenseRequestService {
 				'Content-Type': 'multipart/form-data',
 			},
 		});
+		return result as LicenseRequest;
+	}
+
+	async resubmitLicenseRequest(
+		specialistId: number,
+		licenseTypeId: number,
+		data: ResubmitLicenseRequest
+	): Promise<LicenseRequest> {
+		const formData = new FormData();
+		formData.append('state', data.state);
+		formData.append('issuingAuthority', data.issuingAuthority);
+		formData.append('issueDate', data.issueDate);
+		formData.append('expirationDate', data.expirationDate);
+		formData.append('licenseNumber', data.licenseNumber);
+		if (data.file) {
+			formData.append('file', data.file);
+		}
+
+		const result = await httpClient.put<LicenseRequest>(
+			`/api/licenses/requests/${specialistId}/${licenseTypeId}/resubmit`,
+			formData,
+			{
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			}
+		);
 		return result as LicenseRequest;
 	}
 

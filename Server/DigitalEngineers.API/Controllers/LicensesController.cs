@@ -120,10 +120,17 @@ public class LicensesController : ControllerBase
 
         var dto = new ReviewLicenseRequestDto
         {
+            SpecialistId = model.SpecialistId,
+            LicenseTypeId = model.LicenseTypeId,
             AdminComment = model.AdminComment
         };
 
-        var result = await _licensesService.ApproveLicenseRequestAsync(id, adminId, dto, cancellationToken);
+        var result = await _licensesService.ApproveLicenseRequestAsync(
+            model.SpecialistId, 
+            model.LicenseTypeId, 
+            adminId, 
+            dto, 
+            cancellationToken);
         var viewModel = MapToViewModel(result);
 
         return Ok(viewModel);
@@ -140,10 +147,70 @@ public class LicensesController : ControllerBase
 
         var dto = new ReviewLicenseRequestDto
         {
+            SpecialistId = model.SpecialistId,
+            LicenseTypeId = model.LicenseTypeId,
             AdminComment = model.AdminComment
         };
 
-        var result = await _licensesService.RejectLicenseRequestAsync(id, adminId, dto, cancellationToken);
+        var result = await _licensesService.RejectLicenseRequestAsync(
+            model.SpecialistId, 
+            model.LicenseTypeId, 
+            adminId, 
+            dto, 
+            cancellationToken);
+        var viewModel = MapToViewModel(result);
+
+        return Ok(viewModel);
+    }
+
+    [HttpPut("requests/{specialistId}/{licenseTypeId}/resubmit")]
+    [Authorize(Roles = "Provider")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<LicenseRequestViewModel>> ResubmitLicenseRequest(
+        int specialistId,
+        int licenseTypeId,
+        [FromForm] ResubmitLicenseRequestViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var specialist = await _specialistService.GetSpecialistByUserIdAsync(userId, cancellationToken);
+
+        // Verify the specialist owns this license request
+        if (specialist.Id != specialistId)
+            return Forbid();
+
+        string? licenseFileUrl = null;
+        if (model.File != null)
+        {
+            if (model.File.Length > 10 * 1024 * 1024)
+                throw new ArgumentException("File size must not exceed 10MB");
+
+            var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+            var fileExtension = Path.GetExtension(model.File.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+                throw new ArgumentException($"Invalid file type. Allowed: {string.Join(", ", allowedExtensions)}");
+
+            using var fileStream = model.File.OpenReadStream();
+            var fileName = $"{Path.GetFileNameWithoutExtension(model.File.FileName)}{fileExtension}";
+            licenseFileUrl = await _fileStorageService.UploadLicenseFileAsync(
+                fileStream,
+                fileName,
+                model.File.ContentType,
+                specialist.Id,
+                cancellationToken);
+        }
+
+        var dto = new ResubmitLicenseRequestDto
+        {
+            State = model.State,
+            IssuingAuthority = model.IssuingAuthority,
+            IssueDate = model.IssueDate,
+            ExpirationDate = model.ExpirationDate,
+            LicenseNumber = model.LicenseNumber,
+            LicenseFileUrl = licenseFileUrl
+        };
+
+        var result = await _licensesService.ResubmitLicenseRequestAsync(specialistId, licenseTypeId, dto, cancellationToken);
         var viewModel = MapToViewModel(result);
 
         return Ok(viewModel);
@@ -176,7 +243,7 @@ public class LicensesController : ControllerBase
             State = dto.State,
             IssuingAuthority = dto.IssuingAuthority,
             IssueDate = dto.IssueDate,
-            ExpirationDate = dto.ExpirationDate,
+           ExpirationDate = dto.ExpirationDate,
             LicenseNumber = dto.LicenseNumber,
             LicenseFileUrl = dto.LicenseFileUrl,
             Status = dto.Status.ToString(),

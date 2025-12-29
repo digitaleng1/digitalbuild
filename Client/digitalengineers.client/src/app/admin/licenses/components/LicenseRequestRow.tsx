@@ -28,9 +28,17 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 
 			try {
 				setIsSubmitting(true);
-				await licenseRequestService.approveLicenseRequest(license.id, {
+				
+				const requestData = {
+					specialistId: license.specialistId,
+					licenseTypeId: license.licenseTypeId,
 					adminComment: approveComment || undefined,
-				});
+				};
+				
+				console.log('Sending approve request with data:', requestData);
+				
+				await licenseRequestService.approveLicenseRequest(license.id, requestData);
+				
 				showSuccess('Success', 'License request approved successfully');
 				setShowApproveInput(false);
 				setApproveComment('');
@@ -40,7 +48,14 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 			} finally {
 				setIsSubmitting(false);
 			}
-		}, [showApproveInput, approveComment, license.id, showSuccess, showError, onActionSuccess]);
+		}, [
+			showApproveInput,
+			approveComment,
+			license,
+			showSuccess,
+			showError,
+			onActionSuccess,
+		]);
 
 		const handleReject = useCallback(async () => {
 			if (!showRejectInput) {
@@ -55,9 +70,17 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 
 			try {
 				setIsSubmitting(true);
-				await licenseRequestService.rejectLicenseRequest(license.id, {
+				
+				const requestData = {
+					specialistId: license.specialistId,
+					licenseTypeId: license.licenseTypeId,
 					adminComment: rejectReason,
-				});
+				};
+				
+				console.log('Sending reject request with data:', requestData);
+				
+				await licenseRequestService.rejectLicenseRequest(license.id, requestData);
+				
 				showSuccess('Success', 'License request rejected');
 				setShowRejectInput(false);
 				setRejectReason('');
@@ -67,7 +90,14 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 			} finally {
 				setIsSubmitting(false);
 			}
-		}, [showRejectInput, rejectReason, license.id, showSuccess, showError, onActionSuccess]);
+		}, [
+			showRejectInput,
+			rejectReason,
+			license,
+			showSuccess,
+			showError,
+			onActionSuccess,
+		]);
 
 		const handleCancelApprove = useCallback(() => {
 			setShowApproveInput(false);

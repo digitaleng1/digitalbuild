@@ -13,6 +13,16 @@ public class CreateLicenseRequestDto
     public string LicenseFileUrl { get; init; } = string.Empty;
 }
 
+public class ResubmitLicenseRequestDto
+{
+    public string State { get; init; } = string.Empty;
+    public string IssuingAuthority { get; init; } = string.Empty;
+    public DateTime IssueDate { get; init; }
+    public DateTime ExpirationDate { get; init; }
+    public string LicenseNumber { get; init; } = string.Empty;
+    public string? LicenseFileUrl { get; init; }
+}
+
 public class LicenseRequestDto
 {
     public int Id { get; set; }
@@ -37,5 +47,7 @@ public class LicenseRequestDto
 
 public class ReviewLicenseRequestDto
 {
+    public int SpecialistId { get; init; }
+    public int LicenseTypeId { get; init; }
     public string? AdminComment { get; init; }
 }

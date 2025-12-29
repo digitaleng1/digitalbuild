@@ -108,6 +108,8 @@ export interface LicenseType {
 	code: string;
 	description: string;
 	isStateSpecific: boolean;
+	professionId?: number;
+	professionName?: string;
 }
 
 export interface LicenseTypeManagementDto {

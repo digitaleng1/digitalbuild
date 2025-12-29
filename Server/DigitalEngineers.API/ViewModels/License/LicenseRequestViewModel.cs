@@ -30,8 +30,37 @@ public class CreateLicenseRequestViewModel
     public IFormFile File { get; set; } = null!;
 }
 
+public class ResubmitLicenseRequestViewModel
+{
+    [Required]
+    [MaxLength(100)]
+    public string State { get; set; } = string.Empty;
+    
+    [Required]
+    [MaxLength(200)]
+    public string IssuingAuthority { get; set; } = string.Empty;
+    
+    [Required]
+    public DateTime IssueDate { get; set; }
+    
+    [Required]
+    public DateTime ExpirationDate { get; set; }
+    
+    [Required]
+    [MaxLength(100)]
+    public string LicenseNumber { get; set; } = string.Empty;
+    
+    public IFormFile? File { get; set; }
+}
+
 public class ReviewLicenseRequestViewModel
 {
+    [Required]
+    public int SpecialistId { get; set; }
+    
+    [Required]
+    public int LicenseTypeId { get; set; }
+    
     [MaxLength(1000)]
     public string? AdminComment { get; set; }
 }

@@ -8,7 +8,8 @@ public interface ILicensesService
     Task<IEnumerable<LicenseRequestDto>> GetSpecialistLicenseRequestsAsync(int specialistId, CancellationToken cancellationToken = default);
     Task<IEnumerable<LicenseRequestDto>> GetPendingLicenseRequestsAsync(CancellationToken cancellationToken = default);
     Task<LicenseRequestDto> GetLicenseRequestByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<LicenseRequestDto> ApproveLicenseRequestAsync(int id, string adminId, ReviewLicenseRequestDto dto, CancellationToken cancellationToken = default);
-    Task<LicenseRequestDto> RejectLicenseRequestAsync(int id, string adminId, ReviewLicenseRequestDto dto, CancellationToken cancellationToken = default);
+    Task<LicenseRequestDto> ApproveLicenseRequestAsync(int specialistId, int licenseTypeId, string adminId, ReviewLicenseRequestDto dto, CancellationToken cancellationToken = default);
+    Task<LicenseRequestDto> RejectLicenseRequestAsync(int specialistId, int licenseTypeId, string adminId, ReviewLicenseRequestDto dto, CancellationToken cancellationToken = default);
+    Task<LicenseRequestDto> ResubmitLicenseRequestAsync(int specialistId, int licenseTypeId, ResubmitLicenseRequestDto dto, CancellationToken cancellationToken = default);
     Task DeleteLicenseRequestAsync(int id, int specialistId, CancellationToken cancellationToken = default);
 }
