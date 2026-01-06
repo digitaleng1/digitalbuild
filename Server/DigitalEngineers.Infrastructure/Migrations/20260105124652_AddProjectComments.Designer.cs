@@ -3,6 +3,7 @@ using System;
 using DigitalEngineers.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DigitalEngineers.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260105124652_AddProjectComments")]
+    partial class AddProjectComments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -248,62 +251,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Clients", (string)null);
-                });
-
-            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.CommentFileReference", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ProjectFileId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("ProjectFileId");
-
-                    b.ToTable("CommentFileReferences", (string)null);
-                });
-
-            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.CommentMention", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
-
-                    b.Property<string>("MentionedUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("MentionedUserId");
-
-                    b.ToTable("CommentMentions", (string)null);
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", b =>
@@ -1819,44 +1766,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.CommentFileReference", b =>
-                {
-                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectComment", "Comment")
-                        .WithMany("FileReferences")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectFile", "ProjectFile")
-                        .WithMany()
-                        .HasForeignKey("ProjectFileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("ProjectFile");
-                });
-
-            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.CommentMention", b =>
-                {
-                    b.HasOne("DigitalEngineers.Infrastructure.Entities.ProjectComment", "Comment")
-                        .WithMany("Mentions")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "MentionedUser")
-                        .WithMany()
-                        .HasForeignKey("MentionedUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("MentionedUser");
-                });
-
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.LicenseType", b =>
                 {
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.Identity.ApplicationUser", "CreatedBy")
@@ -2384,10 +2293,6 @@ namespace DigitalEngineers.Infrastructure.Migrations
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectComment", b =>
                 {
-                    b.Navigation("FileReferences");
-
-                    b.Navigation("Mentions");
-
                     b.Navigation("Replies");
                 });
 

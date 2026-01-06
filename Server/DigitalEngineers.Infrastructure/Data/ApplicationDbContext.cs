@@ -44,6 +44,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
     public DbSet<TaskAuditLog> TaskAuditLogs => Set<TaskAuditLog>();
     
+    // Project Comments
+    public DbSet<ProjectComment> ProjectComments => Set<ProjectComment>();
+    public DbSet<CommentMention> CommentMentions => Set<CommentMention>();
+    public DbSet<CommentFileReference> CommentFileReferences => Set<CommentFileReference>();
+
     // Notifications
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();

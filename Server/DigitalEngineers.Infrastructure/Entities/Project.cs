@@ -48,4 +48,5 @@ public class Project
     public ICollection<ProjectSpecialist> AssignedSpecialists { get; set; } = [];
     public ICollection<BidRequest> BidRequests { get; set; } = [];
     public ICollection<Review> Reviews { get; set; } = [];
+    public ICollection<ProjectComment> Comments { get; set; } = [];
 }

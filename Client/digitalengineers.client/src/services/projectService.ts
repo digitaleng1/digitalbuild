@@ -1,5 +1,6 @@
 import httpClient from '@/common/helpers/httpClient';
 import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto, ProjectSpecialistDto } from '@/types/project';
+import type { ProjectCommentViewModel, CreateProjectCommentRequest, UpdateProjectCommentRequest, MentionableUser } from '@/types/project-comment';
 
 class ProjectService {
 	/**
@@ -114,6 +115,47 @@ class ProjectService {
 	 */
 	async updateProjectManagementType(id: number, managementType: string): Promise<void> {
 		await httpClient.patch(`/api/projects/${id}/management-type`, { managementType });
+	}
+	
+	// Comments
+	
+	/**
+	 * Get all comments for a project
+	 */
+	async getProjectComments(projectId: number): Promise<ProjectCommentViewModel[]> {
+		const data = await httpClient.get<ProjectCommentViewModel[]>(`/api/projects/${projectId}/comments`);
+		return data as ProjectCommentViewModel[];
+	}
+	
+	/**
+	 * Add a comment to a project
+	 */
+	async addProjectComment(projectId: number, data: CreateProjectCommentRequest): Promise<ProjectCommentViewModel> {
+		const result = await httpClient.post(`/api/projects/${projectId}/comments`, data);
+		return result as ProjectCommentViewModel;
+	}
+	
+	/**
+	 * Update a comment
+	 */
+	async updateProjectComment(commentId: number, data: UpdateProjectCommentRequest): Promise<ProjectCommentViewModel> {
+		const result = await httpClient.put(`/api/projects/comments/${commentId}`, data);
+		return result as ProjectCommentViewModel;
+	}
+	
+	/**
+	 * Delete a comment
+	 */
+	async deleteProjectComment(commentId: number): Promise<void> {
+		await httpClient.delete(`/api/projects/comments/${commentId}`);
+	}
+	
+	/**
+	 * Get users that can be mentioned in project comments
+	 */
+	async getProjectMentionableUsers(projectId: number): Promise<MentionableUser[]> {
+		const data = await httpClient.get<MentionableUser[]>(`/api/projects/${projectId}/mentionable-users`);
+		return data as MentionableUser[];
 	}
 }
 

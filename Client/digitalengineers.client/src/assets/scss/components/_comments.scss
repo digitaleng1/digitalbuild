@@ -1,0 +1,112 @@
+// Project Comments Styles
+
+// Mention highlighting in comment content
+.mention {
+  color: #0d6efd; // Bootstrap primary blue
+  font-weight: 500;
+  cursor: pointer;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Attached files in comments
+.attached-files {
+  a {
+    transition: all 0.2s ease;
+    border-color: #dee2e6;
+    background-color: #f8f9fa;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background-color: #e9ecef;
+    }
+    
+    &.text-primary { border-color: rgba(13, 110, 253, 0.3); }
+    &.text-danger { border-color: rgba(220, 53, 69, 0.3); }
+    &.text-info { border-color: rgba(13, 202, 240, 0.3); }
+    &.text-success { border-color: rgba(25, 135, 84, 0.3); }
+    &.text-secondary { border-color: rgba(108, 117, 125, 0.3); }
+    &.text-dark { border-color: rgba(33, 37, 41, 0.3); }
+  }
+}
+
+// Mention dropdown container
+.mention-dropdown {
+  position: fixed;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  
+  .mention-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    
+    &:hover,
+    &.selected {
+      background-color: #f8f9fa;
+    }
+    
+    .mention-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 8px;
+      object-fit: cover;
+    }
+    
+    .mention-name {
+      font-size: 14px;
+      color: #212529;
+    }
+  }
+}
+
+// Mention input container
+.mention-input-container {
+  position: relative;
+  width: 100%;
+}
+
+// Dark mode support
+[data-bs-theme="dark"] {
+  .mention {
+    color: #6ea8fe; // Bootstrap primary blue (dark mode)
+  }
+  
+  .attached-files {
+    a {
+      background-color: #343a40;
+      border-color: #495057;
+      
+      &:hover {
+        background-color: #495057;
+      }
+    }
+  }
+  
+  .mention-dropdown {
+    background: #212529;
+    border-color: #495057;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    
+    .mention-item {
+      &:hover,
+      &.selected {
+        background-color: #343a40;
+      }
+      
+      .mention-name {
+        color: #f8f9fa;
+      }
+    }
+  }
+}

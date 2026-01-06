@@ -20,7 +20,8 @@ export enum NotificationType {
   Project = 'Project',
   Bid = 'Bid',
   Quote = 'Quote',
-  System = 'System'
+  System = 'System',
+  Comment = 'Comment'
 }
 
 export enum NotificationSubType {
@@ -44,5 +45,8 @@ export enum NotificationSubType {
   // System actions
   AccountActivation = 'AccountActivation',
   PasswordReset = 'PasswordReset',
-  WelcomeMessage = 'WelcomeMessage'
+  WelcomeMessage = 'WelcomeMessage',
+  
+  // Comment actions
+  Mentioned = 'Mentioned'
 }

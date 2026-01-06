@@ -1,6 +1,8 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.Project;
+using DigitalEngineers.API.ViewModels.ProjectComment;
 using DigitalEngineers.Domain.DTOs;
+using DigitalEngineers.Domain.DTOs.ProjectComment;
 using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -324,5 +326,124 @@ public class ProjectsController : ControllerBase
     {
         await _projectService.RejectQuoteAsync(id, model?.RejectionReason, cancellationToken);
         return NoContent();
+    }
+    
+    // Comments endpoints
+    
+    /// <summary>
+    /// Get all comments for a project
+    /// </summary>
+    [HttpGet("{id}/comments")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectCommentViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<ProjectCommentViewModel>>> GetProjectComments(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var comments = await _projectService.GetProjectCommentsAsync(id, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<ProjectCommentViewModel>>(comments);
+        return Ok(viewModels);
+    }
+    
+    /// <summary>
+    /// Add a comment to a project
+    /// </summary>
+    [HttpPost("{id}/comments")]
+    [ProducesResponseType(typeof(ProjectCommentViewModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ProjectCommentViewModel>> AddProjectComment(
+        int id,
+        [FromBody] CreateProjectCommentViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        
+        var dto = _mapper.Map<CreateProjectCommentDto>(model);
+        dto.ProjectId = id;
+        
+        var comment = await _projectService.AddCommentAsync(dto, userId, cancellationToken);
+        var viewModel = _mapper.Map<ProjectCommentViewModel>(comment);
+        
+        return CreatedAtAction(
+            nameof(GetProjectComments),
+            new { id },
+            viewModel
+        );
+    }
+    
+    /// <summary>
+    /// Update a comment
+    /// </summary>
+    [HttpPut("comments/{commentId}")]
+    [ProducesResponseType(typeof(ProjectCommentViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ProjectCommentViewModel>> UpdateProjectComment(
+        int commentId,
+        [FromBody] UpdateProjectCommentViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        
+        var dto = _mapper.Map<UpdateProjectCommentDto>(model);
+        var comment = await _projectService.UpdateCommentAsync(commentId, dto, userId, cancellationToken);
+        var viewModel = _mapper.Map<ProjectCommentViewModel>(comment);
+        
+        return Ok(viewModel);
+    }
+    
+    /// <summary>
+    /// Delete a comment
+    /// </summary>
+    [HttpDelete("comments/{commentId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteProjectComment(
+        int commentId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        
+        await _projectService.DeleteCommentAsync(commentId, userId, cancellationToken);
+        return NoContent();
+    }
+    
+    /// <summary>
+    /// Get users that can be mentioned in project comments
+    /// </summary>
+    [HttpGet("{id}/mentionable-users")]
+    [ProducesResponseType(typeof(IEnumerable<MentionableUserViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<MentionableUserViewModel>>> GetProjectMentionableUsers(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var users = await _projectService.GetProjectMentionableUsersAsync(id, cancellationToken);
+        var viewModels = _mapper.Map<IEnumerable<MentionableUserViewModel>>(users);
+        return Ok(viewModels);
     }
 }

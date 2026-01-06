@@ -25,5 +25,9 @@ public enum NotificationSubType
     // System actions
     AccountActivation = 12,
     PasswordReset = 13,
-    WelcomeMessage = 14
+    WelcomeMessage = 14,
+    
+    // Comment actions
+    Mentioned = 15,
+    FileShared = 16
 }

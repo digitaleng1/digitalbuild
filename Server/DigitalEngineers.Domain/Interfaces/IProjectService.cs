@@ -1,4 +1,5 @@
 using DigitalEngineers.Domain.DTOs;
+using DigitalEngineers.Domain.DTOs.ProjectComment;
 
 namespace DigitalEngineers.Domain.Interfaces;
 
@@ -115,4 +116,20 @@ public interface IProjectService
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
     /// <exception cref="Exceptions.InvalidProjectStatusForQuoteException">If project status is not QuoteSubmitted</exception>
     Task RejectQuoteAsync(int projectId, string? rejectionReason, CancellationToken cancellationToken = default);
+    
+    // Comments
+    Task<IEnumerable<ProjectCommentDto>> GetProjectCommentsAsync(int projectId, CancellationToken cancellationToken = default);
+    Task<ProjectCommentDto> AddCommentAsync(CreateProjectCommentDto dto, string userId, CancellationToken cancellationToken = default);
+    Task<ProjectCommentDto> UpdateCommentAsync(int commentId, UpdateProjectCommentDto dto, string userId, CancellationToken cancellationToken = default);
+    Task DeleteCommentAsync(int commentId, string userId, CancellationToken cancellationToken = default);
+    Task<int> GetCommentsCountAsync(int projectId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets users that can be mentioned in project comments (client + assigned specialists)
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of mentionable users</returns>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    Task<IEnumerable<MentionableUserDto>> GetProjectMentionableUsersAsync(int projectId, CancellationToken cancellationToken = default);
 }

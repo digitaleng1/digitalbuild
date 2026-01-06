@@ -1,57 +1,58 @@
-
-import {Link} from "react-router";
+import { useState, useEffect } from 'react';
 import { Card, CardBody } from 'react-bootstrap';
+import { useProjectComments } from '@/app/shared/hooks/useProjectComments';
+import { ProjectCommentList } from '@/app/shared/components/project-comments';
+import projectService from '@/services/projectService';
+import type { MentionableUser } from '@/types/project-comment';
 
-import avatar2 from '@/assets/images/users/avatar-7.jpg';
-import avatar3 from '@/assets/images/users/avatar-8.jpg';
+interface CommentsProps {
+  projectId: number;
+}
 
-const Comments = () => {
-	return (
-		<Card>
-			<CardBody>
-				<h4 className="mt-0 mb-3">Comments (258)</h4>
-				<textarea className="form-control form-control-light mb-2" placeholder="Write message" id="example-textarea" rows={3}></textarea>
-				<div className="text-end">
-					<div className="btn-group mb-2">
-						<button type="button" className="btn btn-link btn-sm text-muted font-18">
-							<i className="ri-attachment-2"></i>
-						</button>
-					</div>
+const Comments = ({ projectId }: CommentsProps) => {
+  const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  
+  const {
+    comments,
+    loading,
+    addComment,
+    updateComment,
+    deleteComment
+  } = useProjectComments(projectId);
+  
+  // Fetch mentionable users
+  useEffect(() => {
+    const fetchMentionableUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const users = await projectService.getProjectMentionableUsers(projectId);
+        setMentionableUsers(users);
+      } catch (error) {
+        console.error('Failed to fetch mentionable users:', error);
+        setMentionableUsers([]);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    
+    fetchMentionableUsers();
+  }, [projectId]);
 
-					<div className="btn-group mb-2 ms-2">
-						<button type="button" className="btn btn-primary btn-sm">
-							Submit
-						</button>
-					</div>
-				</div>
-
-				<div className="d-flex align-items-start mt-2">
-					<img className="me-3 avatar-sm rounded-circle" src={avatar3} alt="" />
-					<div className="w-100 overflow-hidden">
-						<h5 className="mt-0">Jeremy Tomlinson</h5>
-						Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at,
-						tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-						<div className="d-flex align-items-start mt-3">
-							<Link to="" className="pe-3">
-								<img src={avatar2} className="avatar-sm rounded-circle" alt="" />
-							</Link>
-							<div className="w-100 overflow-hidden">
-								<h5 className="mt-0">Kathleen Thomas</h5>
-								Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate
-								at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div className="text-center mt-2">
-					<Link to="" className="text-danger">
-						Load more
-					</Link>
-				</div>
-			</CardBody>
-		</Card>
-	);
+  return (
+    <Card>
+      <CardBody>
+        <ProjectCommentList
+          comments={comments}
+          loading={loading || loadingUsers}
+          users={mentionableUsers}
+          onAddComment={addComment}
+          onEditComment={updateComment}
+          onDeleteComment={deleteComment}
+        />
+      </CardBody>
+    </Card>
+  );
 };
 
 export default Comments;

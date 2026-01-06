@@ -1,4 +1,5 @@
 using DigitalEngineers.Domain.DTOs;
+using DigitalEngineers.Domain.DTOs.ProjectComment;
 using DigitalEngineers.Infrastructure.Entities;
 using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
@@ -1149,5 +1150,387 @@ public class ProjectService : IProjectService
                 rejectionReason,
                 cancellationToken);
         }
+    }
+    
+    // Comments
+    public async Task<IEnumerable<ProjectCommentDto>> GetProjectCommentsAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var commentsData = await _context.ProjectComments
+            .AsNoTracking()
+            .Where(c => c.ProjectId == projectId)
+            .Include(c => c.User)
+            .Include(c => c.Replies)
+            .Include(c => c.Mentions)
+                .ThenInclude(m => m.MentionedUser)
+            .Include(c => c.FileReferences) // NEW
+                .ThenInclude(cfr => cfr.ProjectFile) // NEW
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.Id,
+                c.ProjectId,
+                c.UserId,
+                UserFirstName = c.User.FirstName,
+                UserLastName = c.User.LastName,
+                UserProfilePictureUrl = c.User.ProfilePictureUrl,
+                c.Content,
+                c.ParentCommentId,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.IsEdited,
+                RepliesCount = c.Replies.Count,
+                Mentions = c.Mentions.Select(m => new
+                {
+                    m.MentionedUserId,
+                    MentionedUserName = $"{m.MentionedUser.FirstName ?? ""} {m.MentionedUser.LastName ?? ""}".Trim()
+                }).ToList(),
+                // NEW
+                FileReferences = c.FileReferences.Select(cfr => new
+                {
+                    cfr.Id,
+                    cfr.ProjectFileId,
+                    cfr.ProjectFile.FileName,
+                    cfr.ProjectFile.FileUrl,
+                    cfr.ProjectFile.FileSize,
+                    cfr.ProjectFile.ContentType
+                }).ToList()
+            })
+            .ToListAsync(cancellationToken);
+        
+        var comments = commentsData.Select(c => new ProjectCommentDto
+        {
+            Id = c.Id,
+            ProjectId = c.ProjectId,
+            UserId = c.UserId,
+            UserName = $"{c.UserFirstName ?? ""} {c.UserLastName ?? ""}".Trim(),
+            UserProfilePictureUrl = !string.IsNullOrEmpty(c.UserProfilePictureUrl) 
+                ? _fileStorageService.GetPresignedUrl(c.UserProfilePictureUrl) 
+                : null,
+            Content = c.Content,
+            ParentCommentId = c.ParentCommentId,
+            CreatedAt = c.CreatedAt,
+            UpdatedAt = c.UpdatedAt,
+            IsEdited = c.IsEdited,
+            RepliesCount = c.RepliesCount,
+            MentionedUserIds = c.Mentions.Select(m => m.MentionedUserId).ToArray(),
+            MentionedUserNames = c.Mentions.Select(m => m.MentionedUserName).ToArray(),
+            // NEW: Map file references with presigned URLs
+            FileReferences = c.FileReferences.Select(fr => new FileReferenceDto
+            {
+                Id = fr.Id,
+                ProjectFileId = fr.ProjectFileId,
+                FileName = fr.FileName,
+                FileUrl = _fileStorageService.GetPresignedUrl(fr.FileUrl),
+                FileSize = fr.FileSize,
+                ContentType = fr.ContentType
+            }).ToArray()
+        }).ToList();
+        
+        return comments;
+    }
+    
+    public async Task<ProjectCommentDto> AddCommentAsync(CreateProjectCommentDto dto, string userId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == dto.ProjectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(dto.ProjectId);
+        }
+        
+        if (dto.ParentCommentId.HasValue)
+        {
+            var parentExists = await _context.ProjectComments
+                .AnyAsync(c => c.Id == dto.ParentCommentId.Value && c.ProjectId == dto.ProjectId, cancellationToken);
+            
+            if (!parentExists)
+            {
+                throw new ArgumentException($"Parent comment with ID {dto.ParentCommentId.Value} not found in project {dto.ProjectId}");
+            }
+        }
+        
+        // NEW: Validate file references belong to project
+        if (dto.ProjectFileIds.Length > 0)
+        {
+            var validFileIds = await _context.ProjectFiles
+                .Where(pf => pf.ProjectId == dto.ProjectId && dto.ProjectFileIds.Contains(pf.Id))
+                .Select(pf => pf.Id)
+                .ToListAsync(cancellationToken);
+            
+            if (validFileIds.Count != dto.ProjectFileIds.Length)
+            {
+                var invalidIds = dto.ProjectFileIds.Except(validFileIds);
+                throw new ArgumentException($"Invalid file IDs for project {dto.ProjectId}: {string.Join(", ", invalidIds)}");
+            }
+        }
+        
+        var user = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new
+            {
+                u.FirstName,
+                u.LastName,
+                u.ProfilePictureUrl
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    
+        var comment = new ProjectComment
+        {
+            ProjectId = dto.ProjectId,
+            UserId = userId,
+            Content = dto.Content,
+            ParentCommentId = dto.ParentCommentId,
+            CreatedAt = DateTime.UtcNow,
+            IsEdited = false
+        };
+        
+        _context.ProjectComments.Add(comment);
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        // NEW: Create file references
+        if (dto.ProjectFileIds.Length > 0)
+        {
+            var fileReferences = dto.ProjectFileIds.Select(fileId => new CommentFileReference
+            {
+                CommentId = comment.Id,
+                ProjectFileId = fileId,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+            
+            _context.CommentFileReferences.AddRange(fileReferences);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        
+        // Create mentions
+        if (dto.MentionedUserIds.Length > 0)
+        {
+            var mentions = dto.MentionedUserIds.Select(mentionedUserId => new CommentMention
+            {
+                CommentId = comment.Id,
+                MentionedUserId = mentionedUserId,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+            
+            _context.CommentMentions.AddRange(mentions);
+            await _context.SaveChangesAsync(cancellationToken);
+            
+            // Send notifications to mentioned users
+            var userName = $"{user?.FirstName ?? ""} {user?.LastName ?? ""}".Trim();
+            
+            // NEW: Check if files are shared
+            var hasFileShares = dto.ProjectFileIds.Length > 0;
+            
+            foreach (var mentionedUserId in dto.MentionedUserIds)
+            {
+                // Don't send notification to self
+                if (mentionedUserId == userId)
+                    continue;
+                
+                // NEW: Use FileShared subtype if files are attached
+                var notificationSubType = hasFileShares ? NotificationSubType.FileShared : NotificationSubType.Mentioned;
+                var notificationTitle = hasFileShares ? "Files shared with you" : "You were mentioned in a comment";
+                var notificationBody = hasFileShares 
+                    ? $"{userName} shared {dto.ProjectFileIds.Length} file(s) with you in project '{project.Name}'"
+                    : $"{userName} mentioned you in project '{project.Name}'";
+                
+                await _notificationService.SendPushNotificationAsync(
+                    receiverUserId: mentionedUserId,
+                    type: NotificationType.Comment,
+                    subType: notificationSubType,
+                    title: notificationTitle,
+                    body: notificationBody,
+                    additionalData: new Dictionary<string, string>
+                    {
+                        { "projectId", dto.ProjectId.ToString() },
+                        { "commentId", comment.Id.ToString() },
+                        { "hasFiles", hasFileShares.ToString() }
+                    },
+                    cancellationToken: cancellationToken
+                );
+            }
+        }
+        
+        // NEW: Load file references for response
+        var fileReferenceDtos = Array.Empty<FileReferenceDto>();
+        if (dto.ProjectFileIds.Length > 0)
+        {
+            var fileRefs = await _context.CommentFileReferences
+                .Where(cfr => cfr.CommentId == comment.Id)
+                .Include(cfr => cfr.ProjectFile)
+                .ToListAsync(cancellationToken);
+            
+            fileReferenceDtos = fileRefs.Select(cfr => new FileReferenceDto
+            {
+                Id = cfr.Id,
+                ProjectFileId = cfr.ProjectFileId,
+                FileName = cfr.ProjectFile.FileName,
+                FileUrl = _fileStorageService.GetPresignedUrl(cfr.ProjectFile.FileUrl),
+                FileSize = cfr.ProjectFile.FileSize,
+                ContentType = cfr.ProjectFile.ContentType
+            }).ToArray();
+        }
+        
+        string? userProfilePictureUrl = null;
+        if (!string.IsNullOrEmpty(user?.ProfilePictureUrl))
+        {
+            userProfilePictureUrl = _fileStorageService.GetPresignedUrl(user.ProfilePictureUrl);
+        }
+        
+        return new ProjectCommentDto
+        {
+            Id = comment.Id,
+            ProjectId = comment.ProjectId,
+            UserId = comment.UserId,
+            UserName = $"{user?.FirstName ?? ""} {user?.LastName ?? ""}".Trim(),
+            UserProfilePictureUrl = userProfilePictureUrl,
+            Content = comment.Content,
+            ParentCommentId = comment.ParentCommentId,
+            CreatedAt = comment.CreatedAt,
+            UpdatedAt = comment.UpdatedAt,
+            IsEdited = comment.IsEdited,
+            RepliesCount = 0,
+            MentionedUserIds = dto.MentionedUserIds,
+            MentionedUserNames = [],
+            FileReferences = fileReferenceDtos // NEW
+        };
+    }
+    
+    public async Task<ProjectCommentDto> UpdateCommentAsync(int commentId, UpdateProjectCommentDto dto, string userId, CancellationToken cancellationToken = default)
+    {
+        var comment = await _context.ProjectComments
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+        
+        if (comment == null)
+        {
+            throw new ArgumentException($"Comment with ID {commentId} not found");
+        }
+        
+        if (comment.UserId != userId)
+        {
+            throw new UnauthorizedAccessException("You can only edit your own comments");
+        }
+        
+        comment.Content = dto.Content;
+        comment.UpdatedAt = DateTime.UtcNow;
+        comment.IsEdited = true;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        var repliesCount = await _context.ProjectComments
+            .CountAsync(c => c.ParentCommentId == commentId, cancellationToken);
+        
+        string? userProfilePictureUrl = null;
+        if (!string.IsNullOrEmpty(comment.User.ProfilePictureUrl))
+        {
+            userProfilePictureUrl = _fileStorageService.GetPresignedUrl(comment.User.ProfilePictureUrl);
+        }
+        
+        return new ProjectCommentDto
+        {
+            Id = comment.Id,
+            ProjectId = comment.ProjectId,
+            UserId = comment.UserId,
+            UserName = $"{comment.User.FirstName ?? ""} {comment.User.LastName ?? ""}".Trim(),
+            UserProfilePictureUrl = userProfilePictureUrl,
+            Content = comment.Content,
+            ParentCommentId = comment.ParentCommentId,
+            CreatedAt = comment.CreatedAt,
+            UpdatedAt = comment.UpdatedAt,
+            IsEdited = comment.IsEdited,
+            RepliesCount = repliesCount
+        };
+    }
+    
+    public async Task DeleteCommentAsync(int commentId, string userId, CancellationToken cancellationToken = default)
+    {
+        var comment = await _context.ProjectComments
+            .Include(c => c.Replies)
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+        
+        if (comment == null)
+        {
+            throw new ArgumentException($"Comment with ID {commentId} not found");
+        }
+        
+        if (comment.UserId != userId)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own comments");
+        }
+        
+        if (comment.Replies.Any())
+        {
+            throw new InvalidOperationException("Cannot delete comment with replies");
+        }
+        
+        _context.ProjectComments.Remove(comment);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task<int> GetCommentsCountAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        return await _context.ProjectComments
+            .CountAsync(c => c.ProjectId == projectId, cancellationToken);
+    }
+    
+    public async Task<IEnumerable<MentionableUserDto>> GetProjectMentionableUsersAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .Include(p => p.Client)
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        var mentionableUsers = new List<MentionableUserDto>();
+        
+        // Add project owner (client)
+        string? clientProfilePictureUrl = null;
+        if (!string.IsNullOrEmpty(project.Client.ProfilePictureUrl))
+        {
+            clientProfilePictureUrl = _fileStorageService.GetPresignedUrl(project.Client.ProfilePictureUrl);
+        }
+        
+        mentionableUsers.Add(new MentionableUserDto
+        {
+            UserId = project.ClientId,
+            Name = $"{project.Client.FirstName ?? ""} {project.Client.LastName ?? ""}".Trim(),
+            ProfilePictureUrl = clientProfilePictureUrl
+        });
+        
+        // Add assigned specialists
+        var assignedSpecialists = await _context.ProjectSpecialists
+            .Where(ps => ps.ProjectId == projectId)
+            .Include(ps => ps.Specialist)
+                .ThenInclude(s => s.User)
+            .Select(ps => new
+            {
+                ps.Specialist.UserId,
+                ps.Specialist.User.FirstName,
+                ps.Specialist.User.LastName,
+                ps.Specialist.User.ProfilePictureUrl
+            })
+            .ToListAsync(cancellationToken);
+        
+        foreach (var specialist in assignedSpecialists)
+        {
+            string? specialistProfilePictureUrl = null;
+            if (!string.IsNullOrEmpty(specialist.ProfilePictureUrl))
+            {
+                specialistProfilePictureUrl = _fileStorageService.GetPresignedUrl(specialist.ProfilePictureUrl);
+            }
+            
+            mentionableUsers.Add(new MentionableUserDto
+            {
+                UserId = specialist.UserId,
+                Name = $"{specialist.FirstName ?? ""} {specialist.LastName ?? ""}".Trim(),
+                ProfilePictureUrl = specialistProfilePictureUrl
+            });
+        }
+        
+        return mentionableUsers;
     }
 }

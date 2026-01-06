@@ -9,5 +9,6 @@ public enum NotificationType
     Project = 2,
     Bid = 3,
     Quote = 4,
-    System = 5
+    System = 5,
+    Comment = 6
 }

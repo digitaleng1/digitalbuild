@@ -10,6 +10,7 @@ import CardTitle from '@/components/CardTitle';
 import { useProjectDetails } from '@/app/shared/hooks';
 import { getProjectScopeLabel, getStatusBadgeVariant, getManagementTypeLabel, canClientInviteSpecialists } from '@/utils/projectUtils';
 import { ProjectManagementType, ProjectStatus } from '@/types/project';
+import type { MentionableUser } from '@/types/project-comment';
 import { TeamMembers } from '@/app/shared/components/common';
 import ProjectStatusModal from '@/app/admin/projects/details/ProjectStatusModal';
 import QuoteCreationCard from '@/app/admin/projects/details/QuoteCreationCard';
@@ -32,6 +33,7 @@ const ProjectDetailsPage = () => {
 		const [loadingTaskCount, setLoadingTaskCount] = useState(false);
 		const [updatingManagementType, setUpdatingManagementType] = useState(false);
 		const { showSuccess, showError } = useToast();
+		const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
 		
 		const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
@@ -85,6 +87,43 @@ const ProjectDetailsPage = () => {
 
 			fetchTaskCount();
 		}, [projectId]);
+
+		// Fetch mentionable users for file forwarding
+		useEffect(() => {
+			const fetchMentionableUsers = async () => {
+				if (!projectId) return;
+				
+				try {
+					const users = await projectService.getProjectMentionableUsers(projectId);
+					setMentionableUsers(users);
+				} catch (error) {
+					console.error('Failed to fetch mentionable users:', error);
+					setMentionableUsers([]);
+				}
+			};
+
+			fetchMentionableUsers();
+		}, [projectId]);
+
+		const handleForwardFile = useCallback(async (fileId: number, recipientId: string, message: string) => {
+			if (!projectId) return;
+			
+			try {
+				// Create a comment with file reference and mention
+				const content = message || `Sharing file with you`;
+				
+				await projectService.addProjectComment(projectId, {
+					content,
+					mentionedUserIds: [recipientId],
+					projectFileIds: [fileId]
+				});
+				
+				showSuccess('File Forwarded', 'File has been shared successfully');
+			} catch (error) {
+				console.error('Failed to forward file:', error);
+				showError('Forward Failed', 'Failed to share the file');
+			}
+		}, [projectId, showSuccess, showError]);
 
 		if (loading) {
 			return (
@@ -436,7 +475,7 @@ const ProjectDetailsPage = () => {
 							</CardBody>
 						</Card>
 
-						<Comments />
+						<Comments projectId={project.id} />
 					</Col>
 
 					<Col xl={4} lg={6}>
@@ -471,7 +510,11 @@ const ProjectDetailsPage = () => {
 						)}
 
 						<ProgressChart />
-						<Files files={project.files} />
+						<Files 
+							files={project.files}
+							mentionableUsers={mentionableUsers}
+							onForwardFile={handleForwardFile}
+						/>
 					</Col>
 				</Row>
 
