@@ -41,6 +41,7 @@ export interface BidResponseDto {
     isAvailable: boolean;
     coverLetter: string;
     submittedAt: string;
+    attachmentsCount: number;
     
     // Project info
     projectId: number;

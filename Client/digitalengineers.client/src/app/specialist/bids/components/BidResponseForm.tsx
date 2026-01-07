@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Form, Button, Card, InputGroup } from 'react-bootstrap';
+import { Form, Button, Card, InputGroup, ListGroup, Badge } from 'react-bootstrap';
 import type { CreateBidResponseDto } from '@/types/bid';
+import { getFileIcon, formatFileSize } from '@/utils/fileUtils';
 
 interface BidResponseFormProps {
 	bidRequestId: number;
-	onSubmit: (response: CreateBidResponseDto) => Promise<void>;
+	onSubmit: (response: CreateBidResponseDto, files: File[]) => Promise<void>;
 	isSubmitting?: boolean;
 }
 
@@ -15,10 +16,23 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 		estimatedDays: 0,
 		coverLetter: ''
 	});
+	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files) {
+			const newFiles = Array.from(e.target.files);
+			setSelectedFiles([...selectedFiles, ...newFiles]);
+			e.target.value = '';
+		}
+	};
+
+	const handleRemoveFile = (index: number) => {
+		setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		await onSubmit(formData);
+		await onSubmit(formData, selectedFiles);
 	};
 
 	return (
@@ -78,11 +92,64 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 						</Form.Text>
 					</Form.Group>
 
+					{/* File Upload Section */}
+					<Form.Group className="mb-3">
+						<Form.Label>
+							<i className="mdi mdi-paperclip me-1"></i>
+							Attachments (Optional)
+						</Form.Label>
+						<div className="d-flex gap-2">
+							<Form.Control
+								type="file"
+								multiple
+								onChange={handleFileSelect}
+								accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+								style={{ display: 'none' }}
+								id="file-upload"
+							/>
+							<label htmlFor="file-upload" className="btn btn-outline-secondary">
+								<i className="mdi mdi-upload me-1"></i>
+								Add Files
+							</label>
+						</div>
+						<Form.Text className="text-muted">
+							Upload supporting documents (PDF, Word, Excel, Images)
+						</Form.Text>
+
+						{selectedFiles.length > 0 && (
+							<ListGroup className="mt-2">
+								{selectedFiles.map((file, index) => (
+									<ListGroup.Item key={index} className="d-flex align-items-center justify-content-between">
+										<div className="d-flex align-items-center gap-2">
+											<span style={{ fontSize: '1.5rem' }}>
+												{getFileIcon(file.type)}
+											</span>
+											<div>
+												<div>{file.name}</div>
+												<Badge bg="secondary" pill>{formatFileSize(file.size)}</Badge>
+											</div>
+										</div>
+										<Button
+											variant="outline-danger"
+											size="sm"
+											onClick={() => handleRemoveFile(index)}
+										>
+											<i className="mdi mdi-close"></i>
+										</Button>
+									</ListGroup.Item>
+								))}
+							</ListGroup>
+						)}
+					</Form.Group>
+
 					<div className="d-flex justify-content-between align-items-center">
 						<div className="text-muted">
 							<strong>Total:</strong> ${formData.proposedPrice.toFixed(2)}
 							<br />
-							<small>Estimated completion: {formData.estimatedDays} day{formData.estimatedDays !== 1 ? 's' : ''}</small>
+							<small>
+								Estimated completion: {formData.estimatedDays} day{formData.estimatedDays !== 1 ? 's' : ''}
+								{selectedFiles.length > 0 && ` • ${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}`}
+							</small>
 						</div>
 						<Button type="submit" variant="primary" disabled={isSubmitting || formData.proposedPrice === 0 || formData.estimatedDays === 0}>
 							{isSubmitting ? (

@@ -16,4 +16,5 @@ public class BidResponseDto
     public decimal? FinalPrice { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<BidResponseAttachmentDto> Attachments { get; set; } = new();
 }

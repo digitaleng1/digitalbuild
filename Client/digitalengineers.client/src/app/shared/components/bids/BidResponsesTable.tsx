@@ -96,7 +96,16 @@ const BidResponsesTable = ({
 									<div className="d-flex align-items-center">
 										<div>
 											<div className="fw-semibold">${response.proposedPrice.toLocaleString()}</div>
-											<div className="text-muted small">{response.estimatedDays} days</div>
+											<div className="text-muted small">
+												{response.estimatedDays} days
+												{response.attachmentsCount > 0 && (
+													<>
+														{' • '}
+														<Icon icon="mdi:paperclip" width={14} className="me-1" />
+														{response.attachmentsCount}
+													</>
+												)}
+											</div>
 										</div>
 										<Link
 											to="#"

@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
-import { Modal, Button, Badge, Row, Col } from 'react-bootstrap';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Modal, Button, Badge, Row, Col, Spinner, ListGroup } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import type { BidResponseDto } from '@/types/admin-bid';
+import type { BidResponseAttachment } from '@/types/bid-attachment';
+import bidService from '@/services/bidService';
+import { getFileIcon, formatFileSize } from '@/utils/fileUtils';
 
 interface ViewBidProposalModalProps {
 	show: boolean;
@@ -18,6 +21,28 @@ const ViewBidProposalModal: React.FC<ViewBidProposalModalProps> = ({
 	onApprove, 
 	onReject 
 }) => {
+	const [attachments, setAttachments] = useState<BidResponseAttachment[]>([]);
+	const [loadingAttachments, setLoadingAttachments] = useState(false);
+
+	useEffect(() => {
+		if (show && response.id) {
+			loadAttachments();
+		}
+	}, [show, response.id]);
+
+	const loadAttachments = async () => {
+		try {
+			setLoadingAttachments(true);
+			const data = await bidService.getBidResponseAttachments(response.id);
+			setAttachments(data);
+		} catch (err) {
+			console.error('Failed to load attachments:', err);
+			setAttachments([]);
+		} finally {
+			setLoadingAttachments(false);
+		}
+	};
+
 	const formatDate = useMemo(() => {
 		return (dateString: string) => {
 			return new Date(dateString).toLocaleDateString('en-US', {
@@ -122,6 +147,55 @@ const ViewBidProposalModal: React.FC<ViewBidProposalModalProps> = ({
 					>
 						{response.coverLetter || 'No cover letter provided.'}
 					</div>
+				</div>
+
+				{/* Attachments */}
+				<div className="mb-4">
+					<h5 className="mb-2">
+						<Icon icon="mdi:paperclip" className="me-2" />
+						Attachments {!loadingAttachments && attachments.length > 0 && `(${attachments.length})`}
+					</h5>
+					{loadingAttachments ? (
+						<div className="text-center py-3">
+							<Spinner animation="border" size="sm" />
+						</div>
+					) : attachments.length > 0 ? (
+						<ListGroup>
+							{attachments.map((attachment) => (
+								<ListGroup.Item key={attachment.id} className="d-flex align-items-center justify-content-between">
+									<div className="d-flex align-items-center">
+										<span className="me-2" style={{ fontSize: '1.5rem' }}>
+											{getFileIcon(attachment.fileType)}
+										</span>
+										<div>
+											<div className="fw-semibold">{attachment.fileName}</div>
+											{attachment.description && (
+												<div className="text-muted small">{attachment.description}</div>
+											)}
+											<div className="text-muted small">
+												<Badge bg="secondary" pill>{formatFileSize(attachment.fileSize)}</Badge>
+											</div>
+										</div>
+									</div>
+									<Button
+										variant="outline-primary"
+										size="sm"
+										href={attachment.downloadUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<Icon icon="mdi:download" className="me-1" />
+										Download
+									</Button>
+								</ListGroup.Item>
+							))}
+						</ListGroup>
+					) : (
+						<div className="text-muted text-center py-3 border rounded bg-light">
+							<Icon icon="mdi:file-document-outline" width={48} className="text-muted mb-2" />
+							<div>No attachments provided</div>
+						</div>
+					)}
 				</div>
 
 				{/* Submitted At */}

@@ -4,11 +4,14 @@ import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import bidService from '@/services/bidService';
 import type { BidRequestDetailsDto, CreateBidResponseDto } from '@/types/bid';
+import type { BidResponseAttachment } from '@/types/bid-attachment';
 import { BidRequestStatus } from '@/types/bid';
 import BidStatusBadge from '../components/BidStatusBadge';
 import BidResponseForm from '../components/BidResponseForm';
 import BidChat from '@/components/modals/BidChatModal';
 import BidRequestAttachmentList from '@/app/shared/components/bids/BidRequestAttachmentList';
+import BidResponseAttachmentUploader from '../components/BidResponseAttachmentUploader';
+import BidResponseAttachmentList from '../components/BidResponseAttachmentList';
 import { useToast } from '@/contexts';
 
 const BidDetails = () => {
@@ -19,12 +22,20 @@ const BidDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [responseAttachments, setResponseAttachments] = useState<BidResponseAttachment[]>([]);
+    const [loadingAttachments, setLoadingAttachments] = useState(false);
 
     useEffect(() => {
         if (id) {
             loadBidDetails(parseInt(id));
         }
     }, [id]);
+
+    useEffect(() => {
+        if (bid?.response?.id) {
+            loadResponseAttachments(bid.response.id);
+        }
+    }, [bid?.response?.id]);
 
     const loadBidDetails = async (bidId: number) => {
         try {
@@ -39,10 +50,34 @@ const BidDetails = () => {
         }
     };
 
-    const handleSubmitResponse = async (response: CreateBidResponseDto) => {
+    const loadResponseAttachments = async (responseId: number) => {
+        try {
+            setLoadingAttachments(true);
+            const attachments = await bidService.getBidResponseAttachments(responseId);
+            setResponseAttachments(attachments);
+        } catch (err: any) {
+            console.error('Failed to load response attachments:', err);
+        } finally {
+            setLoadingAttachments(false);
+        }
+    };
+
+    const handleSubmitResponse = async (response: CreateBidResponseDto, files: File[]) => {
         try {
             setIsSubmitting(true);
-            await bidService.submitBidResponse(response);
+            const createdResponse = await bidService.submitBidResponse(response);
+            
+            // Upload files if any
+            if (files.length > 0 && createdResponse.id) {
+                for (const file of files) {
+                    try {
+                        await bidService.uploadBidResponseAttachment(createdResponse.id, { file });
+                    } catch (err: any) {
+                        console.error(`Failed to upload ${file.name}:`, err);
+                    }
+                }
+            }
+            
             showSuccess('Success', 'Your proposal has been submitted successfully');
 
             if (id) {
@@ -52,6 +87,21 @@ const BidDetails = () => {
             showError('Error', err.message || 'Failed to submit proposal');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteAttachment = async (attachmentId: number) => {
+        if (!confirm('Are you sure you want to delete this attachment?')) return;
+
+        try {
+            await bidService.deleteBidResponseAttachment(attachmentId);
+            showSuccess('Success', 'Attachment deleted successfully');
+            
+            if (bid?.response?.id) {
+                await loadResponseAttachments(bid.response.id);
+            }
+        } catch (err: any) {
+            showError('Error', err.message || 'Failed to delete attachment');
         }
     };
 
@@ -150,11 +200,6 @@ const BidDetails = () => {
                                     </div>
                                     <div className="d-flex justify-content-between align-items-center mb-3 mt-3">
                                         <div className="d-flex align-items-center gap-3">
-                                            {/*{bid.proposedBudget !== undefined && bid.proposedBudget !== null && (*/}
-                                            {/*    <span className="text-muted">*/}
-                                            {/*        Proposed Budget: <strong className="text-dark">${bid.proposedBudget.toFixed(2)}</strong>*/}
-                                            {/*    </span>*/}
-                                            {/*)}*/}
                                             {bid.deadline && (
                                                 <span className="text-muted">
                                                     Deadline: <strong className="text-dark">{formatDate(bid.deadline)}</strong>
@@ -240,30 +285,60 @@ const BidDetails = () => {
 
                     {/* Existing Response */}
                     {bid.response && (
-                        <Card className="mb-3">
-                            <Card.Header>
-                                <h5 className="mb-0">Your Proposal</h5>
-                            </Card.Header>
-                            <Card.Body>
-                                <Row>
-                                    <Col md={6}>
-                                        <h6 className="text-muted mb-1">Proposed Price</h6>
-                                        <p className="h5 mb-3">${bid.response.proposedPrice.toFixed(2)}</p>
-                                    </Col>
-                                    <Col md={6}>
-                                        <h6 className="text-muted mb-1">Estimated Days</h6>
-                                        <p className="h5 mb-3">{bid.response.estimatedDays} day{bid.response.estimatedDays !== 1 ? 's' : ''}</p>
-                                    </Col>
-                                </Row>
-                                <h6 className="text-muted mb-1">Cover Letter</h6>
-                                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>{bid.response.coverLetter}</p>
+                        <>
+                            <Card className="mb-3">
+                                <Card.Header>
+                                    <h5 className="mb-0">Your Proposal</h5>
+                                </Card.Header>
+                                <Card.Body>
+                                    <Row>
+                                        <Col md={6}>
+                                            <h6 className="text-muted mb-1">Proposed Price</h6>
+                                            <p className="h5 mb-3">${bid.response.proposedPrice.toFixed(2)}</p>
+                                        </Col>
+                                        <Col md={6}>
+                                            <h6 className="text-muted mb-1">Estimated Days</h6>
+                                            <p className="h5 mb-3">{bid.response.estimatedDays} day{bid.response.estimatedDays !== 1 ? 's' : ''}</p>
+                                        </Col>
+                                    </Row>
+                                    <h6 className="text-muted mb-1">Cover Letter</h6>
+                                    <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>{bid.response.coverLetter}</p>
 
-                                <div className="mt-3 text-muted small">
-                                    <i className="mdi mdi-clock-outline me-1"></i>
-                                    Submitted: {formatDate(bid.response.createdAt)}
-                                </div>
-                            </Card.Body>
-                        </Card>
+                                    <div className="mt-3 text-muted small">
+                                        <i className="mdi mdi-clock-outline me-1"></i>
+                                        Submitted: {formatDate(bid.response.createdAt)}
+                                    </div>
+                                </Card.Body>
+                            </Card>
+
+                            {/* Response Attachments - Always show if response exists */}
+                            {bid.response && (
+                                <>
+                                    <Card className="mb-3">
+                                        <Card.Body>
+                                            <BidResponseAttachmentUploader
+                                                bidResponseId={bid.response.id}
+                                                onUploadComplete={() => bid.response && loadResponseAttachments(bid.response.id)}
+                                            />
+                                        </Card.Body>
+                                    </Card>
+
+                                    {loadingAttachments ? (
+                                        <div className="text-center py-3">
+                                            <Spinner animation="border" size="sm" />
+                                        </div>
+                                    ) : responseAttachments.length > 0 && (
+                                        <div className="mb-3">
+                                            <BidResponseAttachmentList
+                                                attachments={responseAttachments}
+                                                canDelete={true}
+                                                onDelete={handleDeleteAttachment}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </Col>
             </Row>

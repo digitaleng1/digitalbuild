@@ -1,5 +1,5 @@
 import type { LicenseType } from './lookup';
-import type { BidRequestAttachment } from './bid-attachment';
+import type { BidRequestAttachment, BidResponseAttachment } from './bid-attachment';
 
 export interface ProfessionInfo {
 	professionId: number;
@@ -110,6 +110,7 @@ export interface BidResponseDto {
 	finalPrice?: number;
 	createdAt: string;
 	updatedAt: string;
+	attachments?: BidResponseAttachment[];
 }
 
 // Synchronized with server CreateBidResponseViewModel

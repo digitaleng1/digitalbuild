@@ -32,6 +32,9 @@ public interface IBidService
     Task<IEnumerable<BidResponseByProjectDto>> GetBidResponsesByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     
     Task<BidRequestAttachmentDto> UploadBidRequestAttachmentAsync(int bidRequestId, Stream fileStream, string fileName, string contentType, string userId, string? description, CancellationToken cancellationToken = default);
-    Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BidRequestAttachmentDto>> GetBidRequestAttachmentsAsync(int bidRequestId, CancellationToken cancellationToken = default);
+    Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default);
+    Task<BidResponseAttachmentDto> UploadBidResponseAttachmentAsync(int bidResponseId, Stream fileStream, string fileName, string contentType, string userId, string? description, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BidResponseAttachmentDto>> GetBidResponseAttachmentsAsync(int bidResponseId, CancellationToken cancellationToken = default);
+    Task DeleteBidResponseAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default);
 }

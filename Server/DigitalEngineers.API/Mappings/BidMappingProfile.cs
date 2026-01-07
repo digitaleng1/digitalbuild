@@ -3,6 +3,7 @@ using DigitalEngineers.API.ViewModels.Bid;
 using DigitalEngineers.API.ViewModels.Specialist;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
+using DigitalEngineers.Infrastructure.Entities;
 
 namespace DigitalEngineers.API.Mappings;
 
@@ -38,5 +39,14 @@ public class BidMappingProfile : Profile
         CreateMap<ProjectBidStatisticsDto, ProjectBidStatisticsViewModel>();
         
         CreateMap<BidRequestAttachmentDto, BidRequestAttachmentViewModel>();
+        CreateMap<BidResponseAttachmentDto, BidResponseAttachmentViewModel>();
+
+        CreateMap<BidRequestAttachment, BidRequestAttachmentDto>()
+            .ForMember(dest => dest.DownloadUrl, opt => opt.Ignore())
+            .ForMember(dest => dest.UploadedByName, opt => opt.MapFrom(src => $"{src.UploadedByUser.FirstName} {src.UploadedByUser.LastName}"));
+
+        CreateMap<BidResponseAttachment, BidResponseAttachmentDto>()
+            .ForMember(dest => dest.DownloadUrl, opt => opt.Ignore())
+            .ForMember(dest => dest.UploadedByName, opt => opt.MapFrom(src => $"{src.UploadedByUser.FirstName} {src.UploadedByUser.LastName}"));
     }
 }

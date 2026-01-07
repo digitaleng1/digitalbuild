@@ -32,6 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<BidResponse> BidResponses => Set<BidResponse>();
     public DbSet<BidMessage> BidMessages => Set<BidMessage>();
     public DbSet<BidRequestAttachment> BidRequestAttachments => Set<BidRequestAttachment>();
+    public DbSet<BidResponseAttachment> BidResponseAttachments => Set<BidResponseAttachment>();
     public DbSet<Review> Reviews => Set<Review>();
 
     // Task Management System

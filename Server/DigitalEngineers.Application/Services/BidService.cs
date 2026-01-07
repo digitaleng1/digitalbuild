@@ -378,10 +378,26 @@ public class BidService : IBidService
             .Include(r => r.BidRequest)
             .Include(r => r.Specialist)
                 .ThenInclude(s => s.User)
+            .Include(r => r.Attachments)
+                .ThenInclude(a => a.UploadedByUser)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
         if (bidResponse == null)
             throw new BidResponseNotFoundException(id);
+
+        var attachments = bidResponse.Attachments.Select(a => new BidResponseAttachmentDto
+        {
+            Id = a.Id,
+            BidResponseId = a.BidResponseId,
+            FileName = a.FileName,
+            FileSize = a.FileSize,
+            FileType = a.FileType,
+            DownloadUrl = _fileStorageService.GetPresignedUrl(a.S3Key),
+            UploadedAt = a.UploadedAt,
+            UploadedByUserId = a.UploadedByUserId,
+            UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
+            Description = a.Description
+        }).ToList();
 
         return new BidResponseDetailsDto
         {
@@ -400,7 +416,8 @@ public class BidService : IBidService
             RejectionReason = bidResponse.RejectionReason,
             CreatedAt = bidResponse.CreatedAt,
             UpdatedAt = bidResponse.UpdatedAt,
-            Messages = []
+            Messages = [],
+            Attachments = attachments
         };
     }
 
@@ -409,23 +426,43 @@ public class BidService : IBidService
         var bidResponses = await _context.Set<BidResponse>()
             .Include(r => r.Specialist)
                 .ThenInclude(s => s.User)
+            .Include(r => r.Attachments)
+                .ThenInclude(a => a.UploadedByUser)
             .Where(r => r.BidRequestId == requestId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return bidResponses.Select(r => new BidResponseDto
+        return bidResponses.Select(r =>
         {
-            Id = r.Id,
-            BidRequestId = r.BidRequestId,
-            SpecialistId = r.SpecialistId,
-            SpecialistName = $"{r.Specialist.User.FirstName} {r.Specialist.User.LastName}",
-            SpecialistProfilePicture = r.Specialist.User.ProfilePictureUrl,
-            SpecialistRating = r.Specialist.Rating,
-            CoverLetter = r.CoverLetter,
-            ProposedPrice = r.ProposedPrice,
-            EstimatedDays = r.EstimatedDays,
-            CreatedAt = r.CreatedAt,
-            UpdatedAt = r.UpdatedAt
+            var attachments = r.Attachments.Select(a => new BidResponseAttachmentDto
+            {
+                Id = a.Id,
+                BidResponseId = a.BidResponseId,
+                FileName = a.FileName,
+                FileSize = a.FileSize,
+                FileType = a.FileType,
+                DownloadUrl = _fileStorageService.GetPresignedUrl(a.S3Key),
+                UploadedAt = a.UploadedAt,
+                UploadedByUserId = a.UploadedByUserId,
+                UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
+                Description = a.Description
+            }).ToList();
+
+            return new BidResponseDto
+            {
+                Id = r.Id,
+                BidRequestId = r.BidRequestId,
+                SpecialistId = r.SpecialistId,
+                SpecialistName = $"{r.Specialist.User.FirstName} {r.Specialist.User.LastName}",
+                SpecialistProfilePicture = r.Specialist.User.ProfilePictureUrl,
+                SpecialistRating = r.Specialist.Rating,
+                CoverLetter = r.CoverLetter,
+                ProposedPrice = r.ProposedPrice,
+                EstimatedDays = r.EstimatedDays,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt,
+                Attachments = attachments
+            };
         });
     }
 
@@ -691,7 +728,7 @@ public class BidService : IBidService
         if (project == null)
             throw new ProjectNotFoundException(dto.ProjectId);
 
-        // Validate project status - cannot send bids for Draft or Completed projects
+        // Validate project status - cannot send bid requests for Draft or Completed projects
         if (project.Status == ProjectStatus.Draft)
             throw new InvalidProjectStatusException(
                 "Cannot send bid requests for projects in Draft status. Please submit the project first.");
@@ -896,6 +933,7 @@ public class BidService : IBidService
                 .ThenInclude(s => s.LicenseTypes)
                     .ThenInclude(slt => slt.LicenseType)
             .Include(br => br.Response)
+                .ThenInclude(r => r!.Attachments)
             .Where(br => br.ProjectId == projectId)
             .OrderByDescending(br => br.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -925,6 +963,18 @@ public class BidService : IBidService
             var licenseType = specialist.LicenseTypes.FirstOrDefault()?.LicenseType;
             var response = br.Response;
 
+            string? specialistProfilePicture = null;
+            if (!string.IsNullOrEmpty(specialist.User.ProfilePictureUrl))
+            {
+                specialistProfilePicture = _fileStorageService.GetPresignedUrl(specialist.User.ProfilePictureUrl);
+            }
+
+            string? clientProfilePicturePresignedUrl = null;
+            if (!string.IsNullOrEmpty(clientProfilePictureUrl))
+            {
+                clientProfilePicturePresignedUrl = _fileStorageService.GetPresignedUrl(clientProfilePictureUrl);
+            }
+
             return new BidResponseByProjectDto
             {
                 Id = response?.Id ?? 0,
@@ -932,7 +982,7 @@ public class BidService : IBidService
                 SpecialistId = specialist.Id,
                 SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
                 SpecialistEmail = specialist.User.Email ?? string.Empty,
-                SpecialistProfilePicture = specialist.User.ProfilePictureUrl,
+                SpecialistProfilePicture = specialistProfilePicture,
                 YearsOfExperience = specialist.YearsOfExperience,
                 SpecialistRating = specialist.Rating,
                 LicenseTypeId = licenseType?.Id ?? 0,
@@ -943,6 +993,7 @@ public class BidService : IBidService
                 IsAvailable = specialist.IsAvailable,
                 CoverLetter = response?.CoverLetter ?? string.Empty,
                 SubmittedAt = response?.CreatedAt ?? br.CreatedAt,
+                AttachmentsCount = response?.Attachments.Count ?? 0,
                 
                 ProjectId = project.Id,
                 ProjectName = project.Name,
@@ -951,7 +1002,7 @@ public class BidService : IBidService
                 ProjectDeadline = br.Deadline,
                 
                 ClientName = clientName,
-                ClientProfilePictureUrl = clientProfilePictureUrl
+                ClientProfilePictureUrl = clientProfilePicturePresignedUrl
             };
         });
     }
@@ -1011,33 +1062,6 @@ public class BidService : IBidService
         };
     }
 
-    public async Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default)
-    {
-        var attachment = await _context.BidRequestAttachments
-            .Include(a => a.BidRequest)
-                .ThenInclude(br => br.Project)
-            .FirstOrDefaultAsync(a => a.Id == attachmentId, cancellationToken);
-
-        if (attachment == null)
-            throw new ArgumentException($"Attachment with ID {attachmentId} not found");
-
-        var userRoles = await _context.UserRoles
-            .Where(ur => ur.UserId == userId)
-            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-            .ToListAsync(cancellationToken);
-
-        var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
-        var isOwner = attachment.BidRequest.Project.ClientId == userId;
-
-        if (!isAdminOrSuperAdmin && !isOwner)
-            throw new UnauthorizedAccessException("You are not authorized to delete this attachment");
-
-        await _fileStorageService.DeleteFileAsync(attachment.S3Key, cancellationToken);
-        
-        _context.BidRequestAttachments.Remove(attachment);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<IEnumerable<BidRequestAttachmentDto>> GetBidRequestAttachmentsAsync(int bidRequestId, CancellationToken cancellationToken = default)
     {
         var bidRequestExists = await _context.BidRequests.AnyAsync(br => br.Id == bidRequestId, cancellationToken);
@@ -1064,5 +1088,161 @@ public class BidService : IBidService
             UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
             Description = a.Description
         });
+    }
+
+    public async Task<BidResponseAttachmentDto> UploadBidResponseAttachmentAsync(
+        int bidResponseId,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        string userId,
+        string? description,
+        CancellationToken cancellationToken = default)
+    {
+        var bidResponse = await _context.BidResponses
+            .Include(br => br.Specialist)
+            .FirstOrDefaultAsync(br => br.Id == bidResponseId, cancellationToken);
+
+        if (bidResponse == null)
+            throw new BidResponseNotFoundException(bidResponseId);
+
+        if (bidResponse.Specialist.UserId != userId)
+        {
+            var userRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                .ToListAsync(cancellationToken);
+
+            var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
+            
+            if (!isAdminOrSuperAdmin)
+                throw new UnauthorizedAccessException("You are not authorized to upload attachments for this bid response");
+        }
+
+        var s3Key = await _fileStorageService.UploadBidResponseFileAsync(
+            fileStream,
+            fileName,
+            contentType,
+            bidResponseId,
+            cancellationToken);
+
+        var attachment = new BidResponseAttachment
+        {
+            BidResponseId = bidResponseId,
+            FileName = fileName,
+            FileSize = fileStream.Length,
+            FileType = contentType,
+            S3Key = s3Key,
+            UploadedAt = DateTime.UtcNow,
+            UploadedByUserId = userId,
+            Description = description
+        };
+
+        _context.BidResponseAttachments.Add(attachment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var user = await _context.Users.FindAsync(userId);
+        var downloadUrl = _fileStorageService.GetPresignedUrl(s3Key);
+
+        return new BidResponseAttachmentDto
+        {
+            Id = attachment.Id,
+            BidResponseId = attachment.BidResponseId,
+            FileName = attachment.FileName,
+            FileSize = attachment.FileSize,
+            FileType = attachment.FileType,
+            DownloadUrl = downloadUrl,
+            UploadedAt = attachment.UploadedAt,
+            UploadedByUserId = attachment.UploadedByUserId,
+            UploadedByName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown",
+            Description = attachment.Description
+        };
+    }
+
+    public async Task<IEnumerable<BidResponseAttachmentDto>> GetBidResponseAttachmentsAsync(
+        int bidResponseId,
+        CancellationToken cancellationToken = default)
+    {
+        var bidResponseExists = await _context.BidResponses.AnyAsync(br => br.Id == bidResponseId, cancellationToken);
+        
+        if (!bidResponseExists)
+            throw new BidResponseNotFoundException(bidResponseId);
+
+        var attachments = await _context.BidResponseAttachments
+            .Include(a => a.UploadedByUser)
+            .Where(a => a.BidResponseId == bidResponseId)
+            .OrderByDescending(a => a.UploadedAt)
+            .ToListAsync(cancellationToken);
+
+        return attachments.Select(a => new BidResponseAttachmentDto
+        {
+            Id = a.Id,
+            BidResponseId = a.BidResponseId,
+            FileName = a.FileName,
+            FileSize = a.FileSize,
+            FileType = a.FileType,
+            DownloadUrl = _fileStorageService.GetPresignedUrl(a.S3Key),
+            UploadedAt = a.UploadedAt,
+            UploadedByUserId = a.UploadedByUserId,
+            UploadedByName = $"{a.UploadedByUser.FirstName} {a.UploadedByUser.LastName}",
+            Description = a.Description
+        });
+    }
+
+    public async Task DeleteBidResponseAttachmentAsync(
+        int attachmentId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var attachment = await _context.BidResponseAttachments
+            .Include(a => a.BidResponse)
+                .ThenInclude(br => br.Specialist)
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, cancellationToken);
+
+        if (attachment == null)
+            throw new ArgumentException($"Attachment with ID {attachmentId} not found");
+
+        var userRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
+        var isOwner = attachment.BidResponse.Specialist.UserId == userId;
+
+        if (!isAdminOrSuperAdmin && !isOwner)
+            throw new UnauthorizedAccessException("You are not authorized to delete this attachment");
+
+        await _fileStorageService.DeleteFileAsync(attachment.S3Key, cancellationToken);
+        
+        _context.BidResponseAttachments.Remove(attachment);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteBidRequestAttachmentAsync(int attachmentId, string userId, CancellationToken cancellationToken = default)
+    {
+        var attachment = await _context.BidRequestAttachments
+            .Include(a => a.BidRequest)
+                .ThenInclude(br => br.Project)
+            .FirstOrDefaultAsync(a => a.Id == attachmentId, cancellationToken);
+
+        if (attachment == null)
+            throw new ArgumentException($"Attachment with ID {attachmentId} not found");
+
+        var userRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(cancellationToken);
+
+        var isAdminOrSuperAdmin = userRoles.Any(role => role == "Admin" || role == "SuperAdmin");
+        var isOwner = attachment.BidRequest.Project.ClientId == userId;
+
+        if (!isAdminOrSuperAdmin && !isOwner)
+            throw new UnauthorizedAccessException("You are not authorized to delete this attachment");
+
+        await _fileStorageService.DeleteFileAsync(attachment.S3Key, cancellationToken);
+        
+        _context.BidRequestAttachments.Remove(attachment);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

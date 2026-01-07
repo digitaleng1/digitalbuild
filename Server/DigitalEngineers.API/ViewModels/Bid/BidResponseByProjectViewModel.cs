@@ -19,6 +19,7 @@ public class BidResponseByProjectViewModel
     public bool IsAvailable { get; set; }
     public string CoverLetter { get; set; } = string.Empty;
     public DateTime SubmittedAt { get; set; }
+    public int AttachmentsCount { get; set; }
     
     // Project info
     public int ProjectId { get; set; }

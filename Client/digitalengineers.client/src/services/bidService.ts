@@ -10,7 +10,7 @@ import type {
 	BidMessageDto
 } from '@/types/bid';
 import type { AdminBidListItem, BidResponseDto as BidResponseByProjectDto } from '@/types/admin-bid';
-import type { BidRequestAttachment, UploadBidRequestAttachmentDto } from '@/types/bid-attachment';
+import type { BidRequestAttachment, UploadBidRequestAttachmentDto, BidResponseAttachment, UploadBidResponseAttachmentDto } from '@/types/bid-attachment';
 
 class BidService {
 	/**
@@ -143,6 +143,40 @@ class BidService {
 	 */
 	async deleteBidRequestAttachment(attachmentId: number): Promise<void> {
 		await httpClient.delete(`/api/bids/attachments/${attachmentId}`);
+	}
+
+	async uploadBidResponseAttachment(
+		bidResponseId: number,
+		data: UploadBidResponseAttachmentDto
+	): Promise<BidResponseAttachment> {
+		const formData = new FormData();
+		formData.append('file', data.file);
+		if (data.description) {
+			formData.append('description', data.description);
+		}
+
+		const response = await httpClient.post<BidResponseAttachment>(
+			`/api/bids/responses/${bidResponseId}/attachments`,
+			formData,
+			{
+				headers: {
+					'Content-Type': 'multipart/form-data'
+				}
+			}
+		);
+
+		return response as BidResponseAttachment;
+	}
+
+	async getBidResponseAttachments(bidResponseId: number): Promise<BidResponseAttachment[]> {
+		const data = await httpClient.get<BidResponseAttachment[]>(
+			`/api/bids/responses/${bidResponseId}/attachments`
+		);
+		return data as BidResponseAttachment[];
+	}
+
+	async deleteBidResponseAttachment(attachmentId: number): Promise<void> {
+		await httpClient.delete(`/api/bids/responses/attachments/${attachmentId}`);
 	}
 }
 

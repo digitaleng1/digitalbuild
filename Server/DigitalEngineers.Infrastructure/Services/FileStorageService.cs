@@ -237,20 +237,43 @@ public class FileStorageService : IFileStorageService
         int bidRequestId,
         CancellationToken cancellationToken = default)
     {
-        var key = $"bids/requests/{bidRequestId}/attachments/{Guid.NewGuid()}_{fileName}";
+        var sanitizedFileName = SanitizeFileName(fileName);
+        var s3Key = $"bid-requests/{bidRequestId}/attachments/{Guid.NewGuid()}/{sanitizedFileName}";
 
-        var putRequest = new PutObjectRequest
+        var request = new PutObjectRequest
         {
             BucketName = _settings.BucketName,
-            Key = key,
+            Key = s3Key,
             InputStream = fileStream,
             ContentType = contentType,
-            AutoCloseStream = false
+            ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256
         };
 
-        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+        await _s3Client.PutObjectAsync(request, cancellationToken);
+        return s3Key;
+    }
 
-        return key;
+    public async Task<string> UploadBidResponseFileAsync(
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        int bidResponseId,
+        CancellationToken cancellationToken = default)
+    {
+        var sanitizedFileName = SanitizeFileName(fileName);
+        var s3Key = $"bid-responses/{bidResponseId}/attachments/{Guid.NewGuid()}/{sanitizedFileName}";
+
+        var request = new PutObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = s3Key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256
+        };
+
+        await _s3Client.PutObjectAsync(request, cancellationToken);
+        return s3Key;
     }
 
     public async Task<bool> DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default)
@@ -339,5 +362,11 @@ public class FileStorageService : IFileStorageService
     {
         var uri = new Uri(fileUrl);
         return uri.AbsolutePath.TrimStart('/');
+    }
+
+    private string SanitizeFileName(string fileName)
+    {
+        // Implement your sanitization logic here (e.g., remove invalid characters, etc.)
+        return fileName;
     }
 }

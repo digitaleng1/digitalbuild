@@ -428,4 +428,60 @@ public class BidsController : ControllerBase
         await _bidService.DeleteBidRequestAttachmentAsync(attachmentId, userId, cancellationToken);
         return NoContent();
     }
+
+    [HttpPost("responses/{bidResponseId}/attachments")]
+    [Authorize(Roles = "Provider")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadBidResponseAttachment(
+        int bidResponseId,
+        [FromForm] UploadBidResponseAttachmentViewModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "User ID not found in token" });
+
+        if (model.File.Length > 10 * 1024 * 1024)
+            return BadRequest(new { message = "File size must not exceed 10MB" });
+
+        var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".dwg", ".dxf", ".doc", ".docx" };
+        var fileExtension = Path.GetExtension(model.File.FileName).ToLowerInvariant();
+        
+        if (!allowedExtensions.Contains(fileExtension))
+            return BadRequest(new { message = $"File type {fileExtension} is not allowed. Allowed types: {string.Join(", ", allowedExtensions)}" });
+
+        using var stream = model.File.OpenReadStream();
+        var attachmentDto = await _bidService.UploadBidResponseAttachmentAsync(
+            bidResponseId,
+            stream,
+            model.File.FileName,
+            model.File.ContentType,
+            userId,
+            model.Description);
+
+        var viewModel = _mapper.Map<BidResponseAttachmentViewModel>(attachmentDto);
+        return CreatedAtAction(
+            nameof(GetBidResponseAttachments),
+            new { bidResponseId },
+            viewModel);
+    }
+
+    [HttpGet("responses/{bidResponseId}/attachments")]
+    public async Task<IActionResult> GetBidResponseAttachments(int bidResponseId)
+    {
+        var attachments = await _bidService.GetBidResponseAttachmentsAsync(bidResponseId);
+        var viewModels = _mapper.Map<IEnumerable<BidResponseAttachmentViewModel>>(attachments);
+        return Ok(viewModels);
+    }
+
+    [HttpDelete("responses/attachments/{attachmentId}")]
+    [Authorize(Roles = "Provider,Admin,SuperAdmin")]
+    public async Task<IActionResult> DeleteBidResponseAttachment(int attachmentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "User ID not found in token" });
+
+        await _bidService.DeleteBidResponseAttachmentAsync(attachmentId, userId);
+        return NoContent();
+    }
 }
