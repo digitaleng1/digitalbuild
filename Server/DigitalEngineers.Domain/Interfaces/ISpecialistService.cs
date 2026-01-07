@@ -15,7 +15,7 @@ public interface ISpecialistService
     Task AssignSpecialistToProjectAsync(int projectId, int specialistId, string? role = null, CancellationToken cancellationToken = default);
     Task RemoveSpecialistFromProjectAsync(int projectId, int specialistId, CancellationToken cancellationToken = default);
     Task<IEnumerable<AvailableSpecialistDto>> GetSpecialistsByLicenseTypesAsync(int[] licenseTypeIds, CancellationToken cancellationToken = default);
-    Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] licenseTypeIds, CancellationToken cancellationToken = default);
+    Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] professionTypeIds, CancellationToken cancellationToken = default);
     Task<IEnumerable<ProjectDto>> GetSpecialistProjectsAsync(int specialistId, CancellationToken cancellationToken = default);
     Task<SpecialistStatsDto> GetSpecialistStatsAsync(int specialistId, CancellationToken cancellationToken = default);
 }

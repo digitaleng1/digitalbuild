@@ -691,6 +691,15 @@ public class BidService : IBidService
         if (project == null)
             throw new ProjectNotFoundException(dto.ProjectId);
 
+        // Validate project status - cannot send bids for Draft or Completed projects
+        if (project.Status == ProjectStatus.Draft)
+            throw new InvalidProjectStatusException(
+                "Cannot send bid requests for projects in Draft status. Please submit the project first.");
+
+        if (project.Status == ProjectStatus.Completed)
+            throw new InvalidProjectStatusException(
+                "Cannot send bid requests for completed projects.");
+
         var user = await _context.Users.FindAsync(clientId);
         if (user == null)
             throw new UnauthorizedAccessException("User not found");

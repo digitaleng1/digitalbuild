@@ -3,8 +3,8 @@ import { Modal, Button, Form, Row, Col, Spinner, Alert, Badge } from 'react-boot
 import { useAvailableSpecialists } from '@/app/shared/hooks';
 import { InviteSpecialistModal } from '@/app/shared/components/bids';
 import FileUploader from '@/components/FileUploader';
-import type { LicenseType } from '@/types/lookup';
-import type { BidFormData } from '@/types/bid';
+import type { LicenseType, Profession } from '@/types/lookup';
+import type { BidFormData, ProfessionInfo } from '@/types/bid';
 import type { InviteSpecialistResult } from '@/types/specialist-invitation';
 import bidService from '@/services/bidService';
 import { useToast } from '@/contexts';
@@ -15,6 +15,7 @@ interface SendBidsModalProps {
 	show: boolean;
 	onHide: () => void;
 	projectId: number;
+	professions: Profession[];
 	requiredLicenseTypes: LicenseType[];
 	onSuccess?: () => void;
 }
@@ -23,6 +24,7 @@ const SendBidsModal = ({
 	show,
 	onHide,
 	projectId,
+	professions,
 	requiredLicenseTypes,
 	onSuccess,
 }: SendBidsModalProps) => {
@@ -30,7 +32,7 @@ const SendBidsModal = ({
 	const { showSuccess, showError } = useToast();
 
 	const [selectedSpecialists, setSelectedSpecialists] = useState<Set<string>>(new Set());
-	const [selectedLicenseFilters, setSelectedLicenseFilters] = useState<Set<number>>(new Set());
+	const [selectedProfessionFilters, setSelectedProfessionFilters] = useState<Set<number>>(new Set());
 	const [formData, setFormData] = useState<BidFormData>({
 		description: '',
 	});
@@ -39,26 +41,29 @@ const SendBidsModal = ({
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [uploadingFiles, setUploadingFiles] = useState(false);
 
-	// Initialize with all licenses selected
+	// Use professions directly from props (from project details)
+	const projectProfessions = professions;
+
+	// Initialize with all professions selected
 	useEffect(() => {
-		if (show && requiredLicenseTypes.length > 0) {
-			setSelectedLicenseFilters(new Set(requiredLicenseTypes.map(lt => lt.id)));
+		if (show && projectProfessions.length > 0) {
+			setSelectedProfessionFilters(new Set(projectProfessions.map(p => p.id)));
 		}
-	}, [show, requiredLicenseTypes]);
+	}, [show, projectProfessions]);
 
 	const filteredSpecialists = useMemo(() => {
-		if (selectedLicenseFilters.size === 0) {
+		if (selectedProfessionFilters.size === 0) {
 			return specialists;
 		}
 
 		return specialists.filter((specialist) =>
-			specialist.licenseTypes.some((lt) => selectedLicenseFilters.has(lt.id))
+			specialist.professions.some((p) => selectedProfessionFilters.has(p.professionId))
 		);
-	}, [specialists, selectedLicenseFilters]);
+	}, [specialists, selectedProfessionFilters]);
 
-	const selectedLicenseTypes = useMemo(() => {
-		return requiredLicenseTypes.filter((lt) => selectedLicenseFilters.has(lt.id));
-	}, [requiredLicenseTypes, selectedLicenseFilters]);
+	const selectedProfessions = useMemo(() => {
+		return projectProfessions.filter((p) => selectedProfessionFilters.has(p.id));
+	}, [projectProfessions, selectedProfessionFilters]);
 
 	const handleToggleSpecialist = useCallback((userId: string) => {
 		setSelectedSpecialists((prev) => {
@@ -72,13 +77,13 @@ const SendBidsModal = ({
 		});
 	}, []);
 
-	const handleLicenseFilterChange = useCallback((licenseId: number) => {
-		setSelectedLicenseFilters((prev) => {
+	const handleProfessionFilterChange = useCallback((professionId: number) => {
+		setSelectedProfessionFilters((prev) => {
 			const newSet = new Set(prev);
-			if (newSet.has(licenseId)) {
-				newSet.delete(licenseId);
+			if (newSet.has(professionId)) {
+				newSet.delete(professionId);
 			} else {
-				newSet.add(licenseId);
+				newSet.add(professionId);
 			}
 			return newSet;
 		});
@@ -145,7 +150,7 @@ const SendBidsModal = ({
 			);
 
 			setSelectedSpecialists(new Set());
-			setSelectedLicenseFilters(new Set());
+			setSelectedProfessionFilters(new Set());
 			setFormData({ description: '' });
 			setSelectedFiles([]);
 
@@ -254,19 +259,19 @@ const SendBidsModal = ({
 									<div className="flex-grow-1">
 										<h6 className="mb-3">
 											<i className="mdi mdi-information-outline me-2"></i>
-											Filter by License Types:
+											Filter by Professions:
 										</h6>
 										
-										{/* License Type Switches */}
+										{/* Profession Switches */}
 										<div className="d-flex flex-column gap-1">
-											{requiredLicenseTypes.map((lt) => (
+											{projectProfessions.map((p) => (
 												<Form.Check
-													key={lt.id}
+													key={p.id}
 													type="switch"
-													id={`filter-switch-${lt.id}`}
-													label={lt.name}
-													checked={selectedLicenseFilters.has(lt.id)}
-													onChange={() => handleLicenseFilterChange(lt.id)}
+													id={`filter-switch-${p.id}`}
+													label={p.name}
+													checked={selectedProfessionFilters.has(p.id)}
+													onChange={() => handleProfessionFilterChange(p.id)}
 													className="user-select-none"
 												/>
 											))}
@@ -288,7 +293,7 @@ const SendBidsModal = ({
 													variant="outline-success"
 													size="sm"
 													onClick={() => setShowInviteModal(true)}
-													disabled={selectedLicenseTypes.length === 0}
+													disabled={selectedProfessions.length === 0}
 												>
 													<i className="mdi mdi-account-plus me-1"></i>
 													Invite New
@@ -328,7 +333,7 @@ const SendBidsModal = ({
 														className={`d-flex align-items-center p-2 border rounded ${
 															selectedSpecialists.has(specialist.userId)
 																? 'bg-primary bg-opacity-10 border-primary'
-																: 'bg-white'
+															: 'bg-primary bg-opacity-10'
 														}`}
 														style={{ cursor: 'pointer' }}
 														onClick={() => handleToggleSpecialist(specialist.userId)}
@@ -362,23 +367,23 @@ const SendBidsModal = ({
 																)}
 															</div>
 															<div className="mt-1">
-																{specialist.licenseTypes.slice(0, 3).map((lt) => (
+																{specialist.professions.slice(0, 3).map((p: ProfessionInfo) => (
 																	<Badge
-																		key={lt.id}
+																		key={p.professionId}
 																		bg="secondary"
 																		className="me-1"
 																		style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}
 																	>
-																		{lt.name}
+																		{p.professionName}
 																	</Badge>
 																))}
-																{specialist.licenseTypes.length > 3 && (
+																{specialist.professions.length > 3 && (
 																	<Badge
 																		bg="secondary"
 																		className="me-1"
 																		style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}
 																	>
-																		+{specialist.licenseTypes.length - 3}
+																		+{specialist.professions.length - 3}
 																	</Badge>
 																)}
 															</div>
@@ -408,13 +413,6 @@ const SendBidsModal = ({
 											showFileList={true}
 										/>
 									</Form.Group>
-
-									{/*<div className="mt-auto">*/}
-									{/*	<div className="alert alert-info p-2" style={{ fontSize: '0.8rem' }}>*/}
-									{/*		<i className="mdi mdi-information-outline me-1"></i>*/}
-									{/*		Files will be attached to all bid requests*/}
-									{/*	</div>*/}
-									{/*</div>*/}
 								</div>
 							</Col>
 						</Row>
@@ -452,11 +450,11 @@ const SendBidsModal = ({
 			</Modal>
 
 			{/* Invite Specialist Modal */}
-			{selectedLicenseTypes.length > 0 && (
+			{selectedProfessions.length > 0 && requiredLicenseTypes.length > 0 && (
 				<InviteSpecialistModal
 					show={showInviteModal}
 					onHide={() => setShowInviteModal(false)}
-					licenseType={selectedLicenseTypes[0]}
+					licenseType={requiredLicenseTypes[0]}
 					onInvitationSent={handleInvitationSent}
 				/>
 			)}

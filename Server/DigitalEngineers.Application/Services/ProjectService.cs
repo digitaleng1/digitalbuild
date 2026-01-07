@@ -413,6 +413,9 @@ public class ProjectService : IProjectService
         var project = await _context.Projects
             .Include(p => p.ProjectLicenseTypes)
                 .ThenInclude(plt => plt.LicenseType)
+                    .ThenInclude(lt => lt.ProfessionTypeLicenseRequirements)
+                        .ThenInclude(ptlr => ptlr.ProfessionType)
+                            .ThenInclude(pt => pt.Profession)
             .Include(p => p.Files)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
@@ -463,6 +466,29 @@ public class ProjectService : IProjectService
             })
             .ToArray();
 
+        // Extract unique profession type IDs from license types
+        var professionTypeIds = project.ProjectLicenseTypes
+            .SelectMany(plt => plt.LicenseType.ProfessionTypeLicenseRequirements)
+            .Select(ptlr => ptlr.ProfessionTypeId)
+            .Distinct()
+            .ToArray();
+
+        // NEW: Extract unique professions from license types
+        var professions = project.ProjectLicenseTypes
+            .SelectMany(plt => plt.LicenseType.ProfessionTypeLicenseRequirements
+                .Select(ptlr => ptlr.ProfessionType.Profession))
+            .GroupBy(p => p.Id)
+            .Select(g => g.First())
+            .Select(p => new ProfessionDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Code = p.Code,
+                Description = p.Description,
+                ProfessionTypesCount = p.ProfessionTypes.Count(pt => pt.IsActive && pt.IsApproved)
+            })
+            .ToArray();
+
         string? thumbnailPresignedUrl = null;
         if (!string.IsNullOrEmpty(project.ThumbnailUrl))
         {
@@ -499,6 +525,8 @@ public class ProjectService : IProjectService
             ManagementType = project.ManagementType.ToString(),
             LicenseTypeIds = licenseTypeIds,
             LicenseTypes = licenseTypes,
+            ProfessionTypeIds = professionTypeIds,
+            Professions = professions,
             CreatedAt = project.CreatedAt,
             UpdatedAt = project.UpdatedAt,
             ThumbnailUrl = thumbnailPresignedUrl,

@@ -1,12 +1,20 @@
 import type { LicenseType } from './lookup';
 import type { BidRequestAttachment } from './bid-attachment';
 
+export interface ProfessionInfo {
+	professionId: number;
+	professionName: string;
+	professionCode: string;
+	licenseTypes: LicenseType[];
+}
+
 export interface SpecialistForBid {
 	userId: string;
 	name: string;
 	email: string;
 	profilePictureUrl?: string;
 	licenseTypes: LicenseType[];
+	professions: ProfessionInfo[];
 	location?: string;
 	isAvailableForHire: boolean;
 }

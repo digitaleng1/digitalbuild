@@ -163,7 +163,7 @@ public class SpecialistsController : ControllerBase
     }
 
     /// <summary>
-    /// Get available specialists for a project based on required license types
+    /// Get available specialists for a project based on required profession types
     /// </summary>
     [HttpGet("projects/{projectId}/available")]
     [Authorize(Roles = "Client,Admin,SuperAdmin")]
@@ -177,7 +177,7 @@ public class SpecialistsController : ControllerBase
         
         var specialists = await _specialistService.GetAvailableSpecialistsForProjectAsync(
             projectId,
-            project.LicenseTypeIds.ToArray(), 
+            project.ProfessionTypeIds.ToArray(), 
             cancellationToken);
         
         var viewModels = _mapper.Map<IEnumerable<AvailableSpecialistViewModel>>(specialists);

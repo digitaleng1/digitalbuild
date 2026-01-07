@@ -159,7 +159,7 @@ export function getManagementTypeLabel(managementType: string): string {
 
 /**
  * Check if client can invite specialists to the project
- * Conditions: ClientManaged + status is InitialPaymentComplete or InProgress
+ * Conditions: ClientManaged + status is NOT Draft or Completed
  */
 export function canClientInviteSpecialists(project: ProjectDetailsDto): boolean {
 	// Check management type
@@ -167,12 +167,12 @@ export function canClientInviteSpecialists(project: ProjectDetailsDto): boolean 
 		return false;
 	}
 
-	// Allowed statuses for bidding
-	const allowedStatuses = [
-		ProjectStatus.InitialPaymentComplete,
-		ProjectStatus.InProgress,
+	// Forbidden statuses for bidding
+	const forbiddenStatuses = [
+		ProjectStatus.Draft,
+		ProjectStatus.Completed,
 	];
 
-	// Allow bidding if status is in allowed list
-	return allowedStatuses.includes(project.status as ProjectStatus);
+	// Allow bidding if status is NOT in forbidden list
+	return !forbiddenStatuses.includes(project.status as ProjectStatus);
 }

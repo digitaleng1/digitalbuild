@@ -470,6 +470,7 @@ const ProjectDetailsPage = () => {
 									projectId={project.id} 
 									isAdmin={isAdmin}
 									canInviteSpecialists={canInvite}
+									professions={project.professions || []}
 									requiredLicenseTypes={project.licenseTypes || []} 
 								/>
 							</CardBody>

@@ -457,41 +457,85 @@ public class SpecialistService : ISpecialistService
         });
     }
 
-    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] licenseTypeIds, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] professionTypeIds, CancellationToken cancellationToken = default)
     {
+        // Step 1: Get all license type IDs from profession types
+        var licenseTypeIds = await _context.Set<ProfessionTypeLicenseRequirement>()
+            .Where(ptlr => professionTypeIds.Contains(ptlr.ProfessionTypeId))
+            .Select(ptlr => ptlr.LicenseTypeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        // Step 2: Get specialists who already have bids for this project
         var existingBidSpecialistIds = await _context.BidRequests
             .Where(br => br.ProjectId == projectId)
             .Select(br => br.SpecialistId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        // Step 3: Load specialists with full profession chain
         var specialists = await _context.Specialists
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
                 .ThenInclude(slt => slt.LicenseType)
+                    .ThenInclude(lt => lt.ProfessionTypeLicenseRequirements)
+                        .ThenInclude(ptlr => ptlr.ProfessionType)
+                            .ThenInclude(pt => pt.Profession)
             .Where(s => s.IsAvailable
                 && !existingBidSpecialistIds.Contains(s.Id)
                 && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
             .ToListAsync(cancellationToken);
 
-        return specialists.Select(s => new AvailableSpecialistDto
+        // Step 4: Map to AvailableSpecialistDto with grouped professions
+        return specialists.Select(s =>
         {
-            UserId = s.UserId,
-            Name = $"{s.User.FirstName} {s.User.LastName}",
-            Email = s.User.Email!,
-            ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
-                ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
-                : null,
-            Location = s.User.Location,
-            IsAvailableForHire = s.IsAvailable,
-            LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
+            // Group licenses by profession
+            var professionGroups = s.LicenseTypes
+                .SelectMany(slt => slt.LicenseType.ProfessionTypeLicenseRequirements
+                    .Select(ptlr => new
+                    {
+                        ProfessionId = ptlr.ProfessionType.Profession.Id,
+                        ProfessionName = ptlr.ProfessionType.Profession.Name,
+                        ProfessionCode = ptlr.ProfessionType.Profession.Code,
+                        LicenseType = new LicenseTypeDto
+                        {
+                            Id = slt.LicenseType.Id,
+                            Name = slt.LicenseType.Name,
+                            Code = slt.LicenseType.Code,
+                            Description = slt.LicenseType.Description,
+                            IsStateSpecific = slt.LicenseType.IsStateSpecific
+                        }
+                    }))
+                .GroupBy(x => new { x.ProfessionId, x.ProfessionName, x.ProfessionCode })
+                .Select(g => new ProfessionInfo
+                {
+                    ProfessionId = g.Key.ProfessionId,
+                    ProfessionName = g.Key.ProfessionName,
+                    ProfessionCode = g.Key.ProfessionCode,
+                    LicenseTypes = g.Select(x => x.LicenseType).Distinct().ToList()
+                })
+                .ToList();
+
+            return new AvailableSpecialistDto
             {
-                Id = slt.LicenseType.Id,
-                Name = slt.LicenseType.Name,
-                Code = slt.LicenseType.Code,
-                Description = slt.LicenseType.Description,
-                IsStateSpecific = slt.LicenseType.IsStateSpecific
-            }).ToList()
+                UserId = s.UserId,
+                Name = $"{s.User.FirstName} {s.User.LastName}",
+                Email = s.User.Email!,
+                ProfilePictureUrl = !string.IsNullOrWhiteSpace(s.User.ProfilePictureUrl)
+                    ? _fileStorageService.GetPresignedUrl(s.User.ProfilePictureUrl)
+                    : null,
+                Location = s.User.Location,
+                IsAvailableForHire = s.IsAvailable,
+                LicenseTypes = s.LicenseTypes.Select(slt => new LicenseTypeDto
+                {
+                    Id = slt.LicenseType.Id,
+                    Name = slt.LicenseType.Name,
+                    Code = slt.LicenseType.Code,
+                    Description = slt.LicenseType.Description,
+                    IsStateSpecific = slt.LicenseType.IsStateSpecific
+                }).ToList(),
+                Professions = professionGroups
+            };
         });
     }
 

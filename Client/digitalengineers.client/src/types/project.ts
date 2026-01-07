@@ -107,6 +107,8 @@ export interface ProjectDetailsDto {
 	managementType: string;
 	licenseTypeIds: number[];
 	licenseTypes: LicenseType[];
+	professionTypeIds: number[];
+	professions: Profession[];
 	createdAt: string;
 	updatedAt: string;
 	thumbnailUrl?: string;

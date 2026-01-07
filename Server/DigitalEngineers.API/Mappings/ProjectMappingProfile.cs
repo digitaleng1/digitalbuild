@@ -21,6 +21,9 @@ public class ProjectMappingProfile : Profile
         CreateMap<ProjectFileDto, ProjectFileViewModel>();
 
         CreateMap<LicenseTypeDto, LicenseTypeViewModel>();
+        
+        // Map Profession (use correct namespace)
+        CreateMap<ProfessionDto, ViewModels.Project.ProfessionViewModel>();
 
         CreateMap<ProjectSpecialistDto, ProjectSpecialistViewModel>();
 

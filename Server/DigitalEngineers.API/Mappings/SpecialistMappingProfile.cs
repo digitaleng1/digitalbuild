@@ -26,5 +26,6 @@ public class SpecialistMappingProfile : Profile
         CreateMap<AvailableSpecialistDto, AvailableSpecialistViewModel>();
         CreateMap<ReviewDto, ReviewViewModel>();
         CreateMap<InviteSpecialistResultDto, InviteSpecialistResultViewModel>();
+        CreateMap<ProfessionInfo, ProfessionInfoViewModel>();
     }
 }
