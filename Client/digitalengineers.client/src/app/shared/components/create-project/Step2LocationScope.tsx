@@ -5,7 +5,6 @@ import { TextInput, SelectInput, Form as RHForm } from '@/components/Form';
 import * as yup from 'yup';
 import lookupService from '@/services/lookupService';
 import type { State } from '@/types/lookup';
-import { ProjectManagementType } from '@/types/project';
 import { useProjectWizard } from './ProjectWizardContext';
 
 const Step2LocationScope = () => {
@@ -14,9 +13,6 @@ const Step2LocationScope = () => {
 	const [usStates, setUSStates] = useState<State[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [projectScope, setProjectScope] = useState<number>(formData.projectScope || 1);
-	const [managementType, setManagementType] = useState<ProjectManagementType>(
-		formData.managementType || ProjectManagementType.DigitalEngineersManaged
-	);
 
 	const schema = useMemo(
 		() =>
@@ -55,24 +51,14 @@ const Step2LocationScope = () => {
 				state: values.state,
 				zipCode: values.zipCode,
 				projectScope: projectScope as 1 | 2 | 3,
-				managementType: managementType,
 			});
 			nextStep();
 		},
-		[projectScope, managementType, nextStep, updateFormData]
+		[projectScope, nextStep, updateFormData]
 	);
 
 	const handleScopeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setProjectScope(Number(e.target.value));
-	}, []);
-
-	const handleManagementTypeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		const isClientManaged = e.target.checked;
-		setManagementType(
-			isClientManaged 
-				? ProjectManagementType.ClientManaged 
-				: ProjectManagementType.DigitalEngineersManaged
-		);
 	}, []);
 
 	const defaultValues = useMemo(
@@ -90,33 +76,6 @@ const Step2LocationScope = () => {
 			<Row>
 				<Col>
 					<RHForm onSubmit={handleSubmit} schema={schema} defaultValues={defaultValues}>
-						<h5 className="mb-3 mt-4">Project Management Type</h5>
-						<div className="mb-4">
-							<div className="d-flex align-items-center justify-content-between">
-								<div>
-									<strong className="d-block mb-1">
-										{managementType === ProjectManagementType.DigitalEngineersManaged
-											? 'Novobid Managed'
-											: 'Client Managed (Self-Managed)'
-										}
-									</strong>
-									<span className="text-muted small">
-										{managementType === ProjectManagementType.DigitalEngineersManaged
-											? 'Our admin team manages the project and specialists (requires quote approval)'
-											: 'You manage the project and specialists yourself (no approval needed - ready instantly!)'
-										}
-									</span>
-								</div>
-								<Form.Check
-									type="switch"
-									id="management-type-switch"
-									checked={managementType === ProjectManagementType.ClientManaged}
-									onChange={handleManagementTypeChange}
-									label=""
-								/>
-							</div>
-						</div>
-
 						<h5 className="mb-3">Project Location</h5>
 
 						<Row>

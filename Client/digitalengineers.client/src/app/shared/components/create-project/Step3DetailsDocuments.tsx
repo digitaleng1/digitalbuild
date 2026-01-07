@@ -8,6 +8,8 @@ import * as yup from 'yup';
 import { useProjectWizard } from './ProjectWizardContext';
 import FileUploader from '@/components/FileUploader';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
+import ManagementTypeSelectionModal from './ManagementTypeSelectionModal';
+import { ProjectManagementType } from '@/types/project';
 
 // styles
 import 'easymde/dist/easymde.min.css';
@@ -17,6 +19,8 @@ const Step3DetailsDocuments = () => {
 	const { formData, isSubmitting, submitProject } = useProjectWizard();
 	const [files, setFiles] = useState<File[]>(formData.files);
 	const [thumbnail, setThumbnail] = useState<File | null>(formData.thumbnail);
+	const [showManagementTypeModal, setShowManagementTypeModal] = useState(false);
+	const [pendingSubmitData, setPendingSubmitData] = useState<Record<string, string> | null>(null);
 
 	const schema = useMemo(
 		() =>
@@ -34,16 +38,34 @@ const Step3DetailsDocuments = () => {
 	);
 
 	const handleSubmit = useCallback(
-		async (values: Record<string, string>) => {
+		(values: Record<string, string>) => {
+			setPendingSubmitData(values);
+			setShowManagementTypeModal(true);
+		},
+		[]
+	);
+
+	const handleManagementTypeConfirm = useCallback(
+		async (managementType: ProjectManagementType) => {
+			if (!pendingSubmitData) return;
+			
+			setShowManagementTypeModal(false);
+			
 			await submitProject({
-				name: values.name,
-				description: values.description,
+				name: pendingSubmitData.name,
+				description: pendingSubmitData.description,
 				files,
 				thumbnail,
+				managementType,
 			});
 		},
-		[files, thumbnail, submitProject]
+		[pendingSubmitData, files, thumbnail, submitProject]
 	);
+
+	const handleModalHide = useCallback(() => {
+		setShowManagementTypeModal(false);
+		setPendingSubmitData(null);
+	}, []);
 
 	return (
 		<>
@@ -54,6 +76,13 @@ const Step3DetailsDocuments = () => {
 					</RHForm>
 				</Col>
 			</Row>
+
+			<ManagementTypeSelectionModal
+				show={showManagementTypeModal}
+				onHide={handleModalHide}
+				onConfirm={handleManagementTypeConfirm}
+				isSubmitting={isSubmitting}
+			/>
 		</>
 	);
 };
@@ -185,10 +214,10 @@ const FormFields = ({
 							{isSubmitting ? (
 								<>
 									<span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-									Submitting...
+									Creating...
 								</>
 							) : (
-								'Submit Project'
+								'Create Project'
 							)}
 						</Button>
 					</div>
