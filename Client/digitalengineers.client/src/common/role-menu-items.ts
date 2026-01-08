@@ -128,10 +128,139 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		url: '/profile',
 	},
 ];
-// SuperAdmin - Full Access
-export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = MENU_ITEMS_ADMIN;
-
-
+// SuperAdmin - Full Access (includes Administrators management)
+export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
+	{
+		key: 'navigation',
+		label: 'Navigation',
+		isTitle: true,
+	},
+	{
+		key: 'dashboards',
+		label: 'Dashboards',
+		isTitle: false,
+		icon: 'uil-home-alt',
+		children: [
+			{
+				key: 'ds-analytics',
+				label: 'Analytics',
+				url: '/dashboard/analytics',
+				parentKey: 'dashboards',
+			},
+			{
+				key: 'ds-crm',
+				label: 'CRM',
+				url: '/dashboard/crm',
+				parentKey: 'dashboards',
+			},
+		],
+	},
+	{
+		key: 'management',
+		label: 'Management',
+		isTitle: true,
+	},
+	{
+		key: 'users',
+		label: 'Users Management',
+		isTitle: false,
+		icon: 'uil-users-alt',
+		children: [
+			{
+				key: 'users-administrators',
+				label: 'Administrators',
+				url: '/administrators',
+				parentKey: 'users',
+			},
+			{
+				key: 'users-providers',
+				label: 'Providers',
+				url: '/providers',
+				parentKey: 'users',
+			},
+			{
+				key: 'users-clients',
+				label: 'Clients',
+				url: '/clients',
+				parentKey: 'users',
+			},
+		],
+	},
+	{
+		key: 'projects-management',
+		label: 'Projects',
+		isTitle: false,
+		icon: 'uil-briefcase',
+		expanded: true,
+		children: [
+			{
+				key: 'projects',
+				label: 'Client Projects',
+				url: '/projects',
+				parentKey: 'projects-management',
+			},
+			{
+				key: 'project-bids',
+				label: 'Bids',
+				url: '/bids',
+				parentKey: 'projects-management',
+			},
+		],
+	},
+	{
+		key: 'licenses',
+		label: 'License Requests',
+		isTitle: false,
+		icon: 'uil-shield-check',
+		url: '/licenses',
+	},
+	{
+		key: 'professions-license-types',
+		label: 'Professions & Licenses',
+		isTitle: false,
+		icon: 'uil-book-alt',
+		url: '/professions-license-types',
+	},
+	{
+		key: 'projects-tasks',
+		label: 'Tasks',
+		isTitle: false,
+		icon: 'uil-clipboard-alt',
+		expanded: true,
+		children: [
+			{
+				key: 'task-list',
+				label: 'List',
+				url: '/tasks/list',
+				parentKey: 'projects-tasks',
+			},
+			{
+				key: 'task-kanban',
+				label: 'Kanban Board',
+				url: '/tasks/kanban',
+				parentKey: 'projects-tasks',
+			},
+			{
+				key: 'task-tree',
+				label: 'Task Tree',
+				url: '/tasks/tree',
+				parentKey: 'projects-tasks',
+			}
+		],
+	},
+	{
+		key: 'account',
+		label: 'Account',
+		isTitle: true,
+	},
+	{
+		key: 'admin-profile',
+		label: 'My Profile',
+		isTitle: false,
+		icon: 'uil-user',
+		url: '/profile',
+	},
+];
 
 // Client - View Projects & Engineers
 export const MENU_ITEMS_CLIENT: MenuItemType[] = [

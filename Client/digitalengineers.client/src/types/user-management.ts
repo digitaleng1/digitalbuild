@@ -10,3 +10,11 @@ export interface UserManagement {
     createdAt: string;
     licenseStatus?: string;
 }
+
+export interface CreateAdminRequest {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    phoneNumber?: string;
+}

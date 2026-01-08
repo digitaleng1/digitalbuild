@@ -1,5 +1,6 @@
 using AutoMapper;
 using DigitalEngineers.API.ViewModels.UserManagement;
+using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,5 +46,31 @@ public class UserManagementController : ControllerBase
             return NotFound(new { message = "User not found" });
 
         return Ok(new { message = "User status updated successfully" });
+    }
+
+    [HttpPost("admin")]
+    [Authorize(Roles = "SuperAdmin")]
+    [ProducesResponseType(typeof(UserManagementViewModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<UserManagementViewModel>> CreateAdmin(
+        [FromBody] CreateAdminViewModel viewModel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var dto = _mapper.Map<CreateAdminDto>(viewModel);
+            var result = await _userManagementService.CreateAdminAsync(dto, cancellationToken);
+            var responseViewModel = _mapper.Map<UserManagementViewModel>(result);
+            
+            return CreatedAtAction(
+                nameof(GetUsersByRole), 
+                new { role = "Admin" }, 
+                responseViewModel);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

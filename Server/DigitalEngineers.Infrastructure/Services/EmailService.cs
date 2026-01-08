@@ -199,6 +199,28 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendAdminWelcomeEmailAsync(
+        string toEmail,
+        string userName,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "Email", email },
+            { "Password", password },
+            { "LoginUrl", $"{GetBaseUrl()}/account/login" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.AdminWelcome,
+            placeholders,
+            cancellationToken);
+    }
+
     public async Task SendSpecialistInvitationEmailAsync(
         string toEmail,
         string specialistName,

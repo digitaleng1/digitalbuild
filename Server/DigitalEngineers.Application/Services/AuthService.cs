@@ -162,6 +162,11 @@ public class AuthService : IAuthService
             throw new DigitalEngineers.Domain.Exceptions.EmailNotConfirmedException(email);
         }
 
+        if (!user.IsActive)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(email);
+        }
+
         var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
         if (!result.Succeeded)
         {
@@ -193,6 +198,11 @@ public class AuthService : IAuthService
             user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             throw new UnauthorizedAccessException("Invalid refresh token");
+        }
+
+        if (!user.IsActive)
+        {
+            throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(user.Email ?? userId);
         }
 
         return await GenerateTokenResponse(user, cancellationToken);
@@ -419,11 +429,19 @@ public class AuthService : IAuthService
 
                 await _userManager.AddToRoleAsync(user, "Client");
             }
+            else if (!user.IsActive)
+            {
+                throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(payload.Email);
+            }
 
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
 
             return await GenerateTokenResponse(user, cancellationToken);
+        }
+        catch (DigitalEngineers.Domain.Exceptions.UserDeactivatedException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -508,11 +526,19 @@ public class AuthService : IAuthService
                 _context.Set<Client>().Add(client);
                 await _context.SaveChangesAsync(cancellationToken);
             }
+            else if (!user.IsActive)
+            {
+                throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(email);
+            }
 
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
 
             return await GenerateTokenResponse(user, cancellationToken);
+        }
+        catch (DigitalEngineers.Domain.Exceptions.UserDeactivatedException)
+        {
+            throw;
         }
         catch (SecurityTokenException ex)
         {

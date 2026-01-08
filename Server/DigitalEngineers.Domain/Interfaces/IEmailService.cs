@@ -46,6 +46,13 @@ public interface IEmailService
         string userName,
         CancellationToken cancellationToken = default);
 
+    Task SendAdminWelcomeEmailAsync(
+        string toEmail,
+        string userName,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default);
+
     // Specialist Invitation
     Task SendSpecialistInvitationEmailAsync(
         string toEmail,

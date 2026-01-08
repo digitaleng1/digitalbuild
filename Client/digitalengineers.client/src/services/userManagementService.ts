@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { UserManagement } from '@/types/user-management';
+import type { UserManagement, CreateAdminRequest } from '@/types/user-management';
 
 const API_URL = '/api/usermanagement';
 
@@ -11,5 +11,10 @@ export const userManagementService = {
 
     toggleUserStatus: async (userId: string, isActive: boolean): Promise<void> => {
         await httpClient.put(`${API_URL}/${userId}/toggle-status`, { isActive });
+    },
+
+    createAdmin: async (data: CreateAdminRequest): Promise<UserManagement> => {
+        const result = await httpClient.post<UserManagement>(`${API_URL}/admin`, data);
+        return result as UserManagement;
     },
 };

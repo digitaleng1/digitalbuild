@@ -9,5 +9,6 @@ public class UserManagementMappingProfile : Profile
     public UserManagementMappingProfile()
     {
         CreateMap<UserManagementDto, UserManagementViewModel>();
+        CreateMap<CreateAdminViewModel, CreateAdminDto>();
     }
 }

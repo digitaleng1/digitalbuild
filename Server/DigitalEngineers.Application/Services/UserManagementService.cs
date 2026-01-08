@@ -1,4 +1,5 @@
 using DigitalEngineers.Domain.DTOs;
+using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Data;
 using DigitalEngineers.Infrastructure.Entities.Identity;
@@ -11,11 +12,19 @@ public class UserManagementService : IUserManagementService
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IEmailService _emailService;
+    private readonly IFileStorageService _fileStorageService;
 
-    public UserManagementService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public UserManagementService(
+        ApplicationDbContext context, 
+        UserManager<ApplicationUser> userManager,
+        IEmailService emailService,
+        IFileStorageService fileStorageService)
     {
         _context = context;
         _userManager = userManager;
+        _emailService = emailService;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<IEnumerable<UserManagementDto>> GetUsersByRoleAsync(string role, CancellationToken cancellationToken = default)
@@ -37,8 +46,8 @@ public class UserManagementService : IUserManagementService
 
                 if (specialist != null && specialist.LicenseTypes.Any())
                 {
-                    var hasApproved = specialist.LicenseTypes.Any(lt => lt.Status == Domain.Enums.LicenseRequestStatus.Approved);
-                    var hasPending = specialist.LicenseTypes.Any(lt => lt.Status == Domain.Enums.LicenseRequestStatus.Pending);
+                    var hasApproved = specialist.LicenseTypes.Any(lt => lt.Status == LicenseRequestStatus.Approved);
+                    var hasPending = specialist.LicenseTypes.Any(lt => lt.Status == LicenseRequestStatus.Pending);
                     
                     if (hasApproved)
                         licenseStatus = "Active";
@@ -52,6 +61,12 @@ public class UserManagementService : IUserManagementService
                     licenseStatus = "None";
                 }
             }
+
+            string? profilePictureUrl = null;
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            {
+                profilePictureUrl = _fileStorageService.GetPresignedUrl(user.ProfilePictureUrl);
+            }
             
             userDtos.Add(new UserManagementDto
             {
@@ -59,7 +74,7 @@ public class UserManagementService : IUserManagementService
                 Email = user.Email ?? string.Empty,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                ProfilePictureUrl = user.ProfilePictureUrl,
+                ProfilePictureUrl = profilePictureUrl,
                 Roles = roles,
                 IsActive = user.IsActive,
                 LastActive = user.LastActive,
@@ -82,5 +97,59 @@ public class UserManagementService : IUserManagementService
 
         var result = await _userManager.UpdateAsync(user);
         return result.Succeeded;
+    }
+
+    public async Task<UserManagementDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken cancellationToken = default)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+        {
+            throw new InvalidOperationException("User with this email already exists");
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = dto.Email,
+            Email = dto.Email,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            PhoneNumber = dto.PhoneNumber,
+            EmailConfirmed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var result = await _userManager.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create admin: {errors}");
+        }
+
+        await _userManager.AddToRoleAsync(user, UserRoles.Admin);
+
+        await _emailService.SendAdminWelcomeEmailAsync(
+            dto.Email,
+            $"{dto.FirstName} {dto.LastName}",
+            dto.Email,
+            dto.Password,
+            cancellationToken);
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return new UserManagementDto
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            ProfilePictureUrl = null,
+            Roles = roles,
+            IsActive = user.IsActive,
+            LastActive = user.LastActive,
+            CreatedAt = user.CreatedAt,
+            LicenseStatus = null
+        };
     }
 }

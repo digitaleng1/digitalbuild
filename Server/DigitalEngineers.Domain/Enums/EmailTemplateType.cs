@@ -11,6 +11,7 @@ public enum EmailTemplateType
     PasswordChanged,
     AccountActivation,
     SpecialistInvitation,
+    AdminWelcome,
     
     // Project
     ProjectCreated,

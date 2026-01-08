@@ -32,6 +32,7 @@ public class EmailBuilderFactory
             EmailTemplateType.PasswordChanged => _serviceProvider.GetRequiredService<PasswordChangedEmailBuilder>(),
             EmailTemplateType.AccountActivation => _serviceProvider.GetRequiredService<AccountActivationEmailBuilder>(),
             EmailTemplateType.SpecialistInvitation => _serviceProvider.GetRequiredService<SpecialistInvitationEmailBuilder>(),
+            EmailTemplateType.AdminWelcome => _serviceProvider.GetRequiredService<AdminWelcomeEmailBuilder>(),
             
             // Project
             EmailTemplateType.ProjectCreated => _serviceProvider.GetRequiredService<ProjectCreatedEmailBuilder>(),

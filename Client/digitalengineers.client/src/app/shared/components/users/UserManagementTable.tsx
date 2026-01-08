@@ -4,7 +4,7 @@ import type { UserManagement } from '@/types/user-management';
 import { useUserManagement } from '@/app/shared/hooks';
 
 interface UserManagementTableProps {
-    role: 'Client' | 'Provider';
+    role: 'Client' | 'Provider' | 'Admin';
 }
 
 const UserManagementTable = ({ role }: UserManagementTableProps) => {
@@ -96,9 +96,9 @@ const UserManagementTable = ({ role }: UserManagementTableProps) => {
                                 <small>{user.email}</small>
                             </td>
                             <td>
-                                {user.roles.map((role, index) => (
-                                    <Badge key={index} bg="primary" className="me-1">
-                                        {role}
+                                {user.roles.map((r, index) => (
+                                    <Badge key={index} bg={r === 'Admin' ? 'warning' : 'primary'} className="me-1">
+                                        {r}
                                     </Badge>
                                 ))}
                             </td>
@@ -138,15 +138,12 @@ const UserManagementTable = ({ role }: UserManagementTableProps) => {
                                             <i className="mdi mdi-account-outline me-1"></i>
                                             View Profile
                                         </Dropdown.Item>
-                                        <Dropdown.Item>
-                                            <i className="mdi mdi-pencil-outline me-1"></i>
-                                            Edit User
-                                        </Dropdown.Item>
-                                        <Dropdown.Divider />
-                                        <Dropdown.Item className="text-danger">
-                                            <i className="mdi mdi-delete-outline me-1"></i>
-                                            Delete User
-                                        </Dropdown.Item>
+                                        {role !== 'Admin' && (
+                                            <Dropdown.Item>
+                                                <i className="mdi mdi-pencil-outline me-1"></i>
+                                                Edit User
+                                            </Dropdown.Item>
+                                        )}
                                     </Dropdown.Menu>
                                 </Dropdown>
                             </td>

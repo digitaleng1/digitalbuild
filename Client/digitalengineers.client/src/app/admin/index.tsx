@@ -8,6 +8,7 @@ const Bids = lazy(() => import('./bids'));
 const Tasks = lazy(() => import('./tasks'));
 const ProvidersPage = lazy(() => import('./providers/page'));
 const ClientsPage = lazy(() => import('./clients/page'));
+const AdministratorsPage = lazy(() => import('./administrators/page'));
 const Licenses = lazy(() => import('./licenses'));
 const ProfessionsLicenseTypes = lazy(() => import('./professions-license-types'));
 const ProfilePage = lazy(() => import('./profile/page'));
@@ -22,6 +23,7 @@ export default function Admin() {
                 <Route path="tasks/*" element={<Tasks />} />
                 <Route path="providers" element={<ProvidersPage />} />
                 <Route path="clients" element={<ClientsPage />} />
+                <Route path="administrators" element={<AdministratorsPage />} />
                 <Route path="licenses/*" element={<Licenses />} />
                 <Route path="professions-license-types/*" element={<ProfessionsLicenseTypes />} />
                 <Route path="profile" element={<ProfilePage />} />
