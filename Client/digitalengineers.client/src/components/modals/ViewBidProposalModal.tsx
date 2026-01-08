@@ -165,7 +165,7 @@ const ViewBidProposalModal: React.FC<ViewBidProposalModalProps> = ({
 								<ListGroup.Item key={attachment.id} className="d-flex align-items-center justify-content-between">
 									<div className="d-flex align-items-center">
 										<span className="me-2" style={{ fontSize: '1.5rem' }}>
-											{getFileIcon(attachment.fileType)}
+											<i className={getFileIcon(attachment.fileType)}></i>
 										</span>
 										<div>
 											<div className="fw-semibold">{attachment.fileName}</div>

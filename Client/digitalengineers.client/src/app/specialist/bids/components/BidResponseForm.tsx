@@ -122,7 +122,7 @@ const BidResponseForm = ({ bidRequestId, onSubmit, isSubmitting = false }: BidRe
 									<ListGroup.Item key={index} className="d-flex align-items-center justify-content-between">
 										<div className="d-flex align-items-center gap-2">
 											<span style={{ fontSize: '1.5rem' }}>
-												{getFileIcon(file.type)}
+												<i className={`${getFileIcon(file.type)} mdi-36px`}></i>
 											</span>
 											<div>
 												<div>{file.name}</div>

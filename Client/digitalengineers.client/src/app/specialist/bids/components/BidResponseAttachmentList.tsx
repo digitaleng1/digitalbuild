@@ -36,7 +36,8 @@ const BidResponseAttachmentList: React.FC<BidResponseAttachmentListProps> = ({
 				{attachments.map((attachment) => (
 					<ListGroup.Item key={attachment.id} className="d-flex align-items-center">
 						<div className="me-2" style={{ fontSize: '1.5rem' }}>
-							{getFileIcon(attachment.fileType)}
+							{/*{getFileIcon(attachment.fileType)}*/}
+							<i className={getFileIcon(attachment.fileType)}></i>
 						</div>
 						
 						<div className="flex-grow-1">
