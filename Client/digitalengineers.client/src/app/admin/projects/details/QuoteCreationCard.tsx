@@ -235,80 +235,86 @@ const QuoteCreationCard = ({ projectId, project, onQuoteSubmitted, hideMargin = 
 				{/* Edit/Create Form */}
 				{canEdit && (
 					<Form onSubmit={handleSubmit}>
-						<Form.Group className="mb-3">
-							<Form.Label>
-								Quoted Amount <span className="text-danger">*</span>
-							</Form.Label>
-							<Form.Control
-								type="number"
-								step="0.01"
-								min="0.01"
-								value={quotedAmount}
-								onChange={(e) => setQuotedAmount(e.target.value)}
-								placeholder="Enter quoted amount"
-								required
-								disabled={isSubmitting}
-							/>
-							<Form.Text className="text-muted">
-								Suggested amount: {formatCurrency(quote.suggestedAmount)}
-							</Form.Text>
-						</Form.Group>
-
-						<Form.Group className="mb-3">
-							<Form.Label>{hideMargin ? 'Price Notes (Optional)' : 'Quote Notes (Optional)'}</Form.Label>
-							<Form.Control
-								as="textarea"
-								rows={3}
-								maxLength={1000}
-								value={quoteNotes}
-								onChange={(e) => setQuoteNotes(e.target.value)}
-								placeholder={hideMargin ? 'Add any notes about the project price...' : 'Add any notes for the client...'}
-								disabled={isSubmitting}
-							/>
-							<Form.Text className="text-muted">
-								{quoteNotes.length}/1000 characters
-							</Form.Text>
-						</Form.Group>
-
-						<div className="d-flex gap-2">
-							{canEdit && (
-								<Button
-									variant="secondary"
-									onClick={() => {
-										setQuotedAmount(quote.suggestedAmount.toFixed(2));
-										setQuoteNotes('');
-									}}
+						{!hideMargin && (
+							<Form.Group className="mb-3">
+								<Form.Label>
+									Quoted Amount <span className="text-danger">*</span>
+								</Form.Label>
+								<Form.Control
+									type="number"
+									step="0.01"
+									min="0.01"
+									value={quotedAmount}
+									onChange={(e) => setQuotedAmount(e.target.value)}
+									placeholder="Enter quoted amount"
+									required
 									disabled={isSubmitting}
-								>
-									Reset to Suggested
-								</Button>
-							)}
-							<Button
-								variant="primary"
-								type="submit"
-								disabled={isSubmitting || !quotedAmount || parseFloat(quotedAmount) <= 0}
-								className="flex-grow-1"
-							>
-								{isSubmitting ? (
-									<>
-										<Spinner
-											as="span"
-											animation="border"
-											size="sm"
-											role="status"
-											aria-hidden="true"
-											className="me-2"
-										/>
-										{hideMargin ? 'Setting Price...' : 'Submitting...'}
-									</>
-								) : (
-									<>
-										<i className="mdi mdi-send me-2"></i>
-										{hideMargin ? 'Set Project Price' : 'Submit Quote to Client'}
-									</>
+								/>
+								<Form.Text className="text-muted">
+									Suggested amount: {formatCurrency(quote.suggestedAmount)}
+								</Form.Text>
+							</Form.Group>
+						)}
+
+						{!hideMargin && (
+							<Form.Group className="mb-3">
+								<Form.Label>Quote Notes (Optional)</Form.Label>
+								<Form.Control
+									as="textarea"
+									rows={3}
+									maxLength={1000}
+									value={quoteNotes}
+									onChange={(e) => setQuoteNotes(e.target.value)}
+									placeholder="Add any notes for the client..."
+									disabled={isSubmitting}
+								/>
+								<Form.Text className="text-muted">
+									{quoteNotes.length}/1000 characters
+								</Form.Text>
+							</Form.Group>
+						)}
+
+						{(!hideMargin || quote.acceptedBids.length > 0) && (
+							<div className="d-flex gap-2">
+								{canEdit && !hideMargin && (
+									<Button
+										variant="secondary"
+										onClick={() => {
+											setQuotedAmount(quote.suggestedAmount.toFixed(2));
+											setQuoteNotes('');
+										}}
+										disabled={isSubmitting}
+									>
+										Reset to Suggested
+									</Button>
 								)}
-							</Button>
-						</div>
+								<Button
+									variant="primary"
+									type="submit"
+									disabled={isSubmitting || (!hideMargin && (!quotedAmount || parseFloat(quotedAmount) <= 0))}
+									className="flex-grow-1"
+								>
+									{isSubmitting ? (
+										<>
+											<Spinner
+												as="span"
+												animation="border"
+												size="sm"
+												role="status"
+												aria-hidden="true"
+												className="me-2"
+											/>
+											{hideMargin ? 'Setting Price...' : 'Submitting...'}
+										</>
+									) : (
+										<>
+											<i className="mdi mdi-send me-2"></i>
+											{hideMargin ? 'Set Project Price' : 'Submit Quote to Client'}
+										</>
+									)}
+								</Button>
+							</div>
+						)}
 					</Form>
 				)}
 			</CardBody>

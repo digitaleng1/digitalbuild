@@ -26,10 +26,10 @@ const formatTimeAgo = (dateString: string): string => {
   return date.toLocaleDateString();
 };
 
-const renderContentWithMentions = (content: string): (string | JSX.Element)[] => {
+const renderContentWithMentions = (content: string): (string | React.ReactNode)[] => {
   // Match @Name only if preceded by start/space and followed by space/punctuation/end
   const mentionRegex = /(?:^|(?<=\s))@([A-Za-z]+(?:\s[A-Za-z]+)*)(?=\s|[.,!?;:]|$)/g;
-  const parts: (string | JSX.Element)[] = [];
+  const parts: (string | React.ReactNode)[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 

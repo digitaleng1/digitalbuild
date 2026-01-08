@@ -1,4 +1,4 @@
-import type { ProfessionType, LicenseRequirement, LicenseType } from './lookup';
+import type { ProfessionType, LicenseRequirement, LicenseType, Profession } from './lookup';
 
 // Re-export LicenseType for backward compatibility
 export type { LicenseType } from './lookup';
