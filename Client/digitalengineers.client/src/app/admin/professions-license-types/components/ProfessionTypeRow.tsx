@@ -50,7 +50,10 @@ const ProfessionTypeRow: React.FC<ProfessionTypeRowProps> = React.memo(({
 		<div className="border-bottom">
 			<div 
 				className="d-flex align-items-center justify-content-between py-2 px-3"
-				style={{ cursor: 'pointer', backgroundColor: isExpanded ? '#f8f9fa' : 'transparent' }}
+				style={{
+					cursor: 'pointer',
+					//backgroundColor: isExpanded ? '#f8f9fa' : 'transparent'
+				}}
 				onClick={handleToggle}
 			>
 				<div className="d-flex align-items-center flex-grow-1">

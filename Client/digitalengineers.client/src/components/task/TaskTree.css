@@ -1,7 +1,7 @@
 /* Task Tree Styles */
 
 .task-tree-container {
-  background: #fff;
+  /*background: #fff;*/
   border-radius: 0.25rem;
   overflow: hidden;
 }
@@ -9,7 +9,7 @@
 .task-tree-header {
   padding: 1rem;
   border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
+  /*background: #f8f9fa;*/
 }
 
 .task-tree-actions {
@@ -133,7 +133,7 @@
   padding: 0.75rem;
   border: 2px dashed #dee2e6;
   border-radius: 0.5rem;
-  background-color: #f8f9fa;
+  /*background-color: #f8f9fa;*/
   transition: all 0.3s ease;
 }
 

@@ -64,7 +64,7 @@ const ProfessionRow: React.FC<ProfessionRowProps> = React.memo(({
 				className="d-flex align-items-center justify-content-between py-3 px-3"
 				style={{ 
 					cursor: 'pointer', 
-					backgroundColor: isExpanded ? '#e9ecef' : '#f8f9fa',
+					//backgroundColor: isExpanded ? '#e9ecef' : '#f8f9fa',
 					borderRadius: isExpanded ? '0.25rem 0.25rem 0 0' : '0.25rem'
 				}}
 				onClick={handleToggle}
