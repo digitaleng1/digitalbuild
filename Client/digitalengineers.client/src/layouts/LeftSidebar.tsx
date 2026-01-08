@@ -13,6 +13,7 @@ import { useRolePrefix } from '@/common/hooks/useRolePrefix';
 import { useUserRole } from '@/common/hooks/useUserRole';
 import { useThemeContext } from '@/common/context';
 import { useAuthContext } from '@/common/context/useAuthContext';
+import { MenuBadgeProvider } from './utils/MenuBadgeProvider';
 
 import SimplebarReactClient from "@/components/wrappers/SimplebarReactClient";
 
@@ -57,11 +58,11 @@ const SideBarContent = () => {
 	const useTemplateMenu = settings?.useTemplateMenu ?? false;
 	
 	return (
-		<>
+		<MenuBadgeProvider>
 			<UserBox />
 			<AppMenu menuItems={getMenuItems(rolePrefix, useTemplateMenu, userRole)} />
 			<div className="clearfix" />
-		</>
+		</MenuBadgeProvider>
 	);
 };
 

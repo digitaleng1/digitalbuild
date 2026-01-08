@@ -329,6 +329,31 @@ public class ProjectService : IProjectService
                 },
                 cancellationToken: cancellationToken);
 
+            // Send push notifications to all admins
+            var admins = await GetAllAdminsAsync(cancellationToken);
+            var adminNotificationBody = dto.ManagementType == ProjectManagementType.ClientManaged
+                ? $"New self-managed project '{project.Name}' created by {clientName}"
+                : $"New project '{project.Name}' created by {clientName} - pending quote";
+
+            foreach (var admin in admins)
+            {
+                await _notificationService.SendPushNotificationAsync(
+                    receiverUserId: admin.Id,
+                    type: NotificationType.Project,
+                    subType: NotificationSubType.Created,
+                    title: "New Project Created",
+                    body: adminNotificationBody,
+                    additionalData: new Dictionary<string, string>
+                    {
+                        { "projectId", project.Id.ToString() },
+                        { "projectName", project.Name },
+                        { "clientId", clientId },
+                        { "clientName", clientName ?? "" },
+                        { "managementType", dto.ManagementType.ToString() }
+                    },
+                    cancellationToken: cancellationToken);
+            }
+
             string? thumbnailPresignedUrl = null;
             if (!string.IsNullOrEmpty(project.ThumbnailUrl))
             {
@@ -718,6 +743,42 @@ public class ProjectService : IProjectService
             oldStatus,
             newStatus.ToString(),
             cancellationToken);
+
+        // Send push notifications to all admins
+        var admins = await GetAllAdminsAsync(cancellationToken);
+        foreach (var admin in admins)
+        {
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: admin.Id,
+                type: NotificationType.Project,
+                subType: NotificationSubType.StatusChanged,
+                title: "Project Status Changed",
+                body: $"Project '{project.Name}' status changed from {oldStatus} to {newStatus}",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "projectId", project.Id.ToString() },
+                    { "projectName", project.Name },
+                    { "oldStatus", oldStatus },
+                    { "newStatus", newStatus.ToString() },
+                    { "clientName", clientName }
+                },
+                cancellationToken: cancellationToken);
+        }
+
+        // Send push notification to client
+        await _notificationService.SendPushNotificationAsync(
+            receiverUserId: project.ClientId,
+            type: NotificationType.Project,
+            subType: NotificationSubType.StatusChanged,
+            title: "Project Status Changed",
+            body: $"Your project '{project.Name}' status changed to {newStatus}",
+            additionalData: new Dictionary<string, string>
+            {
+                { "projectId", project.Id.ToString() },
+                { "projectName", project.Name },
+                { "newStatus", newStatus.ToString() }
+            },
+            cancellationToken: cancellationToken);
     }
 
     public async Task UpdateProjectManagementTypeAsync(
@@ -744,6 +805,31 @@ public class ProjectService : IProjectService
         project.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Send push notifications to all admins
+        var admins = await GetAllAdminsAsync(cancellationToken);
+        var client = await _context.Users.FindAsync(new object[] { project.ClientId }, cancellationToken);
+        var clientName = client != null 
+            ? $"{client.FirstName ?? ""} {client.LastName ?? ""}".Trim() 
+            : "Unknown";
+
+        foreach (var admin in admins)
+        {
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: admin.Id,
+                type: NotificationType.Project,
+                subType: NotificationSubType.StatusChanged,
+                title: "Project Management Type Changed",
+                body: $"Project '{project.Name}' management type changed to {newManagementType}",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "projectId", project.Id.ToString() },
+                    { "projectName", project.Name },
+                    { "managementType", newManagementType.ToString() },
+                    { "clientName", clientName }
+                },
+                cancellationToken: cancellationToken);
+        }
     }
 
     public async Task<IEnumerable<ProjectSpecialistDto>> GetProjectSpecialistsAsync(
@@ -1560,5 +1646,12 @@ public class ProjectService : IProjectService
         }
         
         return mentionableUsers;
+    }
+
+    private async Task<List<ApplicationUser>> GetAllAdminsAsync(CancellationToken cancellationToken = default)
+    {
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var superAdmins = await _userManager.GetUsersInRoleAsync("SuperAdmin");
+        return admins.Union(superAdmins).ToList();
     }
 }

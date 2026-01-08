@@ -8,7 +8,7 @@ export default function Footer() {
 		<footer className="footer">
 			<div className="container-fluid">
 				<Row>
-					<Col md={6}>{currentYear} © Novobid - novobid.com</Col>
+					<Col md={6}>{currentYear} © Novobid - novobid.com BY: Digital Engineers</Col>
 					<Col md={6}>
 						<div className="text-md-end footer-links d-none d-md-block">
 							<Link to="https://novobid.com" target="_blank" className="d-none">

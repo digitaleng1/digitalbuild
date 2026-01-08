@@ -2,9 +2,11 @@ import helpBoxImage from '@/assets/images/svg/help-icon.svg';
 import {type MenuItemType, ThemeSettings, useThemeContext } from '@/common';
 import classNames from 'classnames';
 import {Link, useLocation} from "react-router";
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Collapse } from 'react-bootstrap';
 import { findAllParent, findMenuItem } from './utils/menu';
+import { useMenuBadges } from './utils/MenuBadgeProvider';
+import { enhanceMenuItemsWithBadges } from './utils/enhanceMenuItems';
 
 
 export type SubMenus = {
@@ -117,16 +119,21 @@ type AppMenuProps = {
 
 const AppMenu = ({ menuItems }: AppMenuProps) => {
 	const location = useLocation();
-
 	const menuRef = useRef<HTMLUListElement>(null);
-
 	const [activeMenuItems, setActiveMenuItems] = useState<Array<string>>([]);
+	
+	const { projectCount } = useMenuBadges();
+	
+	const enhancedMenuItems = useMemo(
+		() => enhanceMenuItemsWithBadges(menuItems, { projectCount }),
+		[menuItems, projectCount]
+	);
 
 	/*
 	 * toggle the menus
 	 */
 	const toggleMenu = (menuItem: MenuItemType, show: boolean) => {
-		if (show) setActiveMenuItems([menuItem['key'], ...findAllParent(menuItems, menuItem)]);
+		if (show) setActiveMenuItems([menuItem['key'], ...findAllParent(enhancedMenuItems, menuItem)]);
 	};
 
 	/**
@@ -147,13 +154,13 @@ const AppMenu = ({ menuItems }: AppMenuProps) => {
 
 			if (matchingMenuItem) {
 				const mid = matchingMenuItem.getAttribute('data-menu-key');
-				const activeMt = findMenuItem(menuItems, mid!);
+				const activeMt = findMenuItem(enhancedMenuItems, mid!);
 				if (activeMt) {
-					setActiveMenuItems([activeMt['key'], ...findAllParent(menuItems, activeMt)]);
+					setActiveMenuItems([activeMt['key'], ...findAllParent(enhancedMenuItems, activeMt)]);
 				}
 			}
 		}
-	}, [location, menuItems]);
+	}, [location, enhancedMenuItems]);
 
 	useEffect(() => {
 		activeMenu();
@@ -161,7 +168,7 @@ const AppMenu = ({ menuItems }: AppMenuProps) => {
 
 	return (
 		<ul className="side-nav" ref={menuRef} id="main-side-menu">
-			{(menuItems || []).map((item, index) => {
+			{(enhancedMenuItems || []).map((item, index) => {
 				return (
 					<React.Fragment key={index.toString()}>
 						{item.isTitle ? (
