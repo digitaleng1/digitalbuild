@@ -35,7 +35,7 @@ const LoginPage = () => {
 				<p className="text-muted mb-4">{t('Enter your email and password to access your account.')}</p>
 			</div>
 
-			<GoogleLoginButton />
+			{/*<GoogleLoginButton />*/}
 			<Auth0LoginButton />
 
 			<div className="text-center my-3">

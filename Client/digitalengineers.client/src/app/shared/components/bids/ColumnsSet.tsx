@@ -18,12 +18,9 @@ const columns: ColumnDef<AdminBidListItem>[] = [
             const pathPrefix = usePathPrefix();
             return (
                 <div>
-                    <Link to={`${pathPrefix}/projects/details/${row.original.projectId}`} className="text-body fw-semibold">
+                    <Link to={`${pathPrefix}/bids/responces/project/${row.original.projectId}`} className="text-body fw-semibold">
                         {row.original.projectName}
                     </Link>
-                    <p className="mb-0 text-muted font-13">
-                        {row.original.projectId}
-                    </p>
                 </div>
             );
         },
@@ -133,24 +130,6 @@ const columns: ColumnDef<AdminBidListItem>[] = [
                         {daysAgo === 0 ? 'Today' : `${daysAgo} days ago`}
                     </div>
                 </div>
-            );
-        },
-    },
-    {
-        header: 'ACTIONS',
-        id: 'actions',
-        enableSorting: false,
-        cell: ({ row }) => {
-            const pathPrefix = usePathPrefix();
-            return (
-                <Link
-                    to={`${pathPrefix}/bids/responces/project/${row.original.projectId}`}
-                    className="text-primary d-flex align-items-center gap-1"
-                    style={{ textDecoration: 'none' }}
-                >
-                    <i className="mdi mdi-eye"></i>
-                    <span className="fw-bold">View Bids</span>
-                </Link>
             );
         },
     },
