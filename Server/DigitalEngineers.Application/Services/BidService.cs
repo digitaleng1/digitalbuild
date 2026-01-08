@@ -354,6 +354,44 @@ public class BidService : IBidService
                 bidResponse.EstimatedDays,
                 bidResponseUrl,
                 cancellationToken);
+            
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: admin.Id,
+                type: NotificationType.Bid,
+                subType: NotificationSubType.ResponseReceived,
+                title: "Bid Response Received",
+                body: $"Specialist {specialistName} submitted a bid for '{bidRequest.Project.Name}'",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "bidResponseId", bidResponse.Id.ToString() },
+                    { "bidRequestId", dto.BidRequestId.ToString() },
+                    { "projectId", bidRequest.ProjectId.ToString() },
+                    { "projectName", bidRequest.Project.Name },
+                    { "specialistName", specialistName },
+                    { "proposedPrice", bidResponse.ProposedPrice.ToString("F2") }
+                },
+                cancellationToken: cancellationToken);
+        }
+        
+        if (bidRequest.Project.ManagementType == ProjectManagementType.ClientManaged)
+        {
+            var clientBidResponseUrl = $"{baseUrl}/client/bids/{bidResponse.Id}";
+            
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: bidRequest.Project.ClientId,
+                type: NotificationType.Bid,
+                subType: NotificationSubType.ResponseReceived,
+                title: "Bid Response Received",
+                body: $"Specialist {specialistName} submitted a bid for your project '{bidRequest.Project.Name}'",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "bidResponseId", bidResponse.Id.ToString() },
+                    { "bidRequestId", dto.BidRequestId.ToString() },
+                    { "projectId", bidRequest.ProjectId.ToString() },
+                    { "projectName", bidRequest.Project.Name },
+                    { "proposedPrice", bidResponse.ProposedPrice.ToString("F2") }
+                },
+                cancellationToken: cancellationToken);
         }
 
         return new BidResponseDto
@@ -810,6 +848,20 @@ public class BidService : IBidService
                 dto.Description,
                 0,
                 cancellationToken);
+            
+            await _notificationService.SendPushNotificationAsync(
+                receiverUserId: specialist.UserId,
+                type: NotificationType.Bid,
+                subType: NotificationSubType.RequestReceived,
+                title: "New Bid Request",
+                body: $"You have a new bid request for project '{project.Name}'",
+                additionalData: new Dictionary<string, string>
+                {
+                    { "bidRequestId", savedBidRequest.Id.ToString() },
+                    { "projectId", dto.ProjectId.ToString() },
+                    { "projectName", project.Name }
+                },
+                cancellationToken: cancellationToken);
         }
 
         return bidRequestIds;

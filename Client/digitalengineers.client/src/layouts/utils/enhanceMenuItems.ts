@@ -2,6 +2,7 @@ import type { MenuItemType } from '@/common/menu-items';
 
 interface BadgeCounts {
   projectCount: number;
+  bidCount: number;
 }
 
 export const enhanceMenuItemsWithBadges = (
@@ -9,13 +10,30 @@ export const enhanceMenuItemsWithBadges = (
   counts: BadgeCounts
 ): MenuItemType[] => {
   return menuItems.map(item => {
-    if (item.key === 'my-projects' || item.key === 'projects-management' || item.key === 'projects') {
+    // Project badges
+    if (item.key === 'projects' || item.key === 'projects-active') {
       if (counts.projectCount > 0) {
         return {
           ...item,
           badge: {
             variant: 'info',
             text: counts.projectCount.toString()
+          }
+        };
+      }
+    }
+    
+    // Bid badges
+    // Provider: 'bids' (Bid Requests - direct item)
+    // Client: 'client-bids' (Bids - direct item)
+    // Admin/SuperAdmin: 'project-bids' (Bids - child item)
+    if (item.key === 'bids' || item.key === 'client-bids' || item.key === 'project-bids') {
+      if (counts.bidCount > 0) {
+        return {
+          ...item,
+          badge: {
+            variant: 'warning',
+            text: counts.bidCount.toString()
           }
         };
       }

@@ -122,11 +122,11 @@ const AppMenu = ({ menuItems }: AppMenuProps) => {
 	const menuRef = useRef<HTMLUListElement>(null);
 	const [activeMenuItems, setActiveMenuItems] = useState<Array<string>>([]);
 	
-	const { projectCount } = useMenuBadges();
+	const { projectCount, bidCount } = useMenuBadges();
 	
 	const enhancedMenuItems = useMemo(
-		() => enhanceMenuItemsWithBadges(menuItems, { projectCount }),
-		[menuItems, projectCount]
+		() => enhanceMenuItemsWithBadges(menuItems, { projectCount, bidCount }),
+		[menuItems, projectCount, bidCount]
 	);
 
 	/*
