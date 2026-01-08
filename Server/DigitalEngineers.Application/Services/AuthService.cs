@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using DigitalEngineers.Domain.DTOs.Auth;
 using DigitalEngineers.Infrastructure.Entities.Identity;
 using DigitalEngineers.Domain.Interfaces;
@@ -6,6 +7,7 @@ using DigitalEngineers.Infrastructure.Data;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using DigitalEngineers.Infrastructure.Entities;
 
 namespace DigitalEngineers.Infrastructure.Services;
@@ -20,6 +22,7 @@ public class AuthService : IAuthService
     private readonly IFileStorageService _fileStorageService;
     private readonly IEmailService _emailService;
     private readonly IUrlProvider _urlProvider;
+    private readonly HttpClient _httpClient;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
@@ -29,7 +32,8 @@ public class AuthService : IAuthService
         IConfiguration configuration,
         IFileStorageService fileStorageService,
         IEmailService emailService,
-        IUrlProvider urlProvider)
+        IUrlProvider urlProvider,
+        IHttpClientFactory httpClientFactory)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -39,6 +43,7 @@ public class AuthService : IAuthService
         _fileStorageService = fileStorageService;
         _emailService = emailService;
         _urlProvider = urlProvider;
+        _httpClient = httpClientFactory.CreateClient();
     }
 
     public async Task<TokenData> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -428,44 +433,95 @@ public class AuthService : IAuthService
 
     private async Task<TokenData> HandleAuth0Login(string idToken, CancellationToken cancellationToken)
     {
-        var principal = _tokenService.GetPrincipalFromExpiredToken(idToken);
-        if (principal == null)
+        try
         {
-            throw new UnauthorizedAccessException("Invalid Auth0 token");
-        }
+            var domain = _configuration["Authentication:Auth0:Domain"]
+                ?? throw new InvalidOperationException("Auth0 Domain not configured");
+            var clientId = _configuration["Authentication:Auth0:ClientId"]
+                ?? throw new InvalidOperationException("Auth0 ClientId not configured");
 
-        var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-        if (string.IsNullOrEmpty(email))
-        {
-            throw new UnauthorizedAccessException("Email claim not found in token");
-        }
+            var jwksUrl = $"https://{domain}/.well-known/jwks.json";
+            var jwksJson = await _httpClient.GetStringAsync(jwksUrl, cancellationToken);
+            var jwks = new JsonWebKeySet(jwksJson);
 
-        var user = await _userManager.FindByEmailAsync(email);
-        
-        if (user == null)
-        {
-            user = new ApplicationUser
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
             {
-                UserName = email,
-                Email = email,
-                FirstName = principal.FindFirst(ClaimTypes.GivenName)?.Value,
-                LastName = principal.FindFirst(ClaimTypes.Surname)?.Value,
-                EmailConfirmed = true
+                ValidateIssuer = true,
+                ValidIssuer = $"https://{domain}/",
+                ValidateAudience = true,
+                ValidAudience = clientId,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeys = jwks.GetSigningKeys()
             };
 
-            var result = await _userManager.CreateAsync(user);
-            if (!result.Succeeded)
+            var principal = tokenHandler.ValidateToken(idToken, validationParameters, out _);
+
+            var email = principal.FindFirst(ClaimTypes.Email)?.Value
+                     ?? principal.FindFirst("email")?.Value;
+            
+            if (string.IsNullOrEmpty(email))
             {
-                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new UnauthorizedAccessException("Email claim not found in Auth0 token");
             }
 
-            await _userManager.AddToRoleAsync(user, "Client");
+            var firstName = principal.FindFirst(ClaimTypes.GivenName)?.Value
+                         ?? principal.FindFirst("given_name")?.Value;
+            var lastName = principal.FindFirst(ClaimTypes.Surname)?.Value
+                        ?? principal.FindFirst("family_name")?.Value;
+            var auth0Id = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? principal.FindFirst("sub")?.Value;
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    EmailConfirmed = true
+                };
+
+                var result = await _userManager.CreateAsync(user);
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+
+                await _userManager.AddToRoleAsync(user, "Client");
+
+                var client = new Client
+                {
+                    UserId = user.Id,
+                    CompanyName = null,
+                    Industry = null,
+                    Website = null,
+                    CompanyDescription = null,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Set<Client>().Add(client);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            user.LastLoginAt = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+
+            return await GenerateTokenResponse(user, cancellationToken);
         }
-
-        user.LastLoginAt = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
-
-        return await GenerateTokenResponse(user, cancellationToken);
+        catch (SecurityTokenException ex)
+        {
+            throw new UnauthorizedAccessException($"Auth0 token validation failed: {ex.Message}");
+        }
+        catch (Exception ex) when (ex is not UnauthorizedAccessException)
+        {
+            throw new UnauthorizedAccessException($"Auth0 authentication failed: {ex.Message}");
+        }
     }
 
     private async Task<TokenData> GenerateTokenResponse(ApplicationUser user, CancellationToken cancellationToken)

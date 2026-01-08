@@ -26,6 +26,9 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Register HttpClientFactory for external HTTP calls (Auth0 JWKS, etc.)
+        services.AddHttpClient();
+
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),

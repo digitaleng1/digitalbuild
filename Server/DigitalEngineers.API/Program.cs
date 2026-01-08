@@ -95,6 +95,21 @@ builder.Services.AddAuthentication(options =>
                 throw new InvalidOperationException("JWT Key not configured")))
     };
 })
+.AddJwtBearer("Auth0", options =>
+{
+    var auth0Domain = builder.Configuration["Authentication:Auth0:Domain"];
+    options.Authority = $"https://{auth0Domain}/";
+    options.Audience = builder.Configuration["Authentication:Auth0:Audience"];
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = $"https://{auth0Domain}/",
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Authentication:Auth0:Audience"],
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+})
 .AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
