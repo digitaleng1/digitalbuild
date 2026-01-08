@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import type { Notification } from '@/types/notification';
 import { notificationService } from '@/services/notificationService';
-import FirebaseMessagingService from '@/services/firebase/FirebaseMessagingService';
+import WebMessagingService from '@/services/messaging/WebMessagingService';
 
 interface NotificationContextValue {
   notifications: Notification[];
@@ -45,7 +45,6 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
       const unread = data.filter(n => !n.isRead).length;
       setUnreadCount(unread);
     } catch (err: any) {
-      // Ignore 401 errors - user will be redirected by interceptor
       if (err?.response?.status === 401 || err === 'Invalid credentials') {
         console.log('[Notifications] User not authenticated');
         return;
@@ -113,46 +112,36 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
     setUnreadCount(prev => prev + 1);
   }, []);
 
-  const handleNotificationClick = useCallback((url: string) => {
-    if (url && url !== '/') {
-      window.location.href = url;
-    }
-  }, []);
-
-  // Initialize Firebase Messaging Service
+  // Initialize SignalR Notification Service
   useEffect(() => {
-    const initializeFCM = async () => {
+    const initializeSignalR = async () => {
       try {
-        const fcmService = FirebaseMessagingService.getInstance();
+        const token = localStorage.getItem('access_token');
         
-        await fcmService.initialize();
-        
-        const token = await fcmService.getToken();
-        
-        if (token) {
-          const deviceInfo = {
-            deviceType: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Web',
-            deviceName: navigator.userAgent,
-          };
-
-          await notificationService.saveFcmToken(token, deviceInfo);
-          console.log('[FCM] Token registered successfully');
+        if (!token) {
+          console.log('[SignalR] No token available');
+          return;
         }
+
+        const messagingService = WebMessagingService.getInstance();
         
-        const unsubscribe = fcmService.onNotification(handleNewNotification);
+        await messagingService.initialize();
+        
+        const unsubscribe = messagingService.onNotification(handleNewNotification);
+        
+        console.log('[SignalR] Initialized successfully');
         
         return unsubscribe;
       } catch (err: any) {
-        // Ignore 401 errors during FCM initialization
         if (err?.response?.status === 401 || err === 'Invalid credentials') {
-          console.log('[FCM] User not authenticated');
+          console.log('[SignalR] User not authenticated');
           return;
         }
-        console.error('[FCM] Error initializing:', err);
+        console.error('[SignalR] Error initializing:', err);
       }
     };
 
-    const unsubscribePromise = initializeFCM();
+    const unsubscribePromise = initializeSignalR();
 
     return () => {
       unsubscribePromise.then(unsubscribe => {
@@ -162,22 +151,6 @@ export const NotificationProvider = React.memo(({ children }: NotificationProvid
       });
     };
   }, [handleNewNotification]);
-
-  // Handle notification clicks from Service Worker
-  useEffect(() => {
-    const handleServiceWorkerMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'NOTIFICATION_CLICKED') {
-        console.log('[React] Notification clicked:', event.data.payload);
-        handleNotificationClick(event.data.payload?.url);
-      }
-    };
-
-    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
-
-    return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
-    };
-  }, [handleNotificationClick]);
 
   // Load notifications on mount
   useEffect(() => {

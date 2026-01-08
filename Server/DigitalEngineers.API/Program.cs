@@ -4,6 +4,7 @@ using DigitalEngineers.Domain.Configuration;
 using DigitalEngineers.Domain.Interfaces;
 using DigitalEngineers.Infrastructure.Services;
 using DigitalEngineers.Infrastructure.Extensions;
+using DigitalEngineers.Infrastructure.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -72,6 +73,9 @@ builder.Services.AddScoped<IUrlProvider, UrlProvider>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add SignalR
+builder.Services.AddSignalR();
+
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
@@ -93,6 +97,23 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? 
                 throw new InvalidOperationException("JWT Key not configured")))
+    };
+    
+    // Configure JWT for SignalR
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+            {
+                context.Token = accessToken;
+            }
+            
+            return Task.CompletedTask;
+        }
     };
 })
 .AddJwtBearer("Auth0", options =>
@@ -177,6 +198,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapFallbackToFile("/index.html");
 

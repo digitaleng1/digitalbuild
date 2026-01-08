@@ -25,14 +25,6 @@ export const notificationService = {
     return HttpClient.delete(`/api/notifications/${id}`);
   },
 
-  saveFcmToken: async (token: string, deviceInfo: { deviceType: string; deviceName: string }) => {
-    return HttpClient.post('/api/notifications/fcm-token', {
-      fcmToken: token,
-      deviceType: deviceInfo.deviceType,
-      deviceName: deviceInfo.deviceName,
-    });
-  },
-
   sendTestNotification: async () => {
     return HttpClient.post('/api/notifications/test-send', {});
   },

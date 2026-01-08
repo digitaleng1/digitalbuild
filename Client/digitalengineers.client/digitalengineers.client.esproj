@@ -15,5 +15,7 @@
     <Folder Include="src\app\auth\invite\" />
     <Folder Include="src\app\client\bids\responses\components\" />
     <Folder Include="src\components\task\details\" />
+    <Folder Include="src\services\firebase\" />
+    <Folder Include="src\services\signalr\" />
   </ItemGroup>
 </Project>

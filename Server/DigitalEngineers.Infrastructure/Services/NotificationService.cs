@@ -1,14 +1,11 @@
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.Enums;
 using DigitalEngineers.Domain.Interfaces;
-using DigitalEngineers.Infrastructure.Configuration;
 using DigitalEngineers.Infrastructure.Data;
-using FirebaseAdmin;
-using FirebaseAdmin.Messaging;
-using Google.Apis.Auth.OAuth2;
+using DigitalEngineers.Infrastructure.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace DigitalEngineers.Infrastructure.Services;
@@ -20,74 +17,16 @@ public class NotificationService : INotificationService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<NotificationService> _logger;
-    private readonly FirebaseSettings _firebaseSettings;
-    private static GoogleCredential? _cachedCredential;
-    private static readonly object _lock = new();
-    private bool _isFirebaseInitialized;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
     public NotificationService(
         ApplicationDbContext context,
         ILogger<NotificationService> logger,
-        IOptions<FirebaseSettings> firebaseSettings)
+        IHubContext<NotificationHub> hubContext)
     {
         _context = context;
         _logger = logger;
-        _firebaseSettings = firebaseSettings.Value;
-        
-        InitializeFirebase();
-    }
-
-    private void InitializeFirebase()
-    {
-        if (FirebaseApp.DefaultInstance != null)
-        {
-            _isFirebaseInitialized = true;
-            return;
-        }
-
-        try
-        {
-            if (string.IsNullOrEmpty(_firebaseSettings.ServiceAccountKeyPath))
-            {
-                _logger.LogWarning("Firebase ServiceAccountKeyPath not configured. Push notifications will be disabled.");
-                _isFirebaseInitialized = false;
-                return;
-            }
-
-            GoogleCredential credential;
-            
-            lock (_lock)
-            {
-                if (_cachedCredential == null)
-                {
-                    var fullPath = Path.GetFullPath(_firebaseSettings.ServiceAccountKeyPath);
-                    
-                    if (!File.Exists(fullPath))
-                    {
-                        _logger.LogError("Firebase service account file not found at: {Path}", fullPath);
-                        _isFirebaseInitialized = false;
-                        return;
-                    }
-
-                    _cachedCredential = GoogleCredential.FromFile(fullPath);
-                }
-                
-                credential = _cachedCredential;
-            }
-            
-            FirebaseApp.Create(new AppOptions
-            {
-                Credential = credential,
-                ProjectId = _firebaseSettings.ProjectId
-            });
-            
-            _isFirebaseInitialized = true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to initialize Firebase. Push notifications will be disabled.");
-            _isFirebaseInitialized = false;
-        }
+        _hubContext = hubContext;
     }
 
     public async Task SendPushNotificationAsync(
@@ -114,64 +53,34 @@ public class NotificationService : INotificationService
         _context.Notifications.Add(notification);
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (!_isFirebaseInitialized)
+        try
         {
-            _logger.LogWarning("Firebase not initialized. Skipping FCM notification for user {UserId}", receiverUserId);
-            return;
-        }
-
-        var fcmTokens = await _context.UserDevices
-            .Where(d => d.UserId == receiverUserId && d.IsActive)
-            .Select(d => d.FcmToken)
-            .ToListAsync(cancellationToken);
-
-        if (fcmTokens.Any())
-        {
-            var message = new Message
+            var notificationDto = new NotificationDto
             {
-                Notification = new FirebaseAdmin.Messaging.Notification
-                {
-                    Title = title,
-                    Body = body
-                },
-                Data = new Dictionary<string, string>
-                {
-                    { "notificationId", notification.Id.ToString() },
-                    { "type", type.ToString() },
-                    { "subType", subType.ToString() },
-                    { "additionalData", notification.AdditionalData ?? "{}" }
-                }
+                Id = notification.Id,
+                Type = type.ToString(),
+                SubType = subType.ToString(),
+                Title = title,
+                Body = body,
+                AdditionalData = additionalData,
+                SenderId = "system",
+                SenderName = "System",
+                SenderProfilePicture = null,
+                IsDelivered = false,
+                IsRead = false,
+                DeliveredAt = null,
+                ReadAt = null,
+                CreatedAt = notification.CreatedAt
             };
-            
-            var results = new List<string>();
-            var errors = new List<string>();
-            
-            foreach (var token in fcmTokens)
-            {
-                try
-                {
-                    message.Token = token;
-                    string messageId = await FirebaseMessaging.DefaultInstance.SendAsync(message, cancellationToken);
-                    results.Add($"Sent to {token[..10]}... - MessageId: {messageId}");
-                }
-                catch (FirebaseMessagingException ex) when (ex.MessagingErrorCode == MessagingErrorCode.Unregistered)
-                {
-                    await RemoveFcmTokenAsync(receiverUserId, token, cancellationToken);
-                    _logger.LogWarning("Removed invalid FCM token for user {UserId}", receiverUserId);
-                    errors.Add($"Token {token[..10]}... unregistered and removed");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send FCM notification to token {Token}", token[..10]);
-                    errors.Add($"Token {token[..10]}... failed: {ex.Message}");
-                }
-            }
-            
-            if (results.Any())
-                _logger.LogWarning("FCM sent successfully: {Results}", string.Join(", ", results));
-            
-            if (errors.Any())
-                _logger.LogWarning("FCM errors: {Errors}", string.Join(", ", errors));
+
+            await _hubContext.Clients.Group(receiverUserId)
+                .SendAsync("ReceiveNotification", notificationDto, cancellationToken);
+
+            _logger.LogInformation("SignalR notification sent to user {UserId}", receiverUserId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send SignalR notification to user {UserId}", receiverUserId);
         }
     }
 
