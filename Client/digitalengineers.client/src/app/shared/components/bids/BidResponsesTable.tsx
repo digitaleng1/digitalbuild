@@ -22,6 +22,8 @@ const BidResponsesTable = ({
 	selectedBidRequestIds,
 	onToggleSelect
 }: BidResponsesTableProps) => {
+	const showCompareCheckbox = responses.length > 1;
+	
 	const getStatusVariant = (status: string) => {
 		switch (status.toLowerCase()) {
 			case 'pending':
@@ -54,9 +56,11 @@ const BidResponsesTable = ({
 			<Table hover className="table-centered mb-0">
 				<thead>
 					<tr>
-						<th style={{ width: '40px' }}>
-							<Form.Check type="checkbox" disabled />
-						</th>
+						{showCompareCheckbox && (
+							<th style={{ width: '40px' }}>
+								<Form.Check type="checkbox" disabled />
+							</th>
+						)}
 						<th>Specialist</th>
 						<th>Proposal</th>
 						<th>Availability</th>
@@ -68,13 +72,15 @@ const BidResponsesTable = ({
 				<tbody>
 					{responses.map((response) => (
 						<tr key={response.bidRequestId}>
-							<td>
-								<Form.Check
-									type="checkbox"
-									checked={selectedBidRequestIds.includes(response.bidRequestId)}
-									onChange={() => onToggleSelect(response.bidRequestId)}
-								/>
-							</td>
+							{showCompareCheckbox && (
+								<td>
+									<Form.Check
+										type="checkbox"
+										checked={selectedBidRequestIds.includes(response.bidRequestId)}
+										onChange={() => onToggleSelect(response.bidRequestId)}
+									/>
+								</td>
+							)}
 							<td>
 								<div className="d-flex align-items-center">
 									<img
