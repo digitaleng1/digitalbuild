@@ -51,11 +51,11 @@ export default function useLogin() {
 				const primaryRole = tokenResponse.user.roles[0];
 				
 				if (primaryRole === 'Admin' || primaryRole === 'SuperAdmin') {
-					navigate('/admin/dashboard');
+					navigate('/admin/projects');
 				} else if (primaryRole === 'Provider') {
-					navigate('/specialist/dashboard');
+					navigate('/specialist/projects');
 				} else {
-					navigate('/client/dashboard');
+					navigate('/client/projects');
 				}
 			}
 		} catch (error: any) {

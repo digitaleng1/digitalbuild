@@ -17,7 +17,7 @@ export default function Admin() {
     return (
         <Routes>
             <Route path="/*" element={<Outlet />}>
-                <Route path="dashboard/*" element={<Dashboards />} />
+                {/*<Route path="dashboard/*" element={<Dashboards />} />*/}
                 <Route path="projects/*" element={<Projects />} />
                 <Route path="bids/*" element={<Bids />} />
                 <Route path="tasks/*" element={<Tasks />} />
