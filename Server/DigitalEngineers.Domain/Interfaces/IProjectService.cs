@@ -23,28 +23,38 @@ public interface IProjectService
         CancellationToken cancellationToken = default);
     
     /// <summary>
-    /// Updates project status (Admin/SuperAdmin only)
+    /// Updates project status (Admin/SuperAdmin or Client for their ClientManaged projects)
     /// </summary>
     /// <param name="projectId">Project ID</param>
     /// <param name="status">New project status</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
     /// <exception cref="Exceptions.InvalidProjectStatusException">If status is invalid</exception>
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized</exception>
     Task UpdateProjectStatusAsync(
         int projectId, 
-        string status, 
+        string status,
+        string userId,
+        string[] userRoles,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates project management type (Admin/SuperAdmin only)
+    /// Updates project management type (Admin/SuperAdmin or Client for their ClientManaged projects)
     /// </summary>
     /// <param name="projectId">Project ID</param>
     /// <param name="managementType">New management type</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized</exception>
     Task UpdateProjectManagementTypeAsync(
         int projectId,
         string managementType,
+        string userId,
+        string[] userRoles,
         CancellationToken cancellationToken = default);
 
     /// <summary>

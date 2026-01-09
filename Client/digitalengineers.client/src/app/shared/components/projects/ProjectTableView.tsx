@@ -260,9 +260,6 @@ const ProjectTableView = ({
 					) : (
 						Object.values(ProjectStatus).map(status => {
 							const statusProjects = groupedProjects.get(status) || [];
-							if (statusProjects.length === 0) {
-								return null;
-							}
 
 							return (
 								<ProjectStatusGroup

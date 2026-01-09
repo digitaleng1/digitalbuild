@@ -116,14 +116,14 @@ class ProjectService {
 	}
 
 	/**
-	 * Update project status (Admin/SuperAdmin only)
+	 * Update project status (Admin/SuperAdmin or Client for ClientManaged projects)
 	 */
 	async updateProjectStatus(id: number, status: string): Promise<void> {
 		await httpClient.patch(`/api/projects/${id}/status`, { status });
 	}
 
 	/**
-	 * Update project management type (Admin/SuperAdmin only)
+	 * Update project management type (Admin/SuperAdmin or Client for ClientManaged projects)
 	 */
 	async updateProjectManagementType(id: number, managementType: string): Promise<void> {
 		await httpClient.patch(`/api/projects/${id}/management-type`, { managementType });

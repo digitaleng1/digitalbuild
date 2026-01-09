@@ -201,38 +201,46 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Update project status (Admin/SuperAdmin only)
+    /// Update project status (Admin/SuperAdmin or Client for their ClientManaged projects)
     /// </summary>
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateProjectStatus(
         int id,
         [FromBody] UpdateProjectStatusViewModel model,
         CancellationToken cancellationToken)
     {
-        await _projectService.UpdateProjectStatusAsync(id, model.Status, cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
+        await _projectService.UpdateProjectStatusAsync(id, model.Status, userId, roles, cancellationToken);
         return NoContent();
     }
 
     /// <summary>
-    /// Update project management type (Admin/SuperAdmin only)
+    /// Update project management type (Admin/SuperAdmin or Client for their ClientManaged projects)
     /// </summary>
     [HttpPatch("{id}/management-type")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateProjectManagementType(
         int id,
         [FromBody] UpdateProjectManagementTypeViewModel model,
         CancellationToken cancellationToken)
     {
-        await _projectService.UpdateProjectManagementTypeAsync(id, model.ManagementType, cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
+        await _projectService.UpdateProjectManagementTypeAsync(id, model.ManagementType, userId, roles, cancellationToken);
         return NoContent();
     }
 

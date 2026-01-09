@@ -44,6 +44,13 @@ const ProjectDetailsPage = () => {
 	const isProvider = hasAnyRole(['Provider']);
 	const isSpecialist = hasAnyRole(['Specialist']);
 
+	// Check if user can manage project (Admin or Client with ClientManaged project)
+	const canManageProject = useMemo(() => {
+		if (isAdmin) return true;
+		if (isClient && project?.managementType === ProjectManagementType.ClientManaged) return true;
+		return false;
+	}, [isAdmin, isClient, project?.managementType]);
+
 	// ...existing code for canInvite, handleManagementTypeChange, useEffects...
 
 	const canInvite = useMemo(() => 
@@ -184,7 +191,7 @@ const ProjectDetailsPage = () => {
 			];
 
 	const handleRibbonClick = () => {
-		if (isAdmin) {
+		if (canManageProject) {
 			setShowStatusModal(true);
 		}
 	};
@@ -226,13 +233,13 @@ const ProjectDetailsPage = () => {
 									{ 'bg-dark text-light': statusVariant === 'dark' },
 									{ 'bg-secondary text-light': statusVariant === 'secondary' },
 									'float-start',
-									{ 'cursor-pointer': isAdmin }
+									{ 'cursor-pointer': canManageProject }
 								)}
 								onClick={handleRibbonClick}
-								style={isAdmin ? { cursor: 'pointer' } : undefined}
-								title={isAdmin ? 'Click to change status' : undefined}
+								style={canManageProject ? { cursor: 'pointer' } : undefined}
+								title={canManageProject ? 'Click to change status' : undefined}
 							>
-								<i className={`mdi ${isAdmin ? 'mdi-pencil' : 'mdi-circle-slice-8'} me-1`}></i> {project.status}
+								<i className={`mdi ${canManageProject ? 'mdi-pencil' : 'mdi-circle-slice-8'} me-1`}></i> {project.status}
 							</div>
 
 							<CardTitle
@@ -302,8 +309,8 @@ const ProjectDetailsPage = () => {
 								</Link>
 							</div>
 
-							{/* Management Type Switcher - Admin Only */}
-							{isAdmin && (
+							{/* Management Type Switcher - Admin or Client with ClientManaged project */}
+							{canManageProject && (
 								<div className="mb-4">
 									<h5 className="mb-3">Project Management Type</h5>
 									<div className="d-flex align-items-center justify-content-between p-3 border rounded">
@@ -311,7 +318,7 @@ const ProjectDetailsPage = () => {
 											<strong className="d-block mb-1">
 												{project.managementType === ProjectManagementType.DigitalEngineersManaged 
 													? 'Novobid Managed' 
-													: 'Client Managed (Self-Managed'}
+													: 'Client Managed (Self-Managed)'}
 											</strong>
 											<span className="text-muted small">
 												{project.managementType === ProjectManagementType.DigitalEngineersManaged 
@@ -579,8 +586,8 @@ const ProjectDetailsPage = () => {
 				</Col>
 			</Row>
 
-			{/* Status Modal for Admin */}
-			{isAdmin && (
+			{/* Status Modal - for Admin or Client with ClientManaged project */}
+			{canManageProject && (
 				<ProjectStatusModal
 					show={showStatusModal}
 					onHide={() => setShowStatusModal(false)}

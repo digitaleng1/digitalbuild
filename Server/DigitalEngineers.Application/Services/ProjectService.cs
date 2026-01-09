@@ -710,6 +710,8 @@ public class ProjectService : IProjectService
     public async Task UpdateProjectStatusAsync(
         int projectId, 
         string status,
+        string userId,
+        string[] userRoles,
         CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
@@ -720,6 +722,18 @@ public class ProjectService : IProjectService
         {
             _logger.LogWarning("Attempt to update status for non-existent project {ProjectId}", projectId);
             throw new ProjectNotFoundException(projectId);
+        }
+
+        // Authorization check
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+        
+        if (!isAdmin)
+        {
+            if (!isClient || project.ClientId != userId || project.ManagementType != ProjectManagementType.ClientManaged)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to update this project status");
+            }
         }
         
         if (!Enum.TryParse<ProjectStatus>(status, ignoreCase: true, out var newStatus))
@@ -784,6 +798,8 @@ public class ProjectService : IProjectService
     public async Task UpdateProjectManagementTypeAsync(
         int projectId,
         string managementType,
+        string userId,
+        string[] userRoles,
         CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
@@ -793,6 +809,18 @@ public class ProjectService : IProjectService
         {
             _logger.LogWarning("Attempt to update management type for non-existent project {ProjectId}", projectId);
             throw new ProjectNotFoundException(projectId);
+        }
+
+        // Authorization check
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+        
+        if (!isAdmin)
+        {
+            if (!isClient || project.ClientId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to update this project management type");
+            }
         }
         
         if (!Enum.TryParse<ProjectManagementType>(managementType, ignoreCase: true, out var newManagementType))

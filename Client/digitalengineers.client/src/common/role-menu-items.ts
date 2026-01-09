@@ -8,31 +8,31 @@ export const MENU_ITEMS_ADMIN: MenuItemType[] = [
 		label: 'Navigation',
 		isTitle: true,
 	},
-	{
-		key: 'dashboards',
-		label: 'Dashboards',
-		isTitle: false,
-		icon: 'uil-home-alt',
-		children: [
-			{
-				key: 'ds-analytics',
-				label: 'Analytics',
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-crm',
-				label: 'CRM',
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			},
-		],
-	},
-	{
-		key: 'management',
-		label: 'Management',
-		isTitle: true,
-	},
+	//{
+	//	key: 'dashboards',
+	//	label: 'Dashboards',
+	//	isTitle: false,
+	//	icon: 'uil-home-alt',
+	//	children: [
+	//		{
+	//			key: 'ds-analytics',
+	//			label: 'Analytics',
+	//			url: '/dashboard/analytics',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'ds-crm',
+	//			label: 'CRM',
+	//			url: '/dashboard/crm',
+	//			parentKey: 'dashboards',
+	//		},
+	//	],
+	//},
+	//{
+	//	key: 'management',
+	//	label: 'Management',
+	//	isTitle: true,
+	//},
 	{
 		key: 'users',
 		label: 'Users Management',
@@ -135,31 +135,31 @@ export const MENU_ITEMS_SUPERADMIN: MenuItemType[] = [
 		label: 'Navigation',
 		isTitle: true,
 	},
-	{
-		key: 'dashboards',
-		label: 'Dashboards',
-		isTitle: false,
-		icon: 'uil-home-alt',
-		children: [
-			{
-				key: 'ds-analytics',
-				label: 'Analytics',
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ds-crm',
-				label: 'CRM',
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			},
-		],
-	},
-	{
-		key: 'management',
-		label: 'Management',
-		isTitle: true,
-	},
+	//{
+	//	key: 'dashboards',
+	//	label: 'Dashboards',
+	//	isTitle: false,
+	//	icon: 'uil-home-alt',
+	//	children: [
+	//		{
+	//			key: 'ds-analytics',
+	//			label: 'Analytics',
+	//			url: '/dashboard/analytics',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'ds-crm',
+	//			label: 'CRM',
+	//			url: '/dashboard/crm',
+	//			parentKey: 'dashboards',
+	//		},
+	//	],
+	//},
+	//{
+	//	key: 'management',
+	//	label: 'Management',
+	//	isTitle: true,
+	//},
 	{
 		key: 'users',
 		label: 'Users Management',
@@ -269,49 +269,49 @@ export const MENU_ITEMS_CLIENT: MenuItemType[] = [
 		label: 'Navigation',
 		isTitle: true,
 	},
-	{
-		key: 'dashboards',
-		label: 'Dashboards',
-		isTitle: false,
-		icon: 'uil-home-alt',
-		expanded: true,
-		children: [
-			{
-				key: 'analytics',
-				label: 'Analytics',
-				isTitle: false,
-				url: '/dashboard/analytics',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'ecommerce',
-				label: 'Ecommerce',
-				isTitle: false,
-				url: '/dashboard/ecommerce',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'project',
-				label: 'Projects',
-				isTitle: false,
-				url: '/dashboard/project',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'crm',
-				label: 'CRM',
-				isTitle: false,
-				url: '/dashboard/crm',
-				parentKey: 'dashboards',
-			}
-		]
-	},
+	//{
+	//	key: 'dashboards',
+	//	label: 'Dashboards',
+	//	isTitle: false,
+	//	icon: 'uil-home-alt',
+	//	expanded: true,
+	//	children: [
+	//		{
+	//			key: 'analytics',
+	//			label: 'Analytics',
+	//			isTitle: false,
+	//			url: '/dashboard/analytics',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'ecommerce',
+	//			label: 'Ecommerce',
+	//			isTitle: false,
+	//			url: '/dashboard/ecommerce',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'project',
+	//			label: 'Projects',
+	//			isTitle: false,
+	//			url: '/dashboard/project',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'crm',
+	//			label: 'CRM',
+	//			isTitle: false,
+	//			url: '/dashboard/crm',
+	//			parentKey: 'dashboards',
+	//		}
+	//	]
+	//},
 	
-	{
-		key: 'projects',
-		label: 'Management',
-		isTitle: true,
-	},
+	//{
+	//	key: 'projects',
+	//	label: 'Management',
+	//	isTitle: true,
+	//},
 	{
 		key: 'my-projects',
 		label: 'Projects',
@@ -388,29 +388,29 @@ export const MENU_ITEMS_PROVIDER: MenuItemType[] = [
 		label: 'Navigation',
 		isTitle: true,
 	},
-	{
-		key: 'dashboards',
-		label: 'Dashboards',
-		isTitle: false,
-		icon: 'uil-home-alt',
-		expanded: true,
-		children: [
-			{
-				key: 'project',
-				label: 'Projects',
-				isTitle: false,
-				url: '/dashboard/project',
-				parentKey: 'dashboards',
-			},
-			{
-				key: 'wallet',
-				label: 'Wallet',
-				isTitle: false,
-				url: '/dashboard/e-wallet',
-				parentKey: 'dashboards',
-			}
-		]
-	},
+	//{
+	//	key: 'dashboards',
+	//	label: 'Dashboards',
+	//	isTitle: false,
+	//	icon: 'uil-home-alt',
+	//	expanded: true,
+	//	children: [
+	//		{
+	//			key: 'project',
+	//			label: 'Projects',
+	//			isTitle: false,
+	//			url: '/dashboard/project',
+	//			parentKey: 'dashboards',
+	//		},
+	//		{
+	//			key: 'wallet',
+	//			label: 'Wallet',
+	//			isTitle: false,
+	//			url: '/dashboard/e-wallet',
+	//			parentKey: 'dashboards',
+	//		}
+	//	]
+	//},
 	{
 		key: 'work',
 		label: 'My Work',
