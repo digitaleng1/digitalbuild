@@ -9,7 +9,7 @@ export interface AdminBidListItem {
     projectName: string;
     projectStatus: ProjectStatus;
     projectBudget: number;
-    startDate: string | null;
+    latestActivityDate: string | null;
     pendingBidsCount: number;
     respondedBidsCount: number;
     acceptedBidsCount: number;

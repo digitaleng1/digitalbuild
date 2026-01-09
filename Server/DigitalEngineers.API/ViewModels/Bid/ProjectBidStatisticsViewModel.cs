@@ -6,7 +6,7 @@ public class ProjectBidStatisticsViewModel
     public string ProjectName { get; set; } = string.Empty;
     public string ProjectStatus { get; set; } = string.Empty;
     public decimal ProjectBudget { get; set; }
-    public DateTime? StartDate { get; set; }
+    public DateTime? LatestActivityDate { get; set; }
     public int PendingBidsCount { get; set; }
     public int RespondedBidsCount { get; set; }
     public int AcceptedBidsCount { get; set; }

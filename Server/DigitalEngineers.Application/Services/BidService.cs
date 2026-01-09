@@ -942,9 +942,9 @@ public class BidService : IBidService
     {
         var query = _context.Projects
             .Include(p => p.BidRequests)
-            .Where(p => p.BidRequests.Any()); // Only projects with bid requests
+                .ThenInclude(br => br.Response)
+            .Where(p => p.BidRequests.Any());
 
-        // If clientId is provided - filter by ClientManaged projects of that client
         if (!string.IsNullOrEmpty(clientId))
         {
             query = query.Where(p => p.ClientId == clientId 
@@ -958,12 +958,17 @@ public class BidService : IBidService
                 ProjectName = p.Name,
                 ProjectStatus = p.Status.ToString(),
                 ProjectBudget = p.Budget,
-                StartDate = p.StartDate,
+                LatestActivityDate = p.BidRequests
+                    .Where(br => br.Response != null)
+                    .Select(br => br.Response!.CreatedAt)
+                    .OrderByDescending(d => d)
+                    .FirstOrDefault(),
                 PendingBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Pending),
                 RespondedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Responded),
                 AcceptedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Accepted),
                 RejectedBidsCount = p.BidRequests.Count(br => br.Status == BidRequestStatus.Rejected)
             })
+            .OrderByDescending(s => s.LatestActivityDate)
             .ToListAsync(cancellationToken);
 
         return statistics;

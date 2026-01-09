@@ -106,14 +106,14 @@ const columns: ColumnDef<AdminBidListItem>[] = [
     },
     {
         header: 'LATEST ACTIVITY',
-        accessorKey: 'startDate',
+        accessorKey: 'latestActivityDate',
         enableSorting: true,
         cell: ({ row }) => {
-            if (!row.original.startDate) {
-                return <span className="text-muted">—</span>;
+            if (!row.original.latestActivityDate) {
+                return <span className="text-muted">No responses yet</span>;
             }
             
-            const date = new Date(row.original.startDate);
+            const date = new Date(row.original.latestActivityDate);
             const now = new Date();
             const daysAgo = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
             
