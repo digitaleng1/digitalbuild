@@ -1654,4 +1654,54 @@ public class ProjectService : IProjectService
         var superAdmins = await _userManager.GetUsersInRoleAsync("SuperAdmin");
         return admins.Union(superAdmins).ToList();
     }
+
+    public async Task<ProjectFileDto> CopyTaskFileToProjectAsync(
+        int projectId,
+        int taskFileId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects.FindAsync([projectId], cancellationToken);
+        if (project == null)
+            throw new ProjectNotFoundException(projectId);
+
+        var taskFile = await _context.Set<TaskAttachment>()
+            .Include(tf => tf.Task)
+            .FirstOrDefaultAsync(tf => tf.Id == taskFileId, cancellationToken);
+
+        if (taskFile == null)
+            throw new ValidationException($"Task file with ID {taskFileId} not found");
+
+        if (taskFile.Task.ProjectId != projectId)
+            throw new ValidationException("Task file does not belong to this project");
+
+        var newFileKey = await _fileStorageService.CopyFileAsync(
+            taskFile.FileUrl,
+            $"projects/{projectId}/files/",
+            cancellationToken);
+
+        var projectFile = new ProjectFile
+        {
+            ProjectId = projectId,
+            FileName = taskFile.FileName,
+            FileUrl = newFileKey,
+            FileSize = taskFile.FileSize,
+            ContentType = taskFile.ContentType,
+            UploadedBy = userId,
+            UploadedAt = DateTime.UtcNow
+        };
+
+        _context.Set<ProjectFile>().Add(projectFile);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new ProjectFileDto
+        {
+            Id = projectFile.Id,
+            FileName = projectFile.FileName,
+            FileUrl = _fileStorageService.GetPresignedUrl(projectFile.FileUrl),
+            FileSize = projectFile.FileSize,
+            ContentType = projectFile.ContentType,
+            UploadedAt = projectFile.UploadedAt
+        };
+    }
 }

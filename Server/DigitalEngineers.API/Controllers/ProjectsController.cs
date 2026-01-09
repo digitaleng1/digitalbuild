@@ -446,4 +446,34 @@ public class ProjectsController : ControllerBase
         var viewModels = _mapper.Map<IEnumerable<MentionableUserViewModel>>(users);
         return Ok(viewModels);
     }
+
+    /// <summary>
+    /// Copy task attachment file to project files
+    /// </summary>
+    [HttpPost("{projectId}/copy-task-file/{taskFileId}")]
+    [ProducesResponseType(typeof(ProjectFileViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ProjectFileViewModel>> CopyTaskFileToProject(
+        int projectId,
+        int taskFileId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        
+        var projectFile = await _projectService.CopyTaskFileToProjectAsync(
+            projectId, 
+            taskFileId, 
+            userId, 
+            cancellationToken);
+        
+        var viewModel = _mapper.Map<ProjectFileViewModel>(projectFile);
+        return Ok(viewModel);
+    }
 }

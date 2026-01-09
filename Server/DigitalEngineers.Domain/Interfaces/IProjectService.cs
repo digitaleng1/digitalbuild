@@ -132,4 +132,18 @@ public interface IProjectService
     /// <returns>List of mentionable users</returns>
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
     Task<IEnumerable<MentionableUserDto>> GetProjectMentionableUsersAsync(int projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Copies task attachment file to project files
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="taskFileId">Task attachment ID to copy</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Created project file</returns>
+    Task<ProjectFileDto> CopyTaskFileToProjectAsync(
+        int projectId, 
+        int taskFileId, 
+        string userId,
+        CancellationToken cancellationToken = default);
 }

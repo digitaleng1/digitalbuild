@@ -14,12 +14,14 @@ import type {
   TaskCommentViewModel,
   TaskAttachmentViewModel
 } from '@/types/task';
-import type { ProjectSpecialistDto } from '@/types/project';
+import type { ProjectSpecialistDto, ProjectFile } from '@/types/project';
+import type { MentionableUser } from '@/types/project-comment';
 import UserSelector from './UserSelector';
 import ParentTaskSelector from './ParentTaskSelector';
 import LabelSelector from './LabelSelector';
 import TaskCommentList from './TaskCommentList';
 import TaskCommentForm from './TaskCommentForm';
+import ForwardFileModal from '@/components/modals/ForwardFileModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuthContext } from '@/common/context/useAuthContext';
 import CardTitle from '@/components/CardTitle';
@@ -63,10 +65,16 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingFiles, setExistingFiles] = useState<TaskAttachmentViewModel[]>([]);
   const [comments, setComments] = useState<TaskCommentViewModel[]>([]);
+  const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Forward file modal state
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [selectedFileForForward, setSelectedFileForForward] = useState<ProjectFile | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -105,15 +113,17 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
   const loadData = async () => {
     setIsLoadingData(true);
     try {
-      const [members, labels, tasks] = await Promise.all([
+      const [members, labels, tasks, users] = await Promise.all([
         projectService.getProjectTeamMembers(projectId),
         taskService.getLabelsByProject(projectId),
-        taskService.getTasksForSelection(projectId)
+        taskService.getTasksForSelection(projectId),
+        projectService.getProjectMentionableUsers(projectId)
       ]);
       
       setProjectMembers(members || []);
       setTaskLabels(labels || []);
       setParentTasks((tasks || []).filter(t => mode === 'edit' && taskId ? t.id !== taskId : true));
+      setMentionableUsers(users || []);
 
       // Load task data if in edit mode (without files and comments)
       if (mode === 'edit' && taskId) {
@@ -137,6 +147,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       setProjectMembers([]);
       setTaskLabels([]);
       setParentTasks([]);
+      setMentionableUsers([]);
     } finally {
       setIsLoadingData(false);
     }
@@ -283,6 +294,43 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       showError('Error', err.response?.data?.message || 'Failed to upload files');
     }
   }, [taskId, showSuccess, showError]);
+
+  const handleForwardClick = useCallback(async (file: TaskAttachmentViewModel) => {
+    try {
+      setIsConverting(true);
+      
+      const projectFile = await projectService.copyTaskFileToProject(projectId, file.id);
+      
+      setSelectedFileForForward(projectFile);
+      setShowForwardModal(true);
+    } catch (error) {
+      console.error('Failed to prepare task file for forwarding:', error);
+      showError('Error', 'Failed to prepare file for forwarding');
+    } finally {
+      setIsConverting(false);
+    }
+  }, [projectId, showError]);
+
+  const handleForwardFile = useCallback(async (
+    fileId: number, 
+    recipientId: string, 
+    message: string
+  ) => {
+    try {
+      await projectService.addProjectComment(projectId, {
+        content: message || 'Sharing task file with you',
+        mentionedUserIds: [recipientId],
+        projectFileIds: [fileId]
+      });
+      
+      showSuccess('File Forwarded', 'Task file has been shared successfully');
+      setShowForwardModal(false);
+      setSelectedFileForForward(null);
+    } catch (error) {
+      console.error('Failed to forward task file:', error);
+      showError('Forward Failed', 'Failed to share the task file');
+    }
+  }, [projectId, showSuccess, showError]);
 
   const getPriorityBadge = (priority: TaskPriority) => {
     const badges = {
@@ -558,6 +606,24 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                                 <p className="mb-0">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</p>
                               </Col>
                               <Col className="col-auto">
+                                {/* Forward button */}
+                                {mentionableUsers.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleForwardClick(file)}
+                                    className="btn btn-link btn-lg text-primary p-0 me-2"
+                                    disabled={isConverting}
+                                    title="Forward to client"
+                                  >
+                                    {isConverting ? (
+                                      <span className="spinner-border spinner-border-sm" />
+                                    ) : (
+                                      <Icon icon="mdi:share-variant" width={20} />
+                                    )}
+                                  </button>
+                                )}
+                                
+                                {/* Delete button */}
                                 <button
                                   type="button"
                                   onClick={() => handleFileDelete(file.id)}
@@ -668,6 +734,18 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
           </div>
         </Col>
       </Row>
+
+      {/* Forward File Modal */}
+      <ForwardFileModal
+        show={showForwardModal}
+        onHide={() => {
+          setShowForwardModal(false);
+          setSelectedFileForForward(null);
+        }}
+        file={selectedFileForForward}
+        mentionableUsers={mentionableUsers}
+        onForward={handleForwardFile}
+      />
     </Form>
   );
 };

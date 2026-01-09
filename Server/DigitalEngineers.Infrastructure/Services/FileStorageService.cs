@@ -369,4 +369,28 @@ public class FileStorageService : IFileStorageService
         // Implement your sanitization logic here (e.g., remove invalid characters, etc.)
         return fileName;
     }
+
+    public async Task<string> CopyFileAsync(
+        string sourceKey,
+        string destinationPrefix,
+        CancellationToken cancellationToken = default)
+    {
+        var fileName = Path.GetFileName(sourceKey);
+        var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
+        var destinationKey = $"{destinationPrefix.TrimEnd('/')}/{uniqueFileName}";
+
+        var copyRequest = new CopyObjectRequest
+        {
+            SourceBucket = _settings.BucketName,
+            SourceKey = sourceKey,
+            DestinationBucket = _settings.BucketName,
+            DestinationKey = destinationKey
+        };
+
+        await _s3Client.CopyObjectAsync(copyRequest, cancellationToken);
+        
+        _logger.LogInformation("File copied from {SourceKey} to {DestinationKey}", sourceKey, destinationKey);
+        
+        return destinationKey;
+    }
 }

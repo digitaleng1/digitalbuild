@@ -14,4 +14,5 @@ public interface IFileStorageService
     Task<Stream> DownloadFileAsync(string fileUrl, CancellationToken cancellationToken = default);
     Task<bool> EnsureBucketExistsAsync(CancellationToken cancellationToken = default);
     string GetPresignedUrl(string fileUrl, int expirationMinutes = 0);
+    Task<string> CopyFileAsync(string sourceKey, string destinationPrefix, CancellationToken cancellationToken = default);
 }

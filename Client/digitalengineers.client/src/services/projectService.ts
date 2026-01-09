@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto, ProjectSpecialistDto } from '@/types/project';
+import type { CreateProjectRequest, ProjectDto, ProjectDetailsDto, ProjectSpecialistDto, ProjectFile } from '@/types/project';
 import type { ProjectCommentViewModel, CreateProjectCommentRequest, UpdateProjectCommentRequest, MentionableUser } from '@/types/project-comment';
 
 class ProjectService {
@@ -156,6 +156,16 @@ class ProjectService {
 	async getProjectMentionableUsers(projectId: number): Promise<MentionableUser[]> {
 		const data = await httpClient.get<MentionableUser[]>(`/api/projects/${projectId}/mentionable-users`);
 		return data as MentionableUser[];
+	}
+
+	/**
+	 * Copy task attachment file to project files
+	 */
+	async copyTaskFileToProject(projectId: number, taskFileId: number): Promise<ProjectFile> {
+		return await httpClient.post<ProjectFile>(
+			`/api/projects/${projectId}/copy-task-file/${taskFileId}`,
+			{}
+		);
 	}
 }
 
