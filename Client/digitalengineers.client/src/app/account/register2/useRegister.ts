@@ -72,7 +72,7 @@ export default function useRegister() {
                 });
 
                 // Redirect based on role
-                const redirectPath = role === 'Provider' ? '/specialist/dashboard' : '/client/dashboard';
+                const redirectPath = role === 'Provider' ? '/specialist/projects' : '/client/projects';
                 navigate(redirectPath);
             }
         } catch (e: any) {

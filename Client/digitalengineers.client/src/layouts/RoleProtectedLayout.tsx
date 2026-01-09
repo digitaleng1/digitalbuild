@@ -21,11 +21,11 @@ const RoleProtectedLayout = ({ allowedRoles }: RoleProtectedLayoutProps) => {
         let redirectPath = '/';
 
         if (primaryRole === 'Admin' || primaryRole === 'SuperAdmin') {
-            redirectPath = '/admin/dashboard';
+            redirectPath = '/admin/projects';
         } else if (primaryRole === 'Provider') {
-            redirectPath = '/specialist/dashboard';
+            redirectPath = '/specialist/projects';
         } else if (primaryRole === 'Client') {
-            redirectPath = '/client/dashboard';
+            redirectPath = '/client/projects';
         }
 
         return <Navigate to={redirectPath} replace />;

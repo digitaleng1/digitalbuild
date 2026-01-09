@@ -131,7 +131,7 @@ public class EmailService : IEmailService
         {
             { "UserName", userName },
             { "UserRole", userRole },
-            { "DashboardUrl", $"{GetBaseUrl()}/dashboard" }
+            { "DashboardUrl", $"{GetBaseUrl()}/projects" }
         };
 
         await SendTemplatedEmailAsync(

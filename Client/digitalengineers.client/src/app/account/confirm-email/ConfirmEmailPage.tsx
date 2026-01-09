@@ -47,10 +47,10 @@ const ConfirmEmailPage = () => {
 				const primaryRole = tokenResponse.user.roles[0];
 				const redirectPath =
 					primaryRole === 'Admin' || primaryRole === 'SuperAdmin'
-						? '/admin/dashboard'
+						? '/admin/projects'
 						: primaryRole === 'Provider'
-						? '/specialist/dashboard'
-						: '/client/dashboard';
+							? '/specialist/projects'
+							: '/client/projects';
 
 				setTimeout(() => navigate(redirectPath), 2000);
 			} catch (err: any) {
@@ -85,7 +85,7 @@ const ConfirmEmailPage = () => {
 					<div className="alert alert-success" role="alert">
 						<i className="mdi mdi-check-circle me-2"></i>
 						<h4 className="alert-heading">Email confirmed successfully!</h4>
-						<p className="mb-0">Redirecting to your dashboard...</p>
+						<p className="mb-0">Redirecting to your control panel...</p>
 					</div>
 				)}
 

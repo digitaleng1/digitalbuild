@@ -5,6 +5,7 @@ import AccountWrapper from '../AccountWrapper';
 import { Link } from 'react-router';
 import useRegister from './useRegister';
 import RoleSelector from '@/components/auth/RoleSelector';
+import Auth0RegisterButton from '@/components/auth/Auth0RegisterButton';
 import { useState } from 'react';
 
 export type UserData = {
@@ -44,6 +45,12 @@ const RegisterForm = () => {
 				<p className="text-muted mb-4">
 					{t("Don't have an account? Create your account, it takes less than a minute")}
 				</p>
+			</div>
+
+			<Auth0RegisterButton />
+
+			<div className="text-center my-3">
+				<p className="text-muted">{t('Or sign up with email')}</p>
 			</div>
 
 			<Form

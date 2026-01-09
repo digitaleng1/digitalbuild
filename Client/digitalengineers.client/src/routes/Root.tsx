@@ -2,7 +2,7 @@ import { Navigate } from 'react-router';
 
 const Root = () => {
     const getRootUrl = () => {
-        const url = 'dashboard/ecommerce';
+        const url = 'projects';
         return url;
     };
 

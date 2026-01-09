@@ -5,15 +5,21 @@ import { useAuthContext } from '@/common/context/useAuthContext';
 import { authApi } from '@/common/api';
 import { useNotificationContext } from '@/common/context';
 import { useNavigate } from 'react-router';
+import RoleSelectionModal from './RoleSelectionModal';
 
-const Auth0LoginButton = () => {
+const Auth0RegisterButton = () => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+    const [showRoleModal, setShowRoleModal] = useState(false);
     const { saveSession } = useAuthContext();
     const { showNotification } = useNotificationContext();
     const navigate = useNavigate();
 
-    const handleAuth0Login = async () => {
+    const handleClick = () => {
+        setShowRoleModal(true);
+    };
+
+    const handleRoleConfirm = async (role: 'Client' | 'Provider') => {
         setLoading(true);
         try {
             if (typeof window.auth0 === 'undefined') {
@@ -46,6 +52,7 @@ const Auth0LoginButton = () => {
             const tokenResponse = await authApi.externalLogin({
                 provider: 'Auth0',
                 idToken: idTokenClaims.__raw,
+                role: role,
             });
 
             saveSession(
@@ -55,20 +62,22 @@ const Auth0LoginButton = () => {
                 tokenResponse.expiresAt
             );
 
+            setShowRoleModal(false);
+
             showNotification({
-                message: t('Successfully logged in with Auth0'),
+                message: t('Successfully registered with Auth0'),
                 type: 'success',
             });
 
             const primaryRole = tokenResponse.user.roles[0];
-            const redirectPath = primaryRole === 'Provider' 
-                ? '/specialist/projects' 
+            const redirectPath = primaryRole === 'Provider'
+                ? '/specialist/projects'
                 : primaryRole === 'Admin' || primaryRole === 'SuperAdmin'
                     ? '/admin/projects'
                     : '/client/projects';
             navigate(redirectPath);
         } catch (error: unknown) {
-            let errorMessage = t('Auth0 login failed');
+            let errorMessage = t('Auth0 registration failed');
 
             if (error instanceof Error) {
                 if ('error' in error) {
@@ -99,16 +108,25 @@ const Auth0LoginButton = () => {
     };
 
     return (
-        <Button
-            variant="outline-secondary"
-            className="w-100 mb-2"
-            onClick={handleAuth0Login}
-            disabled={loading}
-        >
-            <i className="mdi mdi-shield-lock-outline me-2"></i>
-            {loading ? t('Loading...') : t('Sign in with Auth0')}
-        </Button>
+        <>
+            <Button
+                variant="outline-secondary"
+                className="w-100 mb-2"
+                onClick={handleClick}
+                disabled={loading}
+            >
+                <i className="mdi mdi-shield-lock-outline me-2"></i>
+                {t('Sign up with Auth0')}
+            </Button>
+
+            <RoleSelectionModal
+                show={showRoleModal}
+                onHide={() => setShowRoleModal(false)}
+                onConfirm={handleRoleConfirm}
+                loading={loading}
+            />
+        </>
     );
 };
 
-export default Auth0LoginButton;
+export default Auth0RegisterButton;

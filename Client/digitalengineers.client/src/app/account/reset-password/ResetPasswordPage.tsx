@@ -62,10 +62,10 @@ const ResetPasswordPage = () => {
 
             const redirectPath =
                 tokenResponse.user.roles[0] === 'Provider'
-                    ? '/specialist/dashboard'
+                    ? '/specialist/projects'
                     : tokenResponse.user.roles[0] === 'Admin'
-                      ? '/admin/dashboard'
-                      : '/client/dashboard';
+                        ? '/admin/projects'
+                        : '/client/projects';
 
             setTimeout(() => navigate(redirectPath), 2000);
         } catch (err) {
@@ -109,7 +109,7 @@ const ResetPasswordPage = () => {
                                 <Card.Body className="p-4">
                                     <Alert variant="success">
                                         <h4>Password Changed Successfully!</h4>
-                                        <p>You are now logged in. Redirecting to your dashboard...</p>
+                                        <p>You are now logged in. Redirecting...</p>
                                     </Alert>
                                 </Card.Body>
                             </Card>

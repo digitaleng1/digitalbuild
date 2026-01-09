@@ -40,7 +40,7 @@ const InvitationAcceptPage = () => {
 
 				// Redirect to specialist dashboard after 2 seconds
 				setTimeout(() => {
-					navigate('/specialist/dashboard');
+					navigate('/specialist/projects');
 				}, 2000);
 			} catch (error: any) {
 				setStatus('error');
@@ -74,7 +74,7 @@ const InvitationAcceptPage = () => {
 										<i className="mdi mdi-check-circle me-2"></i>
 										<strong>Welcome to Novobid!</strong>
 										<br />
-										Your account has been activated. Redirecting to dashboard...
+										Your account has been activated. Redirecting...
 									</Alert>
 								)}
 

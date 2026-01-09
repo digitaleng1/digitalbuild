@@ -64,7 +64,11 @@ public class AuthController : ControllerBase
         [FromBody] ExternalLoginViewModel viewModel,
         CancellationToken cancellationToken)
     {
-        var response = await _authService.ExternalLoginAsync(viewModel.Provider, viewModel.IdToken, cancellationToken);
+        var response = await _authService.ExternalLoginAsync(
+            viewModel.Provider, 
+            viewModel.IdToken, 
+            viewModel.Role,
+            cancellationToken);
         var result = _mapper.Map<TokenResponseViewModel>(response);
         return Ok(result);
     }

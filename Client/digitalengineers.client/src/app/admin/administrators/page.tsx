@@ -18,7 +18,7 @@ const AdministratorsPage = () => {
     }, []);
 
     if (userRole !== 'SuperAdmin') {
-        return <Navigate to="/admin/dashboard/analytics" replace />;
+        return <Navigate to="/admin/projects" replace />;
     }
 
     return (

@@ -208,7 +208,7 @@ public class AuthService : IAuthService
         return await GenerateTokenResponse(user, cancellationToken);
     }
 
-    public async Task<TokenData> ExternalLoginAsync(string provider, string idToken, CancellationToken cancellationToken = default)
+    public async Task<TokenData> ExternalLoginAsync(string provider, string idToken, string? role = null, CancellationToken cancellationToken = default)
     {
         if (provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
         {
@@ -216,7 +216,7 @@ public class AuthService : IAuthService
         }
         else if (provider.Equals("Auth0", StringComparison.OrdinalIgnoreCase))
         {
-            return await HandleAuth0Login(idToken, cancellationToken);
+            return await HandleAuth0Login(idToken, role, cancellationToken);
         }
 
         throw new NotSupportedException($"Provider {provider} is not supported");
@@ -449,7 +449,7 @@ public class AuthService : IAuthService
         }
     }
 
-    private async Task<TokenData> HandleAuth0Login(string idToken, CancellationToken cancellationToken)
+    private async Task<TokenData> HandleAuth0Login(string idToken, string? role, CancellationToken cancellationToken)
     {
         try
         {
@@ -495,6 +495,13 @@ public class AuthService : IAuthService
 
             if (user == null)
             {
+                // Validate and determine effective role (default to Client for backwards compatibility)
+                var effectiveRole = role ?? "Client";
+                if (effectiveRole != "Client" && effectiveRole != "Provider")
+                {
+                    effectiveRole = "Client";
+                }
+
                 user = new ApplicationUser
                 {
                     UserName = email,
@@ -510,26 +517,48 @@ public class AuthService : IAuthService
                     throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
 
-                await _userManager.AddToRoleAsync(user, "Client");
+                await _userManager.AddToRoleAsync(user, effectiveRole);
 
-                var client = new Client
+                // Create appropriate entity based on role
+                if (effectiveRole == "Client")
                 {
-                    UserId = user.Id,
-                    CompanyName = null,
-                    Industry = null,
-                    Website = null,
-                    CompanyDescription = null,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                    var client = new Client
+                    {
+                        UserId = user.Id,
+                        CompanyName = null,
+                        Industry = null,
+                        Website = null,
+                        CompanyDescription = null,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-                _context.Set<Client>().Add(client);
+                    _context.Set<Client>().Add(client);
+                }
+                else if (effectiveRole == "Provider")
+                {
+                    var specialist = new Specialist
+                    {
+                        UserId = user.Id,
+                        YearsOfExperience = 0,
+                        HourlyRate = null,
+                        Specialization = null,
+                        IsAvailable = true,
+                        Rating = 0,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Set<Specialist>().Add(specialist);
+                }
+
                 await _context.SaveChangesAsync(cancellationToken);
             }
             else if (!user.IsActive)
             {
                 throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(email);
             }
+            // Note: For existing users, the role parameter is ignored (security)
 
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);

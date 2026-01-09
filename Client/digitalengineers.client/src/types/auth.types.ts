@@ -36,6 +36,7 @@ export interface RefreshTokenDto {
 export interface ExternalLoginDto {
     provider: 'Google' | 'Auth0';
     idToken: string;
+    role?: 'Client' | 'Provider';
 }
 
 export interface ApiErrorResponse {
