@@ -33,6 +33,7 @@ public class EmailBuilderFactory
             EmailTemplateType.AccountActivation => _serviceProvider.GetRequiredService<AccountActivationEmailBuilder>(),
             EmailTemplateType.SpecialistInvitation => _serviceProvider.GetRequiredService<SpecialistInvitationEmailBuilder>(),
             EmailTemplateType.AdminWelcome => _serviceProvider.GetRequiredService<AdminWelcomeEmailBuilder>(),
+            EmailTemplateType.ClientWelcome => _serviceProvider.GetRequiredService<ClientWelcomeEmailBuilder>(),
             
             // Project
             EmailTemplateType.ProjectCreated => _serviceProvider.GetRequiredService<ProjectCreatedEmailBuilder>(),

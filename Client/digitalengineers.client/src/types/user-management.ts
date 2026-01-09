@@ -18,3 +18,15 @@ export interface CreateAdminRequest {
     password: string;
     phoneNumber?: string;
 }
+
+export interface CreateClientRequest {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    phoneNumber?: string;
+    companyName?: string;
+    industry?: string;
+    website?: string;
+    companyDescription?: string;
+}

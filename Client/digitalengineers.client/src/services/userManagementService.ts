@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { UserManagement, CreateAdminRequest } from '@/types/user-management';
+import type { UserManagement, CreateAdminRequest, CreateClientRequest } from '@/types/user-management';
 
 const API_URL = '/api/usermanagement';
 
@@ -15,6 +15,11 @@ export const userManagementService = {
 
     createAdmin: async (data: CreateAdminRequest): Promise<UserManagement> => {
         const result = await httpClient.post<UserManagement>(`${API_URL}/admin`, data);
+        return result as UserManagement;
+    },
+
+    createClient: async (data: CreateClientRequest): Promise<UserManagement> => {
+        const result = await httpClient.post<UserManagement>(`${API_URL}/client`, data);
         return result as UserManagement;
     },
 };

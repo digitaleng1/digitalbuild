@@ -12,6 +12,7 @@ public enum EmailTemplateType
     AccountActivation,
     SpecialistInvitation,
     AdminWelcome,
+    ClientWelcome,
     
     // Project
     ProjectCreated,

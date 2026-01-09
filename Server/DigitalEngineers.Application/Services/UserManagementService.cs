@@ -152,4 +152,84 @@ public class UserManagementService : IUserManagementService
             LicenseStatus = null
         };
     }
+
+    public async Task<UserManagementDto> CreateClientAsync(CreateClientDto dto, CancellationToken cancellationToken = default)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+        {
+            throw new InvalidOperationException("User with this email already exists");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        
+        try
+        {
+            var user = new ApplicationUser
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                PhoneNumber = dto.PhoneNumber,
+                EmailConfirmed = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create client user: {errors}");
+            }
+
+            await _userManager.AddToRoleAsync(user, UserRoles.Client);
+
+            var client = new Infrastructure.Entities.Client
+            {
+                UserId = user.Id,
+                CompanyName = dto.CompanyName,
+                Industry = dto.Industry,
+                Website = dto.Website,
+                CompanyDescription = dto.CompanyDescription,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Clients.Add(client);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            await _emailService.SendClientWelcomeEmailAsync(
+                dto.Email,
+                $"{dto.FirstName} {dto.LastName}",
+                dto.Email,
+                dto.Password,
+                cancellationToken);
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new UserManagementDto
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePictureUrl = null,
+                Roles = roles,
+                IsActive = user.IsActive,
+                LastActive = user.LastActive,
+                CreatedAt = user.CreatedAt,
+                LicenseStatus = null
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }
