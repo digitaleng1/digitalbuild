@@ -9,18 +9,28 @@ import { useProjectWizard } from './ProjectWizardContext';
 import FileUploader from '@/components/FileUploader';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import ManagementTypeSelectionModal from './ManagementTypeSelectionModal';
+import ClientSelector from './ClientSelector';
 import { ProjectManagementType } from '@/types/project';
+import { useAuthContext } from '@/common/context/useAuthContext';
 
 // styles
 import 'easymde/dist/easymde.min.css';
 
 const Step3DetailsDocuments = () => {
 	const { previousStep } = useWizard();
-	const { formData, isSubmitting, submitProject } = useProjectWizard();
+	const { formData, isSubmitting, submitProject, updateFormData } = useProjectWizard();
 	const [files, setFiles] = useState<File[]>(formData.files);
 	const [thumbnail, setThumbnail] = useState<File | null>(formData.thumbnail);
 	const [showManagementTypeModal, setShowManagementTypeModal] = useState(false);
 	const [pendingSubmitData, setPendingSubmitData] = useState<Record<string, string> | null>(null);
+	
+	// Admin role check
+	const { hasAnyRole } = useAuthContext();
+	const isAdmin = hasAnyRole(['Admin', 'SuperAdmin']);
+	const [selectedClientId, setSelectedClientId] = useState<string | null>(
+		formData.clientId || null
+	);
+	const [clientError, setClientError] = useState<string | null>(null);
 
 	const schema = useMemo(
 		() =>
@@ -39,10 +49,16 @@ const Step3DetailsDocuments = () => {
 
 	const handleSubmit = useCallback(
 		(values: Record<string, string>) => {
+			// Validate admin must select client
+			if (isAdmin && !selectedClientId) {
+				setClientError('Please select a client for this project');
+				return;
+			}
+			
 			setPendingSubmitData(values);
 			setShowManagementTypeModal(true);
 		},
-		[]
+		[isAdmin, selectedClientId]
 	);
 
 	const handleManagementTypeConfirm = useCallback(
@@ -57,9 +73,10 @@ const Step3DetailsDocuments = () => {
 				files,
 				thumbnail,
 				managementType,
+				clientId: isAdmin ? selectedClientId || undefined : undefined,
 			});
 		},
-		[pendingSubmitData, files, thumbnail, submitProject]
+		[pendingSubmitData, files, thumbnail, submitProject, isAdmin, selectedClientId]
 	);
 
 	const handleModalHide = useCallback(() => {
@@ -67,12 +84,27 @@ const Step3DetailsDocuments = () => {
 		setPendingSubmitData(null);
 	}, []);
 
+	const handleClientChange = useCallback((clientId: string | null) => {
+		setSelectedClientId(clientId);
+		updateFormData({ clientId: clientId || undefined });
+		if (clientError) setClientError(null);
+	}, [updateFormData, clientError]);
+
 	return (
 		<>
 			<Row>
 				<Col>
 					<RHForm onSubmit={handleSubmit} schema={schema} defaultValues={{ name: formData.name, description: formData.description }}>
-						<FormFields files={files} setFiles={setFiles} thumbnail={thumbnail} setThumbnail={setThumbnail} />
+						<FormFields 
+							files={files} 
+							setFiles={setFiles} 
+							thumbnail={thumbnail} 
+							setThumbnail={setThumbnail}
+							isAdmin={isAdmin}
+							selectedClientId={selectedClientId}
+							onClientChange={handleClientChange}
+							clientError={clientError}
+						/>
 					</RHForm>
 				</Col>
 			</Row>
@@ -92,11 +124,19 @@ const FormFields = ({
 	setFiles,
 	thumbnail,
 	setThumbnail,
+	isAdmin,
+	selectedClientId,
+	onClientChange,
+	clientError,
 }: {
 	files: File[];
 	setFiles: (files: File[]) => void;
 	thumbnail: File | null;
 	setThumbnail: (file: File | null) => void;
+	isAdmin: boolean;
+	selectedClientId: string | null;
+	onClientChange: (clientId: string | null) => void;
+	clientError: string | null;
 }) => {
 	const { previousStep } = useWizard();
 	const { isSubmitting } = useProjectWizard();
@@ -196,6 +236,28 @@ const FormFields = ({
 				value={files}
 				showFileList={true}
 			/>
+
+			{/* Client Selection - Admin Only */}
+			{isAdmin && (
+				<>
+					<hr className="my-4" />
+					<h5 className="mb-3">
+						<i className="mdi mdi-account-check me-1"></i>
+						Client Assignment
+					</h5>
+					<ClientSelector
+						value={selectedClientId || undefined}
+						onChange={onClientChange}
+						disabled={isSubmitting}
+						required={true}
+					/>
+					{clientError && (
+						<Alert variant="danger" className="mt-2">
+							{clientError}
+						</Alert>
+					)}
+				</>
+			)}
 
 			<Alert variant="info" className="mt-3 mb-3">
 				<i className="mdi mdi-information-outline me-1"></i>

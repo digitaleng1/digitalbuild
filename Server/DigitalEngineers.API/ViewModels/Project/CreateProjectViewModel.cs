@@ -47,4 +47,10 @@ public class CreateProjectViewModel
     public IFormFileCollection? Files { get; set; }
     
     public IFormFile? Thumbnail { get; set; }
+
+    /// <summary>
+    /// For Admin/SuperAdmin: assign project to specific client
+    /// Required when creating as admin
+    /// </summary>
+    public string? ClientId { get; set; }
 }

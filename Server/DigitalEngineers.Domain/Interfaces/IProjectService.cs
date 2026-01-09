@@ -146,4 +146,14 @@ public interface IProjectService
         int taskFileId, 
         string userId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Change project client (Admin/SuperAdmin only)
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="newClientId">New client user ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="InvalidOperationException">If client not found</exception>
+    Task ChangeProjectClientAsync(int projectId, string newClientId, CancellationToken cancellationToken = default);
 }

@@ -4,8 +4,10 @@ using DigitalEngineers.API.ViewModels.ProjectComment;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.ProjectComment;
 using DigitalEngineers.Domain.Interfaces;
+using DigitalEngineers.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace DigitalEngineers.API.Controllers;
@@ -17,20 +19,23 @@ public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
     private readonly IMapper _mapper;
+    private readonly ApplicationDbContext _context;
 
     public ProjectsController(
         IProjectService projectService,
-        IMapper mapper)
+        IMapper mapper,
+        ApplicationDbContext context)
     {
         _projectService = projectService;
         _mapper = mapper;
+        _context = context;
     }
 
     /// <summary>
     /// Create a new project with files
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Client")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ProjectViewModel), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -44,11 +49,39 @@ public class ProjectsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var clientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         
-        if (string.IsNullOrEmpty(clientId))
+        if (string.IsNullOrEmpty(currentUserId))
         {
             throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        var isAdmin = roles.Contains("Admin") || roles.Contains("SuperAdmin");
+        
+        string clientId;
+        
+        if (isAdmin)
+        {
+            // Admin creating project for client
+            if (string.IsNullOrEmpty(model.ClientId))
+            {
+                return BadRequest(new { message = "ClientId is required when creating project as admin" });
+            }
+            
+            // Verify client exists
+            var clientExists = await _context.Clients.AnyAsync(c => c.UserId == model.ClientId, cancellationToken);
+            if (!clientExists)
+            {
+                return BadRequest(new { message = "Client not found" });
+            }
+            
+            clientId = model.ClientId;
+        }
+        else
+        {
+            // Client creating their own project
+            clientId = currentUserId;
         }
 
         var dto = _mapper.Map<CreateProjectDto>(model);
@@ -90,6 +123,30 @@ public class ProjectsController : ControllerBase
             new { id = viewModel.Id },
             viewModel
         );
+    }
+
+    /// <summary>
+    /// Change project client (Admin/SuperAdmin only)
+    /// </summary>
+    [HttpPatch("{id}/client")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ChangeProjectClient(
+        int id,
+        [FromBody] ChangeProjectClientViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        await _projectService.ChangeProjectClientAsync(id, model.ClientId, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>

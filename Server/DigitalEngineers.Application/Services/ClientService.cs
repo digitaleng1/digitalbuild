@@ -153,6 +153,56 @@ public class ClientService : IClientService
         return _fileStorageService.GetPresignedUrl(s3Key);
     }
 
+    public async Task<List<ClientListDto>> GetClientListAsync(string? search = null, CancellationToken cancellationToken = default)
+    {
+        // Get users with Client role
+        var usersWithClientRole = _context.UserRoles
+            .Where(ur => _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == UserRoles.Client))
+            .Select(ur => ur.UserId);
+        
+        var query = from user in _context.Users
+                    join client in _context.Clients on user.Id equals client.UserId into clientJoin
+                    from client in clientJoin.DefaultIfEmpty()
+                    where user.IsActive && usersWithClientRole.Contains(user.Id)
+                    select new { User = user, Client = client };
+        
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(x =>
+                (x.User.FirstName != null && x.User.FirstName.ToLower().Contains(searchLower)) ||
+                (x.User.LastName != null && x.User.LastName.ToLower().Contains(searchLower)) ||
+                (x.User.Email != null && x.User.Email.ToLower().Contains(searchLower)) ||
+                (x.Client != null && x.Client.CompanyName != null && x.Client.CompanyName.ToLower().Contains(searchLower))
+            );
+        }
+        
+        var clients = await query
+            .OrderBy(x => x.User.FirstName)
+            .ThenBy(x => x.User.LastName)
+            .Select(x => new ClientListDto
+            {
+                UserId = x.User.Id,
+                Name = $"{x.User.FirstName} {x.User.LastName}".Trim(),
+                Email = x.User.Email!,
+                CompanyName = x.Client != null ? x.Client.CompanyName : null,
+                ProfilePictureUrl = x.User.ProfilePictureUrl
+            })
+            .ToListAsync(cancellationToken);
+        
+        // Generate presigned URLs for profile pictures
+        foreach (var client in clients)
+        {
+            if (!string.IsNullOrEmpty(client.ProfilePictureUrl))
+            {
+                client.ProfilePictureUrl = _fileStorageService.GetPresignedUrl(client.ProfilePictureUrl);
+            }
+        }
+        
+        return clients;
+    }
+
     private async Task<ClientStatsDto> CalculateStatsAsync(string clientUserId, CancellationToken cancellationToken)
     {
         var projects = await _context.Projects

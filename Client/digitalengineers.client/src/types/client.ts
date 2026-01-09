@@ -41,3 +41,11 @@ export interface UpdateClientProfile {
 	phoneNumber?: string;
 	location?: string;
 }
+
+export interface ClientListItem {
+	userId: string;
+	name: string;
+	email: string;
+	companyName?: string;
+	profilePictureUrl?: string;
+}

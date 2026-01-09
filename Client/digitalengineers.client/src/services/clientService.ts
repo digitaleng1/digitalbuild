@@ -1,5 +1,5 @@
 import httpClient from '@/common/helpers/httpClient';
-import type { ClientProfile, UpdateClientProfile } from '@/types/client';
+import type { ClientProfile, UpdateClientProfile, ClientListItem } from '@/types/client';
 
 class ClientService {
 	/**
@@ -35,6 +35,23 @@ class ClientService {
 			}
 		);
 		return result as { profilePictureUrl: string };
+	}
+
+	/**
+	 * Get list of clients for selection (Admin only)
+	 */
+	async getClientList(search?: string): Promise<ClientListItem[]> {
+		const params = new URLSearchParams();
+		if (search) {
+			params.append('search', search);
+		}
+		
+		const url = params.toString() 
+			? `/api/clients/list?${params.toString()}`
+			: '/api/clients/list';
+		
+		const data = await httpClient.get<ClientListItem[]>(url);
+		return data as ClientListItem[];
 	}
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, ButtonGroup, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { ProjectList, ProjectKanbanBoard, ProjectTableView } from '@/app/shared/components/projects';
 import ProjectFilters, { type ProjectFiltersData } from './ProjectFilters';
@@ -69,9 +70,15 @@ const AdminProjectsManagement = () => {
 				filters={filters}
 			/>
 
-			{/* View Mode Switcher */}
+			{/* View Mode Switcher and Create Button */}
 			<Row className="mb-3">
-				<Col className="d-flex justify-content-end">
+				<Col className="d-flex justify-content-between align-items-center">
+					<Link to="/admin/projects/create">
+						<Button variant="primary">
+							<i className="mdi mdi-plus me-1"></i>
+							Create Project
+						</Button>
+					</Link>
 					<ButtonGroup>
 						<Button
 							variant={viewMode === 'cards' ? 'primary' : 'light'}

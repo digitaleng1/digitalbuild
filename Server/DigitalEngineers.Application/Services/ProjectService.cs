@@ -1704,4 +1704,43 @@ public class ProjectService : IProjectService
             UploadedAt = projectFile.UploadedAt
         };
     }
+
+    public async Task ChangeProjectClientAsync(int projectId, string newClientId, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+        
+        // Verify new client exists and has Client role
+        var newClientExists = await _context.Users
+            .AnyAsync(u => u.Id == newClientId && u.IsActive, cancellationToken);
+        
+        if (!newClientExists)
+        {
+            throw new InvalidOperationException("Client not found or user is not active");
+        }
+        
+        // Verify user has Client role
+        var hasClientRole = await _context.UserRoles
+            .AnyAsync(ur => ur.UserId == newClientId && 
+                           _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == UserRoles.Client), 
+                      cancellationToken);
+        
+        if (!hasClientRole)
+        {
+            throw new InvalidOperationException("User is not a client");
+        }
+        
+        // Update project client reference
+        project.ClientId = newClientId;
+        project.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        _logger.LogInformation("Project {ProjectId} client changed to {NewClientId}", projectId, newClientId);
+    }
 }

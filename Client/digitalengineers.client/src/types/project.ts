@@ -65,6 +65,7 @@ export interface CreateProjectRequest {
 	description: string;
 	files: File[];
 	thumbnail: File | null;
+	clientId?: string; // For Admin/SuperAdmin - assign to specific client
 }
 
 // Synchronized with ProjectViewModel from server

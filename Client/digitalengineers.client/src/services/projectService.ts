@@ -82,6 +82,11 @@ class ProjectService {
 			});
 		}
 		
+		// For Admin: append clientId
+		if (data.clientId) {
+			formData.append('clientId', data.clientId);
+		}
+		
 		// Append files
 		if (data.files && data.files.length > 0) {
 			data.files.forEach(file => {
@@ -101,6 +106,13 @@ class ProjectService {
 		});
 		
 		return result as ProjectDto;
+	}
+
+	/**
+	 * Change project client (Admin/SuperAdmin only)
+	 */
+	async changeProjectClient(projectId: number, clientId: string): Promise<void> {
+		await httpClient.patch(`/api/projects/${projectId}/client`, { clientId });
 	}
 
 	/**
