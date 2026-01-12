@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Badge } from 'react-bootstrap';
 import classNames from 'classnames';
 import type { ProjectDto } from '@/types/project';
-import { getProjectScopeLabel, getStatusBadgeVariant } from '@/utils/projectUtils';
+import { getProjectScopeLabel, getStatusBadgeVariant,getManagementTypeLabel,getManagementTypeBadgeVariant } from '@/utils/projectUtils';
 import { useAuthContext } from '@/common/context/useAuthContext';
 
 interface ProjectCardProps {
@@ -163,6 +163,15 @@ export default function ProjectCard({
 					<span className="text-muted">
 						<i className="mdi mdi-clock-outline me-1"></i>
 						Scope: <strong>{getProjectScopeLabel(project.projectScope)}</strong>
+					</span>
+				</div>
+
+				<div className="mb-1">
+					<span className="text-muted">
+						<i className="mdi mdi-account-cog me-1"></i>
+						<Badge bg={getManagementTypeBadgeVariant(project.managementType)} className="ms-1">
+							{getManagementTypeLabel(project.managementType)}
+						</Badge>
 					</span>
 				</div>
 

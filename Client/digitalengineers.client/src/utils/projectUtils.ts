@@ -153,8 +153,14 @@ export function isDigitalEngineersManaged(project: ProjectDto | ProjectDetailsDt
  */
 export function getManagementTypeLabel(managementType: string): string {
 	return managementType === ProjectManagementType.ClientManaged 
-		? 'Client Managed' 
+		? 'Self Managed' 
 		: 'Novobid Managed';
+}
+
+export function getManagementTypeBadgeVariant(managementType: string): 'info' | 'secondary' {
+	return managementType === ProjectManagementType.ClientManaged
+		? 'secondary' //Gray for self managed
+		: 'info'; //Blue for Novobid managed
 }
 
 /**

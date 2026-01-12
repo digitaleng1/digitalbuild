@@ -51,6 +51,10 @@
     width: 120px;
 }
 
+.project-table .col-management {
+        width: 140px;
+}
+
 .project-table .col-metadata {
     width: 100px;
     text-align: center;

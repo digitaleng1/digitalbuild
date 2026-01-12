@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from 'react-bootstrap';
 import type { ProjectDto } from '@/types/project';
-import { getStatusBadgeVariant, getProjectScopeShortLabel } from '@/utils/projectUtils';
+import { getStatusBadgeVariant, getProjectScopeShortLabel, getManagementTypeLabel, getManagementTypeBadgeVariant } from '@/utils/projectUtils';
 import { useAuthContext } from '@/common/context/useAuthContext';
 import './ProjectTable.css';
 
@@ -134,6 +134,13 @@ const ProjectTableRow = ({
 			<td className="col-scope">
 				<Badge bg="secondary" className="px-2 py-1">
 					{getProjectScopeShortLabel(project.projectScope)}
+				</Badge>
+			</td>
+
+			{/* Management Type */}
+			<td className="col-management">
+				<Badge bg={getManagementTypeBadgeVariant(project.managementType)} className="px-2 py-1">
+					{getManagementTypeLabel(project.managementType)}
 				</Badge>
 			</td>
 
