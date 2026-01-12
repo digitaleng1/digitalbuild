@@ -36,7 +36,8 @@ const Auth0LoginButton = () => {
                 },
             });
 
-            await auth0Client.loginWithPopup();
+            // Force re-authentication, ignoring any existing SSO session
+            await auth0Client.loginWithPopup({ authorizationParams: { prompt: 'login' } });
 
             const idTokenClaims = await auth0Client.getIdTokenClaims();
             if (!idTokenClaims?.__raw) {

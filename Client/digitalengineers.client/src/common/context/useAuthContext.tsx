@@ -57,8 +57,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const removeSession = useCallback(() => {
+		// Primary session key and token store
 		localStorage.removeItem(authSessionKey);
 		tokenService.clearTokens();
+
+		// Legacy or alternative keys that may be present in different flows
+		const legacyKeys = [
+			'token',
+			'auth_token',
+			'auth_user',
+			'userId',
+			'userRole',
+			'_AUTH',
+			'_ACTIVE_USER'
+		];
+
+		for (const k of legacyKeys) {
+			try {
+				localStorage.removeItem(k);
+			} catch {}
+		}
+
 		setUser(null);
 	}, []);
 

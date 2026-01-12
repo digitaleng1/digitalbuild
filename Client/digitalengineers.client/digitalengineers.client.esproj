@@ -10,6 +10,7 @@
     <TypeScriptConfiguration Remove="src\app\admin\projects\list\**" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="src\app\account\callback\" />
     <Folder Include="src\app\admin\bids\responses\components\" />
     <Folder Include="src\app\admin\dictionaries\components\" />
     <Folder Include="src\app\auth\invite\" />

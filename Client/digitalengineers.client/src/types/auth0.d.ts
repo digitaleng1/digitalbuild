@@ -33,6 +33,7 @@ interface Auth0PopupOptions {
     authorizationParams?: {
         scope?: string;
         audience?: string;
+        prompt?: 'none' | 'login' | 'consent' | 'select_account';
     };
 }
 
@@ -41,6 +42,7 @@ interface Auth0RedirectOptions {
         redirect_uri?: string;
         scope?: string;
         audience?: string;
+        prompt?: 'none' | 'login' | 'consent' | 'select_account';
     };
     appState?: Record<string, unknown>;
 }
