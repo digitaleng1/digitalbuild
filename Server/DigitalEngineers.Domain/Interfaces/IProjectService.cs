@@ -166,4 +166,22 @@ public interface IProjectService
     /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
     /// <exception cref="InvalidOperationException">If client not found</exception>
     Task ChangeProjectClientAsync(int projectId, string newClientId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uploads files to existing project
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
+    /// <param name="files">Files to upload</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of uploaded project files</returns>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized</exception>
+    Task<IEnumerable<ProjectFileDto>> AddFilesToProjectAsync(
+        int projectId,
+        string userId,
+        string[] userRoles,
+        List<FileUploadInfo> files,
+        CancellationToken cancellationToken = default);
 }

@@ -51,8 +51,6 @@ const ProjectDetailsPage = () => {
 		return false;
 	}, [isAdmin, isClient, project?.managementType]);
 
-	// ...existing code for canInvite, handleManagementTypeChange, useEffects...
-
 	const canInvite = useMemo(() => 
 		isClient && project ? canClientInviteSpecialists(project) : false,
 		[isClient, project]
@@ -135,6 +133,19 @@ const ProjectDetailsPage = () => {
 			showError('Forward Failed', 'Failed to share the file');
 		}
 	}, [projectId, showSuccess, showError]);
+
+	const handleFilesUploaded = useCallback(async () => {
+		if (!projectId) return;
+		
+		try {
+			await refetch();
+			showSuccess('Files Uploaded', 'Files have been uploaded successfully');
+		} catch (error) {
+			console.error('Failed to refresh project files:', error);
+		}
+	}, [projectId, refetch, showSuccess]);
+
+	const canUploadFiles = isClient || isAdmin;
 
 	if (loading) {
 		return (
@@ -445,8 +456,8 @@ const ProjectDetailsPage = () => {
 														<i className="mdi mdi-check-circle text-success me-1"></i>
 														<strong className="text-success">
 															{new Intl.NumberFormat('en-US', {
-																style: 'currency',
-																currency: 'USD',
+															 style: 'currency',
+															 currency: 'USD',
 															}).format(project.quotedAmount)}
 														</strong>
 													</p>
@@ -582,6 +593,9 @@ const ProjectDetailsPage = () => {
 						files={project.files}
 						mentionableUsers={mentionableUsers}
 						onForwardFile={handleForwardFile}
+						onFilesUploaded={handleFilesUploaded}
+						projectId={project.id}
+						canUpload={canUploadFiles}
 					/>
 				</Col>
 			</Row>

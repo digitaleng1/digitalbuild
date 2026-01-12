@@ -1771,4 +1771,119 @@ public class ProjectService : IProjectService
         
         _logger.LogInformation("Project {ProjectId} client changed to {NewClientId}", projectId, newClientId);
     }
+
+    public async Task<IEnumerable<ProjectFileDto>> AddFilesToProjectAsync(
+        int projectId,
+        string userId,
+        string[] userRoles,
+        List<FileUploadInfo> files,
+        CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+
+        if (project == null)
+        {
+            throw new ProjectNotFoundException(projectId);
+        }
+
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+
+        if (!isAdmin && (!isClient || project.ClientId != userId))
+        {
+            throw new UnauthorizedAccessException("You are not authorized to upload files to this project");
+        }
+
+        if (files == null || files.Count == 0)
+        {
+            return Enumerable.Empty<ProjectFileDto>();
+        }
+
+        var uploadedFiles = new List<ProjectFileDto>();
+        var uploadedS3Keys = new List<string>();
+
+        try
+        {
+            foreach (var file in files)
+            {
+                if (file.FileSize == 0)
+                    continue;
+
+                try
+                {
+                    var fileKey = await _fileStorageService.UploadProjectFileAsync(
+                        file.FileStream,
+                        file.FileName,
+                        file.ContentType,
+                        projectId,
+                        cancellationToken);
+
+                    uploadedS3Keys.Add(fileKey);
+
+                    var projectFile = new ProjectFile
+                    {
+                        ProjectId = projectId,
+                        FileName = file.FileName,
+                        FileUrl = fileKey,
+                        FileSize = file.FileSize,
+                        ContentType = file.ContentType,
+                        UploadedBy = userId,
+                        UploadedAt = DateTime.UtcNow
+                    };
+
+                    _context.ProjectFiles.Add(projectFile);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to upload file {FileName} for project {ProjectId}",
+                        file.FileName, projectId);
+                    throw;
+                }
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var createdFiles = _context.ProjectFiles.Local.Where(pf => pf.ProjectId == projectId);
+
+            foreach (var projectFile in createdFiles)
+            {
+                uploadedFiles.Add(new ProjectFileDto
+                {
+                    Id = projectFile.Id,
+                    FileName = projectFile.FileName,
+                    FileUrl = _fileStorageService.GetPresignedUrl(projectFile.FileUrl),
+                    FileSize = projectFile.FileSize,
+                    ContentType = projectFile.ContentType,
+                    UploadedAt = projectFile.UploadedAt
+                });
+            }
+
+            return uploadedFiles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading files to project {ProjectId}. Rolling back and cleaning up S3 files.",
+                projectId);
+
+            if (uploadedS3Keys.Count > 0)
+            {
+                _logger.LogWarning("Cleaning up {FileCount} uploaded files from S3", uploadedS3Keys.Count);
+
+                foreach (var s3Key in uploadedS3Keys)
+                {
+                    try
+                    {
+                        await _fileStorageService.DeleteFileAsync(s3Key, cancellationToken);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        _logger.LogError(deleteEx, "Failed to delete file from S3: {S3Key}. Manual cleanup may be required.", s3Key);
+                    }
+                }
+            }
+
+            throw;
+        }
+    }
 }

@@ -541,4 +541,55 @@ public class ProjectsController : ControllerBase
         var viewModel = _mapper.Map<ProjectFileViewModel>(projectFile);
         return Ok(viewModel);
     }
+
+    /// <summary>
+    /// Upload files to existing project
+    /// </summary>
+    [HttpPost("{id}/files")]
+    [Authorize(Roles = "Client,Admin,SuperAdmin")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(IEnumerable<ProjectFileViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IEnumerable<ProjectFileViewModel>>> AddProjectFiles(
+        int id,
+        [FromForm] List<IFormFile> files,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+
+        if (files == null || files.Count == 0)
+        {
+            return BadRequest(new { message = "No files provided" });
+        }
+
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        
+        var fileUploadInfos = files
+            .Where(f => f.Length > 0)
+            .Select(f => new FileUploadInfo(
+                f.OpenReadStream(),
+                f.FileName,
+                f.ContentType,
+                f.Length
+            ))
+            .ToList();
+
+        var uploadedFiles = await _projectService.AddFilesToProjectAsync(
+            id,
+            userId,
+            roles,
+            fileUploadInfos,
+            cancellationToken);
+
+        var viewModels = _mapper.Map<IEnumerable<ProjectFileViewModel>>(uploadedFiles);
+        return Ok(viewModels);
+    }
 }

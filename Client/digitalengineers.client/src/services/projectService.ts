@@ -179,6 +179,25 @@ class ProjectService {
 			{}
 		);
 	}
+
+	/**
+	 * Upload files to existing project
+	 */
+	async uploadProjectFiles(projectId: number, files: File[]): Promise<ProjectFile[]> {
+		const formData = new FormData();
+		
+		files.forEach(file => {
+			formData.append('files', file);
+		});
+		
+		const result = await httpClient.post(`/api/projects/${projectId}/files`, formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
+		
+		return result as ProjectFile[];
+	}
 }
 
 export default new ProjectService();
