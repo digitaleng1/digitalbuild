@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardBody } from 'react-bootstrap';
 import { useProjectComments } from '@/app/shared/hooks/useProjectComments';
 import { ProjectCommentList } from '@/app/shared/components/project-comments';
@@ -9,7 +9,11 @@ interface CommentsProps {
   projectId: number;
 }
 
-const Comments = ({ projectId }: CommentsProps) => {
+export interface CommentsRef {
+  refreshComments: () => Promise<void>;
+}
+
+const Comments = forwardRef<CommentsRef, CommentsProps>(({ projectId }, ref) => {
   const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   
@@ -18,8 +22,13 @@ const Comments = ({ projectId }: CommentsProps) => {
     loading,
     addComment,
     updateComment,
-    deleteComment
+    deleteComment,
+    refreshComments
   } = useProjectComments(projectId);
+
+  useImperativeHandle(ref, () => ({
+    refreshComments
+  }), [refreshComments]);
   
   // Fetch mentionable users
   useEffect(() => {
@@ -53,6 +62,8 @@ const Comments = ({ projectId }: CommentsProps) => {
       </CardBody>
     </Card>
   );
-};
+});
+
+Comments.displayName = 'Comments';
 
 export default Comments;

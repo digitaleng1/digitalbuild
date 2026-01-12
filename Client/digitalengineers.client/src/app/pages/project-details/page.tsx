@@ -1,8 +1,8 @@
 import { Row, Col, Card, CardBody, Badge, Spinner, Alert, Form, Button } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/common/context/useAuthContext';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import Comments from '@/app/client/projects/details/Comments';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import Comments, { type CommentsRef } from '@/app/client/projects/details/Comments';
 import ProgressChart from '@/app/client/projects/details/ProgressChart';
 import Files from '@/app/client/projects/details/Files';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
@@ -36,6 +36,7 @@ const ProjectDetailsPage = () => {
 	const [updatingManagementType, setUpdatingManagementType] = useState(false);
 	const { showSuccess, showError } = useToast();
 	const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
+	const commentsRef = useRef<CommentsRef>(null);
 	
 	const { project, loading, error, refetch, updateProjectStatus } = useProjectDetails(projectId);
 
@@ -126,6 +127,9 @@ const ProjectDetailsPage = () => {
 				mentionedUserIds: [recipientId],
 				projectFileIds: [fileId]
 			});
+			
+			// Refresh comments list
+			await commentsRef.current?.refreshComments();
 			
 			showSuccess('File Forwarded', 'File has been shared successfully');
 		} catch (error) {
@@ -554,7 +558,7 @@ const ProjectDetailsPage = () => {
 						</CardBody>
 					</Card>
 
-					<Comments projectId={project.id} />
+					<Comments ref={commentsRef} projectId={project.id} />
 				</Col>
 
 				<Col xl={4} lg={6}>
