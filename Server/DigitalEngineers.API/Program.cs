@@ -11,6 +11,13 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load DbInit configuration based on environment
+builder.Configuration.AddJsonFile("DbInit.json", optional: false, reloadOnChange: false);
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("DbInit.Development.json", optional: true, reloadOnChange: false);
+}
+
 // Add services to the container.
 
 builder.Services.AddControllers();

@@ -379,3 +379,4 @@ FodyWeavers.xsd
 /Client/digitalengineers.client/dist.zip
 *.docx
 *.pdf
+/Server/DigitalEngineers.API/DbInit.Development.json
