@@ -8,6 +8,14 @@ export interface ProfessionInfo {
 	licenseTypes: LicenseType[];
 }
 
+export interface ProfessionTypeInfo {
+	professionTypeId: number;
+	professionTypeName: string;
+	professionTypeCode: string;
+	professionId: number;
+	professionName: string;
+}
+
 export interface SpecialistForBid {
 	userId: string;
 	name: string;
@@ -15,6 +23,8 @@ export interface SpecialistForBid {
 	profilePictureUrl?: string;
 	licenseTypes: LicenseType[];
 	professions: ProfessionInfo[];
+	professionTypes: ProfessionTypeInfo[];
+	professionTypeIds: number[];
 	location?: string;
 	isAvailableForHire: boolean;
 }

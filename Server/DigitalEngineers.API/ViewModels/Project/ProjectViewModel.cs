@@ -46,6 +46,7 @@ public class ProjectDetailsViewModel
     public LicenseTypeViewModel[] LicenseTypes { get; set; } = [];
     public int[] ProfessionTypeIds { get; set; } = [];
     public ProfessionViewModel[] Professions { get; set; } = [];
+    public ProfessionTypeViewModel[] ProfessionTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }
@@ -91,6 +92,13 @@ public class SpecialistLicenseInfoViewModel
 }
 
 public class ProfessionViewModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+}
+
+public class ProfessionTypeViewModel
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;

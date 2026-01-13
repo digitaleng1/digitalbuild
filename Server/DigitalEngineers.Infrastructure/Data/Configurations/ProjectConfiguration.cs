@@ -31,7 +31,7 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .HasForeignKey(e => e.ClientId)
             .OnDelete(DeleteBehavior.Restrict);
             
-        builder.HasMany(e => e.ProjectLicenseTypes)
+        builder.HasMany(e => e.ProjectProfessionTypes)
             .WithOne(e => e.Project)
             .HasForeignKey(e => e.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);

@@ -68,6 +68,7 @@ public class ProjectDetailsDto
     public LicenseTypeDto[] LicenseTypes { get; set; } = [];
     public int[] ProfessionTypeIds { get; set; } = [];
     public ProfessionDto[] Professions { get; set; } = [];
+    public ProfessionTypeDto[] ProfessionTypes { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string? ThumbnailUrl { get; set; }

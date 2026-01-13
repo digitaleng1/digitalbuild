@@ -84,27 +84,39 @@ public static class ProjectSeeder
         await context.Projects.AddRangeAsync(projects);
         await context.SaveChangesAsync();
 
-        // Seed project license types from config
-        var projectLicenseTypes = new List<ProjectLicenseType>();
+        // Seed project profession types from config (using license type names to find profession types)
+        var professionTypes = await context.ProfessionTypes
+            .Include(pt => pt.LicenseRequirements)
+                .ThenInclude(lr => lr.LicenseType)
+            .ToListAsync();
+
+        var projectProfessionTypes = new List<ProjectProfessionType>();
         foreach (var project in projects)
         {
             var config = projectConfigs.First(pc => pc.Name == project.Name);
 
+            // Find profession types that have these license types in their requirements
             foreach (var licenseTypeName in config.LicenseTypeNames)
             {
-                var licenseType = licenseTypes.FirstOrDefault(lt => lt.Name == licenseTypeName);
-                if (licenseType != null)
+                var matchingProfessionTypes = professionTypes
+                    .Where(pt => pt.LicenseRequirements.Any(lr => lr.LicenseType.Name == licenseTypeName))
+                    .ToList();
+
+                foreach (var pt in matchingProfessionTypes)
                 {
-                    projectLicenseTypes.Add(new ProjectLicenseType
+                    if (!projectProfessionTypes.Any(ppt => ppt.ProjectId == project.Id && ppt.ProfessionTypeId == pt.Id))
                     {
-                        ProjectId = project.Id,
-                        LicenseTypeId = licenseType.Id
-                    });
+                        projectProfessionTypes.Add(new ProjectProfessionType
+                        {
+                            ProjectId = project.Id,
+                            ProfessionTypeId = pt.Id
+                        });
+                    }
                 }
             }
         }
 
-        await context.ProjectLicenseTypes.AddRangeAsync(projectLicenseTypes);
+        await context.ProjectProfessionTypes.AddRangeAsync(projectProfessionTypes);
         await context.SaveChangesAsync();
 
         // Seed project task statuses and labels (common for all projects)

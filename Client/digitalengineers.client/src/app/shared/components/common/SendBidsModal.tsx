@@ -3,8 +3,8 @@ import { Modal, Button, Form, Row, Col, Spinner, Alert, Badge } from 'react-boot
 import { useAvailableSpecialists } from '@/app/shared/hooks';
 import { InviteSpecialistModal } from '@/app/shared/components/bids';
 import FileUploader from '@/components/FileUploader';
-import type { LicenseType, Profession } from '@/types/lookup';
-import type { BidFormData, ProfessionInfo } from '@/types/bid';
+import type { ProfessionType, LicenseType } from '@/types/lookup';
+import type { BidFormData, ProfessionTypeInfo } from '@/types/bid';
 import type { InviteSpecialistResult } from '@/types/specialist-invitation';
 import bidService from '@/services/bidService';
 import { useToast } from '@/contexts';
@@ -15,8 +15,8 @@ interface SendBidsModalProps {
 	show: boolean;
 	onHide: () => void;
 	projectId: number;
-	professions: Profession[];
-	requiredLicenseTypes: LicenseType[];
+	professionTypes: ProfessionType[];
+	licenseTypes?: LicenseType[];
 	onSuccess?: () => void;
 }
 
@@ -24,15 +24,15 @@ const SendBidsModal = ({
 	show,
 	onHide,
 	projectId,
-	professions,
-	requiredLicenseTypes,
+	professionTypes,
+	licenseTypes = [],
 	onSuccess,
 }: SendBidsModalProps) => {
 	const { specialists, loading, error, refetch } = useAvailableSpecialists(show ? projectId : undefined);
 	const { showSuccess, showError } = useToast();
 
 	const [selectedSpecialists, setSelectedSpecialists] = useState<Set<string>>(new Set());
-	const [selectedProfessionFilters, setSelectedProfessionFilters] = useState<Set<number>>(new Set());
+	const [selectedProfessionTypeFilters, setSelectedProfessionTypeFilters] = useState<Set<number>>(new Set());
 	const [formData, setFormData] = useState<BidFormData>({
 		description: '',
 	});
@@ -41,29 +41,28 @@ const SendBidsModal = ({
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [uploadingFiles, setUploadingFiles] = useState(false);
 
-	// Use professions directly from props (from project details)
-	const projectProfessions = professions;
-
-	// Initialize with all professions selected
+	// Initialize with all profession types selected
 	useEffect(() => {
-		if (show && projectProfessions.length > 0) {
-			setSelectedProfessionFilters(new Set(projectProfessions.map(p => p.id)));
+		if (show && professionTypes.length > 0) {
+			setSelectedProfessionTypeFilters(new Set(professionTypes.map(pt => pt.id)));
 		}
-	}, [show, projectProfessions]);
+	}, [show, professionTypes]);
 
+	// Filter specialists by professionTypeIds
 	const filteredSpecialists = useMemo(() => {
-		if (selectedProfessionFilters.size === 0) {
-			return specialists;
+		// If no filters selected, return empty list (user must select at least one filter)
+		if (selectedProfessionTypeFilters.size === 0) {
+			return [];
 		}
 
 		return specialists.filter((specialist) =>
-			specialist.professions.some((p) => selectedProfessionFilters.has(p.professionId))
+			specialist.professionTypeIds?.some((ptId) => selectedProfessionTypeFilters.has(ptId))
 		);
-	}, [specialists, selectedProfessionFilters]);
+	}, [specialists, selectedProfessionTypeFilters]);
 
-	const selectedProfessions = useMemo(() => {
-		return projectProfessions.filter((p) => selectedProfessionFilters.has(p.id));
-	}, [projectProfessions, selectedProfessionFilters]);
+	const selectedProfessionTypes = useMemo(() => {
+		return professionTypes.filter((pt) => selectedProfessionTypeFilters.has(pt.id));
+	}, [professionTypes, selectedProfessionTypeFilters]);
 
 	const handleToggleSpecialist = useCallback((userId: string) => {
 		setSelectedSpecialists((prev) => {
@@ -77,13 +76,13 @@ const SendBidsModal = ({
 		});
 	}, []);
 
-	const handleProfessionFilterChange = useCallback((professionId: number) => {
-		setSelectedProfessionFilters((prev) => {
+	const handleProfessionTypeFilterChange = useCallback((professionTypeId: number) => {
+		setSelectedProfessionTypeFilters((prev) => {
 			const newSet = new Set(prev);
-			if (newSet.has(professionId)) {
-				newSet.delete(professionId);
+			if (newSet.has(professionTypeId)) {
+				newSet.delete(professionTypeId);
 			} else {
-				newSet.add(professionId);
+				newSet.add(professionTypeId);
 			}
 			return newSet;
 		});
@@ -121,14 +120,12 @@ const SendBidsModal = ({
 		try {
 			setIsSubmitting(true);
 
-			// Step 1: Send bid requests and get created IDs
 			const response = await bidService.sendBids({
 				projectId,
 				specialistUserIds: Array.from(selectedSpecialists),
 				description: formData.description,
 			});
 
-			// Step 2: Upload files to each created bid request
 			if (selectedFiles.length > 0 && response.bidRequestIds.length > 0) {
 				setUploadingFiles(true);
 
@@ -150,7 +147,7 @@ const SendBidsModal = ({
 			);
 
 			setSelectedSpecialists(new Set());
-			setSelectedProfessionFilters(new Set());
+			setSelectedProfessionTypeFilters(new Set());
 			setFormData({ description: '' });
 			setSelectedFiles([]);
 
@@ -259,19 +256,19 @@ const SendBidsModal = ({
 									<div className="flex-grow-1">
 										<h6 className="mb-3">
 											<i className="mdi mdi-information-outline me-2"></i>
-											Filter by Professions:
+											Filter by Profession Types:
 										</h6>
 										
-										{/* Profession Switches */}
+										{/* Profession Type Switches */}
 										<div className="d-flex flex-column gap-1">
-											{projectProfessions.map((p) => (
+											{professionTypes.map((pt) => (
 												<Form.Check
-													key={p.id}
+													key={pt.id}
 													type="switch"
-													id={`filter-switch-${p.id}`}
-													label={p.name}
-													checked={selectedProfessionFilters.has(p.id)}
-													onChange={() => handleProfessionFilterChange(p.id)}
+													id={`filter-switch-${pt.id}`}
+													label={pt.name}
+													checked={selectedProfessionTypeFilters.has(pt.id)}
+													onChange={() => handleProfessionTypeFilterChange(pt.id)}
 													className="user-select-none"
 												/>
 											))}
@@ -293,7 +290,7 @@ const SendBidsModal = ({
 													variant="outline-success"
 													size="sm"
 													onClick={() => setShowInviteModal(true)}
-													disabled={selectedProfessions.length === 0}
+													disabled={selectedProfessionTypes.length === 0}
 												>
 													<i className="mdi mdi-account-plus me-1"></i>
 													Invite New
@@ -367,23 +364,23 @@ const SendBidsModal = ({
 																)}
 															</div>
 															<div className="mt-1">
-																{specialist.professions.slice(0, 3).map((p: ProfessionInfo) => (
+																{specialist.professionTypes?.slice(0, 3).map((pt: ProfessionTypeInfo) => (
 																	<Badge
-																		key={p.professionId}
+																		key={pt.professionTypeId}
 																		bg="secondary"
 																		className="me-1"
 																		style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}
 																	>
-																		{p.professionName}
+																		{pt.professionTypeName}
 																	</Badge>
 																))}
-																{specialist.professions.length > 3 && (
+																{(specialist.professionTypes?.length || 0) > 3 && (
 																	<Badge
 																		bg="secondary"
 																		className="me-1"
 																		style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}
 																	>
-																		+{specialist.professions.length - 3}
+																		+{specialist.professionTypes.length - 3}
 																	</Badge>
 																)}
 															</div>
@@ -449,12 +446,12 @@ const SendBidsModal = ({
 				</Modal.Footer>
 			</Modal>
 
-			{/* Invite Specialist Modal */}
-			{selectedProfessions.length > 0 && requiredLicenseTypes.length > 0 && (
+			{/* Invite Specialist Modal - pass first license type from project */}
+			{selectedProfessionTypes.length > 0 && licenseTypes.length > 0 && (
 				<InviteSpecialistModal
 					show={showInviteModal}
 					onHide={() => setShowInviteModal(false)}
-					licenseType={requiredLicenseTypes[0]}
+					licenseType={licenseTypes[0]}
 					onInvitationSent={handleInvitationSent}
 				/>
 			)}

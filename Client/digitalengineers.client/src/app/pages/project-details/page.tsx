@@ -530,18 +530,18 @@ const ProjectDetailsPage = () => {
 							<h5>Project Overview:</h5>
 							<p className="text-muted mb-4">{project.description}</p>
 
-							{project.licenseTypes && project.licenseTypes.length > 0 && (
+							{project.professionTypes && project.professionTypes.length > 0 && (
 								<>
-									<h5>Required Professionals:</h5>
+									<h5>Required Professions:</h5>
 									<div className="mb-4">
-										{project.licenseTypes.map((licenseType) => (
+										{project.professionTypes.map((professionType) => (
 											<Badge
-												key={licenseType.id}
+												key={professionType.id}
 												bg="primary"
 												className="me-2 mb-2 p-2"
 												style={{ fontSize: '0.875rem' }}
 											>
-												{licenseType.name}
+												{professionType.name}
 											</Badge>
 										))}
 									</div>
@@ -552,8 +552,8 @@ const ProjectDetailsPage = () => {
 								projectId={project.id} 
 								isAdmin={isAdmin}
 								canInviteSpecialists={canInvite}
-								professions={project.professions || []}
-								requiredLicenseTypes={project.licenseTypes || []} 
+								professionTypes={project.professionTypes || []}
+								licenseTypes={project.licenseTypes || []}
 							/>
 						</CardBody>
 					</Card>

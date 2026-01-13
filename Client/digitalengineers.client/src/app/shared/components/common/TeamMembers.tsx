@@ -3,23 +3,23 @@ import { OverlayTrigger, Tooltip, Spinner, Badge, Button } from 'react-bootstrap
 import { useMemo, useState, useCallback } from 'react';
 import { useProjectTeamMembers } from '@/app/shared/hooks';
 import type { ProjectSpecialistDto } from '@/types/project';
-import type { LicenseType, Profession } from '@/types/lookup';
+import type { ProfessionType, LicenseType } from '@/types/lookup';
 import SendBidsModal from './SendBidsModal';
 
 type TeamMembersProps = {
 	projectId?: number;
 	isAdmin?: boolean;
 	canInviteSpecialists?: boolean;
-	professions?: Profession[];
-	requiredLicenseTypes?: LicenseType[];
+	professionTypes?: ProfessionType[];
+	licenseTypes?: LicenseType[];
 };
 
 const TeamMembers = ({ 
 	projectId, 
 	isAdmin = false, 
 	canInviteSpecialists = false, 
-	professions = [],
-	requiredLicenseTypes = [] 
+	professionTypes = [],
+	licenseTypes = []
 }: TeamMembersProps) => {
 	const { teamMembers, loading, error, refetch } = useProjectTeamMembers(projectId);
 	const [showSendBidsModal, setShowSendBidsModal] = useState(false);
@@ -105,8 +105,8 @@ const TeamMembers = ({
 						show={showSendBidsModal}
 						onHide={handleCloseSendBidsModal}
 						projectId={projectId}
-						professions={professions}
-						requiredLicenseTypes={requiredLicenseTypes}
+						professionTypes={professionTypes}
+						licenseTypes={licenseTypes}
 						onSuccess={handleBidsSentSuccess}
 					/>
 				)}
@@ -291,8 +291,8 @@ const TeamMembers = ({
 					show={showSendBidsModal}
 					onHide={handleCloseSendBidsModal}
 					projectId={projectId}
-					professions={professions}
-					requiredLicenseTypes={requiredLicenseTypes}
+					professionTypes={professionTypes}
+					licenseTypes={licenseTypes}
 					onSuccess={handleBidsSentSuccess}
 				/>
 			)}

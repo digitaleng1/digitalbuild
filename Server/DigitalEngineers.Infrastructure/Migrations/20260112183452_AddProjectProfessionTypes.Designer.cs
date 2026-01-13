@@ -3,6 +3,7 @@ using System;
 using DigitalEngineers.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DigitalEngineers.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112183452_AddProjectProfessionTypes")]
+    partial class AddProjectProfessionTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -998,6 +1001,21 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("ProjectFiles", (string)null);
+                });
+
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectLicenseType", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LicenseTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ProjectId", "LicenseTypeId");
+
+                    b.HasIndex("LicenseTypeId");
+
+                    b.ToTable("ProjectLicenseTypes", (string)null);
                 });
 
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectProfessionType", b =>
@@ -2067,6 +2085,25 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectLicenseType", b =>
+                {
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.LicenseType", "LicenseType")
+                        .WithMany()
+                        .HasForeignKey("LicenseTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DigitalEngineers.Infrastructure.Entities.Project", "Project")
+                        .WithMany("ProjectLicenseTypes")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LicenseType");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("DigitalEngineers.Infrastructure.Entities.ProjectProfessionType", b =>
                 {
                     b.HasOne("DigitalEngineers.Infrastructure.Entities.ProfessionType", "ProfessionType")
@@ -2450,6 +2487,8 @@ namespace DigitalEngineers.Infrastructure.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Files");
+
+                    b.Navigation("ProjectLicenseTypes");
 
                     b.Navigation("ProjectProfessionTypes");
 

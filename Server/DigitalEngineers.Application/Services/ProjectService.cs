@@ -54,57 +54,23 @@ public class ProjectService : IProjectService
             throw new ArgumentException($"Client with ID {clientId} not found", nameof(clientId));
         }
 
-        // Extract license types from profession types
-        var licenseTypeIds = new List<int>();
-        
-        if (dto.ProfessionTypeIds.Length > 0)
+        // Validate profession types
+        if (dto.ProfessionTypeIds.Length == 0)
         {
-            // NEW: Extract license types from profession types via LicenseRequirements
-            licenseTypeIds = await _context.Set<ProfessionTypeLicenseRequirement>()
-                .Where(ptlr => dto.ProfessionTypeIds.Contains(ptlr.ProfessionTypeId))
-                .Select(ptlr => ptlr.LicenseTypeId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-            
-            if (licenseTypeIds.Count == 0)
-            {
-                // Get profession type names for better error message
-                var professionTypeNames = await _context.Set<ProfessionType>()
-                    .Where(pt => dto.ProfessionTypeIds.Contains(pt.Id))
-                    .Select(pt => pt.Name)
-                    .ToListAsync(cancellationToken);
-                
-                _logger.LogWarning("No license types found for profession types: {ProfessionTypeNames}", 
-                    string.Join(", ", professionTypeNames));
-                
-                throw new ArgumentException(
-                    $"No required licenses found for the selected profession types: {string.Join(", ", professionTypeNames)}. " +
-                    "Please contact administrator to configure license requirements for these profession types.",
-                    nameof(dto.ProfessionTypeIds));
-            }
-        }
-#pragma warning disable CS0618 // Type or member is obsolete
-        else if (dto.LicenseTypeIds.Length > 0) // Fallback for backward compatibility
-        {
-            licenseTypeIds = dto.LicenseTypeIds.ToList();
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
-        else
-        {
-            throw new ArgumentException("Either ProfessionTypeIds or LicenseTypeIds must be provided");
+            throw new ArgumentException("At least one ProfessionTypeId must be provided", nameof(dto.ProfessionTypeIds));
         }
 
-        // Validate license types exist
-        var existingLicenseTypeIds = await _context.LicenseTypes
-            .Where(lt => licenseTypeIds.Contains(lt.Id))
-            .Select(lt => lt.Id)
+        // Validate profession types exist
+        var existingProfessionTypeIds = await _context.ProfessionTypes
+            .Where(pt => dto.ProfessionTypeIds.Contains(pt.Id))
+            .Select(pt => pt.Id)
             .ToListAsync(cancellationToken);
 
-        if (existingLicenseTypeIds.Count != licenseTypeIds.Count)
+        if (existingProfessionTypeIds.Count != dto.ProfessionTypeIds.Length)
         {
-            var invalidIds = licenseTypeIds.Except(existingLicenseTypeIds);
-            _logger.LogWarning("Invalid license type IDs: {InvalidIds}", string.Join(", ", invalidIds));
-            throw new ArgumentException($"Invalid license type IDs: {string.Join(", ", invalidIds)}", nameof(dto.LicenseTypeIds));
+            var invalidIds = dto.ProfessionTypeIds.Except(existingProfessionTypeIds);
+            _logger.LogWarning("Invalid profession type IDs: {InvalidIds}", string.Join(", ", invalidIds));
+            throw new ArgumentException($"Invalid profession type IDs: {string.Join(", ", invalidIds)}", nameof(dto.ProfessionTypeIds));
         }
 
         if (!Enum.IsDefined(typeof(ProjectScope), dto.ProjectScope))
@@ -274,15 +240,16 @@ public class ProjectService : IProjectService
                 }
             }
 
-            var projectLicenseTypes = licenseTypeIds
-                .Select(ltId => new ProjectLicenseType
+            // Save ProjectProfessionTypes (selected profession types for project)
+            var projectProfessionTypes = dto.ProfessionTypeIds
+                .Select(ptId => new ProjectProfessionType
                 {
                     ProjectId = project.Id,
-                    LicenseTypeId = ltId
+                    ProfessionTypeId = ptId
                 })
                 .ToList();
 
-            _context.ProjectLicenseTypes.AddRange(projectLicenseTypes);
+            _context.ProjectProfessionTypes.AddRange(projectProfessionTypes);
             await _context.SaveChangesAsync(cancellationToken);
 
             //await transaction.CommitAsync(cancellationToken);
@@ -401,7 +368,7 @@ public class ProjectService : IProjectService
                 ZipCode = project.ZipCode,
                 ProjectScope = (int)project.ProjectScope,
                 ManagementType = project.ManagementType.ToString(),
-                LicenseTypeIds = licenseTypeIds.ToArray(),
+                LicenseTypeIds = [], // Computed dynamically when needed
                 QuotedAmount = project.QuotedAmount,
                 TaskCount = 0
             };
@@ -436,11 +403,13 @@ public class ProjectService : IProjectService
     public async Task<ProjectDetailsDto> GetProjectByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects
-            .Include(p => p.ProjectLicenseTypes)
-                .ThenInclude(plt => plt.LicenseType)
-                    .ThenInclude(lt => lt.ProfessionTypeLicenseRequirements)
-                        .ThenInclude(ptlr => ptlr.ProfessionType)
-                            .ThenInclude(pt => pt.Profession)
+            .Include(p => p.ProjectProfessionTypes)
+                .ThenInclude(ppt => ppt.ProfessionType)
+                    .ThenInclude(pt => pt.Profession)
+            .Include(p => p.ProjectProfessionTypes)
+                .ThenInclude(ppt => ppt.ProfessionType)
+                    .ThenInclude(pt => pt.LicenseRequirements)
+                        .ThenInclude(lr => lr.LicenseType)
             .Include(p => p.Files)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
@@ -476,43 +445,57 @@ public class ProjectService : IProjectService
             clientProfilePictureUrl = client.ProfilePictureUrl;
         }
 
-        var licenseTypeIds = project.ProjectLicenseTypes
-            .Select(plt => plt.LicenseTypeId)
-            .ToArray();
-
-        var licenseTypes = project.ProjectLicenseTypes
-            .Select(plt => new LicenseTypeDto
+        // Get profession types from ProjectProfessionTypes
+        var professionTypes = project.ProjectProfessionTypes
+            .Select(ppt => new ProfessionTypeDto
             {
-                Id = plt.LicenseType.Id,
-                Name = plt.LicenseType.Name,
-                Code = plt.LicenseType.Code,
-                Description = plt.LicenseType.Description,
-                IsStateSpecific = plt.LicenseType.IsStateSpecific
+                Id = ppt.ProfessionType.Id,
+                Name = ppt.ProfessionType.Name,
+                Code = ppt.ProfessionType.Code,
+                Description = ppt.ProfessionType.Description,
+                ProfessionId = ppt.ProfessionType.ProfessionId,
+                ProfessionName = ppt.ProfessionType.Profession.Name,
+                ProfessionCode = ppt.ProfessionType.Profession.Code,
+                RequiresStateLicense = ppt.ProfessionType.RequiresStateLicense,
+                DisplayOrder = ppt.ProfessionType.DisplayOrder,
+                IsActive = ppt.ProfessionType.IsActive,
+                LicenseRequirementsCount = ppt.ProfessionType.LicenseRequirements.Count
             })
             .ToArray();
 
-        // Extract unique profession type IDs from license types
-        var professionTypeIds = project.ProjectLicenseTypes
-            .SelectMany(plt => plt.LicenseType.ProfessionTypeLicenseRequirements)
-            .Select(ptlr => ptlr.ProfessionTypeId)
-            .Distinct()
-            .ToArray();
+        var professionTypeIds = professionTypes.Select(pt => pt.Id).ToArray();
 
-        // NEW: Extract unique professions from license types
-        var professions = project.ProjectLicenseTypes
-            .SelectMany(plt => plt.LicenseType.ProfessionTypeLicenseRequirements
-                .Select(ptlr => ptlr.ProfessionType.Profession))
-            .GroupBy(p => p.Id)
+        // Extract unique professions from profession types
+        var professions = professionTypes
+            .GroupBy(pt => pt.ProfessionId)
             .Select(g => g.First())
-            .Select(p => new ProfessionDto
+            .Select(pt => new ProfessionDto
             {
-                Id = p.Id,
-                Name = p.Name,
-                Code = p.Code,
-                Description = p.Description,
-                ProfessionTypesCount = p.ProfessionTypes.Count(pt => pt.IsActive && pt.IsApproved)
+                Id = pt.ProfessionId,
+                Name = pt.ProfessionName,
+                Code = pt.ProfessionCode,
+                Description = "",
+                ProfessionTypesCount = professionTypes.Count(x => x.ProfessionId == pt.ProfessionId)
             })
             .ToArray();
+
+        // Compute license types from profession types' requirements
+        var licenseTypes = project.ProjectProfessionTypes
+            .SelectMany(ppt => ppt.ProfessionType.LicenseRequirements
+                .Select(lr => lr.LicenseType))
+            .GroupBy(lt => lt.Id)
+            .Select(g => g.First())
+            .Select(lt => new LicenseTypeDto
+            {
+                Id = lt.Id,
+                Name = lt.Name,
+                Code = lt.Code,
+                Description = lt.Description,
+                IsStateSpecific = lt.IsStateSpecific
+            })
+            .ToArray();
+
+        var licenseTypeIds = licenseTypes.Select(lt => lt.Id).ToArray();
 
         string? thumbnailPresignedUrl = null;
         if (!string.IsNullOrEmpty(project.ThumbnailUrl))
@@ -552,6 +535,7 @@ public class ProjectService : IProjectService
             LicenseTypes = licenseTypes,
             ProfessionTypeIds = professionTypeIds,
             Professions = professions,
+            ProfessionTypes = professionTypes,
             CreatedAt = project.CreatedAt,
             UpdatedAt = project.UpdatedAt,
             ThumbnailUrl = thumbnailPresignedUrl,
@@ -574,7 +558,6 @@ public class ProjectService : IProjectService
         CancellationToken cancellationToken = default)
     {
         IQueryable<Project> query = _context.Projects
-            .Include(p => p.ProjectLicenseTypes)
             .Include(p => p.Client);
 
         if (userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin"))
@@ -664,7 +647,6 @@ public class ProjectService : IProjectService
             .Select(p => new
             {
                 Project = p,
-                LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray(),
                 ClientName = p.Client != null 
                     ? (string.IsNullOrWhiteSpace(p.Client.FirstName) && string.IsNullOrWhiteSpace(p.Client.LastName)
                         ? p.Client.Email
@@ -700,7 +682,7 @@ public class ProjectService : IProjectService
                 ZipCode = p.Project.ZipCode,
                 ProjectScope = (int)p.Project.ProjectScope,
                 ManagementType = p.Project.ManagementType.ToString(),
-                LicenseTypeIds = p.LicenseTypeIds,
+                LicenseTypeIds = [], // Computed dynamically from ProjectProfessionTypes when needed
                 QuotedAmount = p.Project.QuotedAmount,
                 TaskCount = p.TaskCount
             };
@@ -1534,7 +1516,7 @@ public class ProjectService : IProjectService
             RepliesCount = 0,
             MentionedUserIds = dto.MentionedUserIds,
             MentionedUserNames = [],
-            FileReferences = fileReferenceDtos // NEW
+            FileReferences = fileReferenceDtos
         };
     }
     

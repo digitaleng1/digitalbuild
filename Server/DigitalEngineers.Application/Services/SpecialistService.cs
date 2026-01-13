@@ -459,21 +459,14 @@ public class SpecialistService : ISpecialistService
 
     public async Task<IEnumerable<AvailableSpecialistDto>> GetAvailableSpecialistsForProjectAsync(int projectId, int[] professionTypeIds, CancellationToken cancellationToken = default)
     {
-        // Step 1: Get all license type IDs from profession types
-        var licenseTypeIds = await _context.Set<ProfessionTypeLicenseRequirement>()
-            .Where(ptlr => professionTypeIds.Contains(ptlr.ProfessionTypeId))
-            .Select(ptlr => ptlr.LicenseTypeId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        // Step 2: Get specialists who already have bids for this project
+        // Step 1: Get specialists who already have bids for this project
         var existingBidSpecialistIds = await _context.BidRequests
             .Where(br => br.ProjectId == projectId)
             .Select(br => br.SpecialistId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        // Step 3: Load specialists with full profession chain
+        // Step 2: Load specialists with full profession chain, filtering by profession type IDs directly
         var specialists = await _context.Specialists
             .Include(s => s.User)
             .Include(s => s.LicenseTypes)
@@ -483,15 +476,43 @@ public class SpecialistService : ISpecialistService
                             .ThenInclude(pt => pt.Profession)
             .Where(s => s.IsAvailable
                 && !existingBidSpecialistIds.Contains(s.Id)
-                && s.LicenseTypes.Any(slt => licenseTypeIds.Contains(slt.LicenseTypeId)))
+                // Filter by profession type IDs through license requirements
+                && s.LicenseTypes.Any(slt => 
+                    slt.LicenseType.ProfessionTypeLicenseRequirements.Any(ptlr => 
+                        professionTypeIds.Contains(ptlr.ProfessionTypeId))))
             .ToListAsync(cancellationToken);
 
-        // Step 4: Map to AvailableSpecialistDto with grouped professions
+        // Step 3: Map to AvailableSpecialistDto with grouped professions
         return specialists.Select(s =>
         {
-            // Group licenses by profession
+            // Get only profession type IDs that match the requested ones
+            var specialistProfessionTypeIds = s.LicenseTypes
+                .SelectMany(slt => slt.LicenseType.ProfessionTypeLicenseRequirements
+                    .Where(ptlr => professionTypeIds.Contains(ptlr.ProfessionTypeId))
+                    .Select(ptlr => ptlr.ProfessionTypeId))
+                .Distinct()
+                .ToList();
+
+            // Get profession types info (only matching ones)
+            var professionTypesInfo = s.LicenseTypes
+                .SelectMany(slt => slt.LicenseType.ProfessionTypeLicenseRequirements
+                    .Where(ptlr => professionTypeIds.Contains(ptlr.ProfessionTypeId))
+                    .Select(ptlr => new ProfessionTypeInfo
+                    {
+                        ProfessionTypeId = ptlr.ProfessionType.Id,
+                        ProfessionTypeName = ptlr.ProfessionType.Name,
+                        ProfessionTypeCode = ptlr.ProfessionType.Code,
+                        ProfessionId = ptlr.ProfessionType.Profession.Id,
+                        ProfessionName = ptlr.ProfessionType.Profession.Name
+                    }))
+                .GroupBy(pt => pt.ProfessionTypeId)
+                .Select(g => g.First())
+                .ToList();
+
+            // Group licenses by profession (only for matching profession types)
             var professionGroups = s.LicenseTypes
                 .SelectMany(slt => slt.LicenseType.ProfessionTypeLicenseRequirements
+                    .Where(ptlr => professionTypeIds.Contains(ptlr.ProfessionTypeId))
                     .Select(ptlr => new
                     {
                         ProfessionId = ptlr.ProfessionType.Profession.Id,
@@ -534,7 +555,9 @@ public class SpecialistService : ISpecialistService
                     Description = slt.LicenseType.Description,
                     IsStateSpecific = slt.LicenseType.IsStateSpecific
                 }).ToList(),
-                Professions = professionGroups
+                Professions = professionGroups,
+                ProfessionTypes = professionTypesInfo,
+                ProfessionTypeIds = specialistProfessionTypeIds
             };
         });
     }
@@ -550,7 +573,6 @@ public class SpecialistService : ISpecialistService
         var projects = await _context.Set<ProjectSpecialist>()
             .Where(ps => ps.SpecialistId == specialistId)
             .Include(ps => ps.Project)
-            .ThenInclude(p => p.ProjectLicenseTypes)
             .Select(ps => ps.Project)
             .ToListAsync(cancellationToken);
 
@@ -568,7 +590,7 @@ public class SpecialistService : ISpecialistService
             ZipCode = p.ZipCode,
             ProjectScope = (int)p.ProjectScope,
             ManagementType = p.ManagementType.ToString(),
-            LicenseTypeIds = p.ProjectLicenseTypes.Select(plt => plt.LicenseTypeId).ToArray()
+            LicenseTypeIds = [] // Computed dynamically from ProjectProfessionTypes when needed
         });
     }
 

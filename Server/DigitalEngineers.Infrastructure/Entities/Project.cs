@@ -43,7 +43,7 @@ public class Project
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     // Relationships
-    public ICollection<ProjectLicenseType> ProjectLicenseTypes { get; set; } = [];
+    public ICollection<ProjectProfessionType> ProjectProfessionTypes { get; set; } = [];
     public ICollection<ProjectFile> Files { get; set; } = [];
     public ICollection<ProjectSpecialist> AssignedSpecialists { get; set; } = [];
     public ICollection<BidRequest> BidRequests { get; set; } = [];

@@ -110,6 +110,7 @@ export interface ProjectDetailsDto {
 	licenseTypes: LicenseType[];
 	professionTypeIds: number[];
 	professions: Profession[];
+	professionTypes: ProfessionType[];
 	createdAt: string;
 	updatedAt: string;
 	thumbnailUrl?: string;
