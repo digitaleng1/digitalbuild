@@ -3,10 +3,15 @@ import { Row, Col, Card } from 'react-bootstrap';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import TaskKanbanBoard from '@/components/task/TaskKanbanBoard';
 import ProjectSelector from '@/components/project/ProjectSelector';
+import { useAuthContext } from '@/common/context/useAuthContext';
 import type { ProjectDto } from '@/types/project';
 
 const KanbanPage = () => {
   const [selectedProject, setSelectedProject] = useState<ProjectDto | null>(null);
+  const { hasRole } = useAuthContext();
+  
+  // Specialists (Provider role) have read-only access
+  const canEdit = !hasRole('Provider');
 
   return (
     <>
@@ -26,7 +31,7 @@ const KanbanPage = () => {
                   <TaskKanbanBoard 
                     projectId={selectedProject.id}
                     project={selectedProject}
-                    canEdit={true}
+                    canEdit={canEdit}
                     onTaskClick={(taskId) => console.log('Task clicked:', taskId)}
                   />
                 </div>

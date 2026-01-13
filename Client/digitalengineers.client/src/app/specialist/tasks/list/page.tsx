@@ -10,6 +10,7 @@ import TaskModal from '@/components/task/TaskModal';
 import { useTaskList } from '@/hooks/useTaskList';
 import { taskService } from '@/services/taskService';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuthContext } from '@/common/context/useAuthContext';
 import type { ProjectDto } from '@/types/project';
 import '@/components/task/TaskList.css';
 
@@ -17,6 +18,10 @@ const ListPage = () => {
   const [selectedProject, setSelectedProject] = useState<ProjectDto | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { showSuccess, showError } = useToast();
+  const { hasRole } = useAuthContext();
+  
+  // Specialists (Provider role) have read-only access
+  const canEdit = !hasRole('Provider');
 
   const {
     statuses,
@@ -142,16 +147,18 @@ const ListPage = () => {
                 </div>
                 <h4 className="page-title">
                   Tasks
-                  <Link 
-                    to="#" 
-                    className="btn btn-success btn-sm ms-3"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleAddNew();
-                    }}
-                  >
-                    Add New
-                  </Link>
+                  {canEdit && (
+                    <Link 
+                      to="#" 
+                      className="btn btn-success btn-sm ms-3"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddNew();
+                      }}
+                    >
+                      Add New
+                    </Link>
+                  )}
                 </h4>
               </div>
 
@@ -188,14 +195,16 @@ const ListPage = () => {
             onClose={() => selectTask(null)}
           />
 
-          <TaskModal
-            show={isCreateModalOpen}
-            onHide={() => setIsCreateModalOpen(false)}
-            mode="create"
-            projectId={selectedProject.id}
-            statuses={statuses}
-            onSuccess={handleCreateSuccess}
-          />
+          {canEdit && (
+            <TaskModal
+              show={isCreateModalOpen}
+              onHide={() => setIsCreateModalOpen(false)}
+              mode="create"
+              projectId={selectedProject.id}
+              statuses={statuses}
+              onSuccess={handleCreateSuccess}
+            />
+          )}
         </>
       )}
     </>

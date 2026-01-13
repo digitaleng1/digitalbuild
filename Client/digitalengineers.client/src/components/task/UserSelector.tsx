@@ -5,9 +5,10 @@ interface UserSelectorProps {
   members: ProjectSpecialistDto[];
   value?: string;
   onChange: (userId: string | undefined) => void;
+  disabled?: boolean;
 }
 
-const UserSelector = ({ members, value, onChange }: UserSelectorProps) => {
+const UserSelector = ({ members, value, onChange, disabled = false }: UserSelectorProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     onChange(selectedValue === '' ? undefined : selectedValue);
@@ -19,7 +20,7 @@ const UserSelector = ({ members, value, onChange }: UserSelectorProps) => {
     <Form.Select
       value={value || ''}
       onChange={handleChange}
-      disabled={assignedMembers.length === 0}
+      disabled={disabled || assignedMembers.length === 0}
     >
       <option value="">Unassigned</option>
       {assignedMembers.map(member => (

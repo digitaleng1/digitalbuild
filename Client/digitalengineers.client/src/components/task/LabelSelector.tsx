@@ -8,6 +8,7 @@ interface LabelSelectorProps {
     selectedLabelIds: number[];
     onChange: (labelIds: number[]) => void;
     onCreateLabel: (dto: CreateTaskLabelViewModel) => Promise<TaskLabelViewModel>;
+    disabled?: boolean;
 }
 
 const PREDEFINED_COLORS = [
@@ -21,13 +22,14 @@ const PREDEFINED_COLORS = [
     { name: 'Orange', value: '#fd7e14' },
 ];
 
-const LabelSelector = ({ availableLabels, selectedLabelIds, onChange, onCreateLabel }: LabelSelectorProps) => {
+const LabelSelector = ({ availableLabels, selectedLabelIds, onChange, onCreateLabel, disabled = false }: LabelSelectorProps) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
     const [newLabelColor, setNewLabelColor] = useState(PREDEFINED_COLORS[0].value);
     const [isCreating, setIsCreating] = useState(false);
 
     const handleToggleLabel = (labelId: number) => {
+        if (disabled) return;
         if (selectedLabelIds.includes(labelId)) {
             onChange(selectedLabelIds.filter(id => id !== labelId));
         } else {
@@ -72,16 +74,18 @@ const LabelSelector = ({ availableLabels, selectedLabelIds, onChange, onCreateLa
                                 Organize and categorize tasks with labels
                             </Form.Text>
                         </div>
-                        <Button
-                            variant="link"
-                            size="sm"
-                            className="p-0 text-primary"
-                            onClick={() => setShowCreateModal(true)}
-                            style={{ fontSize: '20px', lineHeight: 1 }}
-                            title="Create new label"
-                        >
-                            <Icon icon="mdi:plus" width={20} />
-                        </Button>
+                        {!disabled && (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-primary"
+                                onClick={() => setShowCreateModal(true)}
+                                style={{ fontSize: '20px', lineHeight: 1 }}
+                                title="Create new label"
+                            >
+                                <Icon icon="mdi:plus" width={20} />
+                            </Button>
+                        )}
                     </div>
                     <div className="d-flex gap-1 flex-wrap">
                         {(availableLabels || []).map(label => {
@@ -94,7 +98,7 @@ const LabelSelector = ({ availableLabels, selectedLabelIds, onChange, onCreateLa
                                     style={{
                                         backgroundColor: isSelected ? label.color : '#f0f0f0',
                                         color: isSelected ? '#fff' : '#000',
-                                        cursor: 'pointer',
+                                        cursor: disabled ? 'default' : 'pointer',
                                         padding: '1rem 1rem',
                                         opacity: isSelected ? 1 : 0.6,
                                     }}

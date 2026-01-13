@@ -12,6 +12,7 @@ import CreateStatusModal from './CreateStatusModal';
 import EditStatusModal from './EditStatusModal';
 import ProjectTaskStats from '@/components/project/ProjectTaskStats';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuthContext } from '@/common/context/useAuthContext';
 
 interface TaskKanbanBoardProps {
     projectId: number;
@@ -39,6 +40,11 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
     const [selectedStatus, setSelectedStatus] = useState<ProjectTaskStatusViewModel | null>(null);
     const [selectedStatusFilter, setSelectedStatusFilter] = useState<number | null>(null);
     const { showSuccess, showError } = useToast();
+    const { hasRole } = useAuthContext();
+    
+    // Specialists can move tasks between statuses but cannot manage statuses themselves
+    const canManageStatuses = canEdit && !hasRole('Provider');
+    const canMoveTasks = canEdit; // Both specialists and admins can move tasks
 
     const loadData = useCallback(async () => {
         try {
@@ -154,8 +160,10 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
         if (!destination) return;
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-        // Handle column reordering
+        // Handle column reordering - only for users who can manage statuses
         if (type === 'COLUMN') {
+            if (!canManageStatuses) return; // Block specialists from reordering columns
+            
             const reorderedStatuses = Array.from(statuses);
             const [movedStatus] = reorderedStatuses.splice(source.index, 1);
             reorderedStatuses.splice(destination.index, 0, movedStatus);
@@ -185,7 +193,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
             return;
         }
 
-        // Handle task reordering (existing logic)
+        // Handle task reordering (existing logic) - both specialists and admins can do this
         const sourceColumnIndex = columns.findIndex(col => col.status.id === Number(source.droppableId));
         const destColumnIndex = columns.findIndex(col => col.status.id === Number(destination.droppableId));
 
@@ -334,7 +342,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                         key={column.status.id}
                                         draggableId={`column-${column.status.id}`}
                                         index={index}
-                                        isDragDisabled={!canEdit || updating || selectedStatusFilter !== null}
+                                        isDragDisabled={!canManageStatuses || updating || selectedStatusFilter !== null}
                                     >
                                         {(columnProvided) => (
                                             <div
@@ -343,7 +351,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                 className="tasks"
                                             >
                                                 <div className="task-header-container task-header">
-                                                    {canEdit && selectedStatusFilter === null && (
+                                                    {canManageStatuses && selectedStatusFilter === null && (
                                                         <div
                                                             className="drag-handle"
                                                             {...columnProvided.dragHandleProps}
@@ -363,7 +371,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                         {column.status.name} ({column.tasks.length})
                                                     </h5>
 
-                                                    {canEdit && (
+                                                    {canManageStatuses && (
                                                         <div className="column-actions d-flex align-items-center gap-2">
                                                             <Icon
                                                                 icon="mdi:pencil-outline"
@@ -399,7 +407,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                                                     key={task.id}
                                                                     draggableId={String(task.id)}
                                                                     index={taskIndex}
-                                                                    isDragDisabled={!canEdit || updating || selectedStatusFilter !== null}
+                                                                    isDragDisabled={!canMoveTasks || updating || selectedStatusFilter !== null}
                                                                 >
                                                                     {(taskDragProvided) => (
                                                                         <div
@@ -520,7 +528,7 @@ const TaskKanbanBoard = ({ projectId, project, canEdit = true, onTaskClick }: Ta
                                 ))}
                                 {provided.placeholder}
 
-                                {canEdit && selectedStatusFilter === null && (
+                                {canManageStatuses && selectedStatusFilter === null && (
                                     <div className="tasks add-status-column">
                                         <div className="add-status-placeholder">
                                             <Button

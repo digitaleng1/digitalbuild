@@ -4,9 +4,10 @@ interface ParentTaskSelectorProps {
   tasks: Array<{ id: number; title: string }>;
   value?: number;
   onChange: (taskId: number | undefined) => void;
+  disabled?: boolean;
 }
 
-const ParentTaskSelector = ({ tasks, value, onChange }: ParentTaskSelectorProps) => {
+const ParentTaskSelector = ({ tasks, value, onChange, disabled = false }: ParentTaskSelectorProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     onChange(selectedValue === '' ? undefined : Number(selectedValue));
@@ -16,6 +17,7 @@ const ParentTaskSelector = ({ tasks, value, onChange }: ParentTaskSelectorProps)
     <Form.Select
       value={value || ''}
       onChange={handleChange}
+      disabled={disabled}
     >
       <option value="">None (Root Task)</option>
       {tasks.map(task => (

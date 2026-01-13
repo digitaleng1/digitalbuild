@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Form, Row, Col, Card, CardBody } from 'react-bootstrap';
+import { Button, Form, Row, Col, Card, CardBody, Badge } from 'react-bootstrap';
 import { Icon } from '@iconify/react';
 import classNames from 'classnames';
 import { taskService } from '@/services/taskService';
@@ -34,9 +34,10 @@ interface TaskEditorProps {
   statuses: ProjectTaskStatusViewModel[];
   onSuccess: () => void;
   onCancel: () => void;
+  readOnly?: boolean;
 }
 
-const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: TaskEditorProps) => {
+const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel, readOnly = false }: TaskEditorProps) => {
   // Initialize form with proper default statusId
   const getInitialStatusId = () => {
     if (statuses && statuses.length > 0) {
@@ -77,7 +78,13 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
   const [isConverting, setIsConverting] = useState(false);
 
   const { showSuccess, showError } = useToast();
-  const { user } = useAuthContext();
+  const { user, hasRole } = useAuthContext();
+  
+  // Determine if user is specialist
+  const isSpecialist = hasRole('Provider');
+  
+  // For specialists in edit mode - read-only
+  const isFormReadOnly = readOnly || (isSpecialist && mode === 'edit');
 
   // Update statusId when statuses change (only for create mode)
   useEffect(() => {
@@ -384,7 +391,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="Enter task title"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isFormReadOnly}
                     required
                     className="font-16"
                   />
@@ -400,7 +407,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                     onChange={handleChange}
                     rows={5}
                     placeholder="Enter task description..."
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isFormReadOnly}
                   />
                   <Form.Text className="text-muted">
                     Provide detailed information about the task
@@ -416,7 +423,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                         name="statusId"
                         value={formData.statusId}
                         onChange={handleChange}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isFormReadOnly}
                       >
                         {statuses.map(status => (
                           <option key={status.id} value={status.id}>
@@ -434,7 +441,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                         name="priority"
                         value={formData.priority}
                         onChange={handleChange}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isFormReadOnly}
                       >
                         <option value={0}>Low</option>
                         <option value={1}>Medium</option>
@@ -455,7 +462,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                           id="milestoneSwitch"
                           checked={formData.isMilestone}
                           onChange={handleCheckboxChange}
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isFormReadOnly}
                         />
                         <label className="form-check-label" htmlFor="milestoneSwitch">
                           <Icon 
@@ -485,6 +492,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                             members={projectMembers}
                             value={formData.assignedToUserId}
                             onChange={(userId) => setFormData(prev => ({ ...prev, assignedToUserId: userId }))}
+                            disabled={isFormReadOnly}
                           />
                         </div>
                       </div>
@@ -502,7 +510,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                             name="deadline"
                             value={typeof formData.deadline === 'string' ? formData.deadline : ''}
                             onChange={handleChange}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isFormReadOnly}
                           />
                         </div>
                       </div>
@@ -517,6 +525,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                     tasks={parentTasks}
                     value={formData.parentTaskId}
                     onChange={(taskId) => setFormData(prev => ({ ...prev, parentTaskId: taskId }))}
+                    disabled={isFormReadOnly}
                   />
                   <Form.Text className="text-muted">
                     <Icon icon="mdi:file-tree-outline" width={14} className="me-1" />
@@ -573,6 +582,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                 selectedLabelIds={formData.labelIds}
                 onChange={(labelIds) => setFormData(prev => ({ ...prev, labelIds }))}
                 onCreateLabel={handleCreateLabel}
+                disabled={isFormReadOnly}
               />
       
 
@@ -649,6 +659,7 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
                     value={[]}
                     maxFiles={10}
                     maxFileSize={10}
+                    disabled={isFormReadOnly}
                   />
                 </>
               ) : (
@@ -705,6 +716,13 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
       {/* Action Buttons Row - Bottom */}
       <Row className="mt-3">
         <Col>
+          {isFormReadOnly && (
+            <div className="alert alert-warning d-flex align-items-center mb-3">
+              <Icon icon="mdi:eye-outline" width={20} className="me-2" />
+              <span>You are in view-only mode. You can add comments and upload files, but cannot edit task details.</span>
+            </div>
+          )}
+          
           <div className="d-flex justify-content-end gap-2">
             <Button 
               variant="light" 
@@ -712,25 +730,27 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel }: 
               disabled={isSubmitting}
             >
               <Icon icon="mdi:close" width={18} className="me-2" />
-              Cancel
+              {isFormReadOnly ? 'Close' : 'Cancel'}
             </Button>
-            <Button 
-              variant="primary" 
-              type="submit" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                  {mode === 'create' ? 'Creating...' : 'Updating...'}
-                </>
-              ) : (
-                <>
-                  <Icon icon={mode === 'create' ? 'mdi:plus' : 'mdi:content-save'} width={18} className="me-2" />
-                  {mode === 'create' ? 'Create Task' : 'Save Changes'}
-                </>
-              )}
-            </Button>
+            {!isFormReadOnly && (
+              <Button 
+                variant="primary" 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    {mode === 'create' ? 'Creating...' : 'Updating...'}
+                  </>
+                ) : (
+                  <>
+                    <Icon icon={mode === 'create' ? 'mdi:plus' : 'mdi:content-save'} width={18} className="me-2" />
+                    {mode === 'create' ? 'Create Task' : 'Save Changes'}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </Col>
       </Row>

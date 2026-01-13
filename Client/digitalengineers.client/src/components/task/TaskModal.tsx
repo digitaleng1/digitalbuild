@@ -1,4 +1,5 @@
 import { Modal } from 'react-bootstrap';
+import { useAuthContext } from '@/common/context/useAuthContext';
 import type { ProjectTaskStatusViewModel } from '@/types/task';
 import TaskEditor from './TaskEditor';
 
@@ -13,6 +14,11 @@ interface TaskModalProps {
 }
 
 const TaskModal = ({ show, onHide, mode, taskId, projectId, statuses, onSuccess }: TaskModalProps) => {
+  const { hasRole } = useAuthContext();
+  
+  // Specialists (Provider role) have read-only access in edit mode
+  const isReadOnly = hasRole('Provider') && mode === 'edit';
+
   const handleSuccess = () => {
     onSuccess();
     onHide();
@@ -28,7 +34,7 @@ const TaskModal = ({ show, onHide, mode, taskId, projectId, statuses, onSuccess 
     >
       <Modal.Header closeButton>
         <Modal.Title>
-          {mode === 'create' ? 'Create New Task' : 'Edit Task'}
+          {mode === 'create' ? 'Create New Task' : isReadOnly ? 'View Task' : 'Edit Task'}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -39,6 +45,7 @@ const TaskModal = ({ show, onHide, mode, taskId, projectId, statuses, onSuccess 
           statuses={statuses}
           onSuccess={handleSuccess}
           onCancel={onHide}
+          readOnly={isReadOnly}
         />
       </Modal.Body>
     </Modal>
