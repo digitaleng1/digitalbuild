@@ -57,7 +57,7 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 							<h6 className="text-muted mb-2">Verified Licenses</h6>
 							<div className="d-flex flex-wrap gap-2">
 								{licenses.map((license) => (
-									<Badge key={license.id} bg="success" className="p-2">
+									<Badge key={`license-verified-${license.id}`} bg="success" className="p-2">
 										<i className="mdi mdi-check-decagram me-1"></i>
 										{license.professionName && (
 											<span className="me-1">{license.professionName} -</span>
@@ -77,13 +77,13 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 								Pending Verification ({pendingRequests.length})
 							</h6>
 							{pendingRequests.map((request) => (
-								<Alert key={`${request.specialistId}-${request.licenseTypeId}`} variant="warning" className="mb-2 py-2">
+								<Alert key={`${request.specialistId}-${request.licenseTypeId}-${request.professionTypeId}`} variant="warning" className="mb-2 py-2">
 									<div className="d-flex justify-content-between align-items-center">
 										<div>
 											<strong>{request.licenseTypeName}</strong>
 											<br />
 											<small className="text-muted">
-												{request.state} • {request.licenseNumber}
+												{request.professionTypeName} • {request.state} • {request.licenseNumber}
 											</small>
 										</div>
 										<Badge bg="warning" text="dark">Pending</Badge>
@@ -101,10 +101,14 @@ const LicensesCard = ({ licenses, isOwnProfile, onRefresh }: LicensesCardProps) 
 								Rejected ({rejectedRequests.length})
 							</h6>
 							{rejectedRequests.map((request) => (
-								<Alert key={`${request.specialistId}-${request.licenseTypeId}`} variant="danger" className="mb-2 py-2">
+								<Alert key={`${request.specialistId}-${request.licenseTypeId}-${request.professionTypeId}`} variant="danger" className="mb-2 py-2">
 									<div className="d-flex justify-content-between align-items-center">
 										<div>
 											<strong>{request.licenseTypeName}</strong>
+											<br />
+											<small className="text-muted">
+												{request.professionTypeName}
+											</small>
 											<br />
 											<small className="text-muted">
 												Reason: {request.adminComment || 'No reason provided'}

@@ -32,6 +32,7 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 				const requestData = {
 					specialistId: license.specialistId,
 					licenseTypeId: license.licenseTypeId,
+					professionTypeId: license.professionTypeId,
 					adminComment: approveComment || undefined,
 				};
 				
@@ -74,6 +75,7 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 				const requestData = {
 					specialistId: license.specialistId,
 					licenseTypeId: license.licenseTypeId,
+					professionTypeId: license.professionTypeId,
 					adminComment: rejectReason,
 				};
 				
@@ -134,6 +136,9 @@ const LicenseRequestRow = React.memo<LicenseRequestRowProps>(
 				</td>
 				<td>
 					<span className="font-14">{license.licenseTypeName}</span>
+				</td>
+				<td>
+					<span className="font-14">{license.professionTypeName}</span>
 				</td>
 				<td>
 					<Badge bg="info" className="font-13">

@@ -5,6 +5,7 @@ export enum LicenseRequestStatus {
 }
 
 export interface CreateLicenseRequest {
+	professionTypeId: number;
 	licenseTypeId: number;
 	state: string;
 	issuingAuthority: string;
@@ -30,6 +31,8 @@ export interface LicenseRequest {
 	specialistEmail: string;
 	licenseTypeId: number;
 	licenseTypeName: string;
+	professionTypeId: number;
+	professionTypeName: string;
 	state: string;
 	issuingAuthority: string;
 	issueDate: string;
@@ -47,5 +50,6 @@ export interface LicenseRequest {
 export interface ReviewLicenseRequest {
 	specialistId: number;
 	licenseTypeId: number;
+	professionTypeId: number;
 	adminComment?: string;
 }

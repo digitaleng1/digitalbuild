@@ -4,6 +4,7 @@ namespace DigitalEngineers.Domain.DTOs;
 
 public class CreateLicenseRequestDto
 {
+    public int ProfessionTypeId { get; init; }
     public int LicenseTypeId { get; init; }
     public string State { get; init; } = string.Empty;
     public string IssuingAuthority { get; init; } = string.Empty;
@@ -31,6 +32,8 @@ public class LicenseRequestDto
     public string SpecialistEmail { get; set; } = string.Empty;
     public int LicenseTypeId { get; set; }
     public string LicenseTypeName { get; set; } = string.Empty;
+    public int ProfessionTypeId { get; set; }
+    public string ProfessionTypeName { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string IssuingAuthority { get; set; } = string.Empty;
     public DateTime IssueDate { get; set; }
@@ -49,5 +52,6 @@ public class ReviewLicenseRequestDto
 {
     public int SpecialistId { get; init; }
     public int LicenseTypeId { get; init; }
+    public int ProfessionTypeId { get; init; }
     public string? AdminComment { get; init; }
 }

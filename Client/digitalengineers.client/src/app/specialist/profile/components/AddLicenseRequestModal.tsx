@@ -191,6 +191,7 @@ const AddLicenseRequestModal = ({ show, onHide, onSuccess }: AddLicenseRequestMo
 		setLoading(true);
 		try {
 			const requestData: CreateLicenseRequest = {
+				professionTypeId: selectedProfessionTypeId,
 				licenseTypeId: formData.licenseTypeId!,
 				state: formData.state!,
 				issuingAuthority: formData.issuingAuthority!,
@@ -266,7 +267,7 @@ const AddLicenseRequestModal = ({ show, onHide, onSuccess }: AddLicenseRequestMo
 							>
 								<option value="">Select profession...</option>
 								{professions.map((profession) => (
-									<option key={profession.id} value={profession.id}>
+									<option key={`profession-${profession.id}`} value={profession.id}>
 										{profession.name}
 									</option>
 								))}
@@ -293,7 +294,7 @@ const AddLicenseRequestModal = ({ show, onHide, onSuccess }: AddLicenseRequestMo
 								>
 									<option value="">Select profession type...</option>
 									{professionTypes.map((professionType) => (
-										<option key={professionType.id} value={professionType.id}>
+										<option key={`professionType-${professionType.id}`} value={professionType.id}>
 											{professionType.name}
 											{professionType.requiresStateLicense ? ' 🏛️' : ''}
 											{` (${professionType.licenseRequirementsCount} licenses)`}
@@ -325,7 +326,7 @@ const AddLicenseRequestModal = ({ show, onHide, onSuccess }: AddLicenseRequestMo
 									>
 										<option value="">Select license...</option>
 										{licenseRequirements.map((requirement) => (
-											<option key={requirement.licenseTypeId} value={requirement.licenseTypeId}>
+											<option key={`license-${requirement.licenseTypeId}`} value={requirement.licenseTypeId}>
 												{requirement.licenseTypeName}
 												{requirement.isRequired ? ' ⚠️ Required' : ' ℹ️ Optional'}
 												{requirement.isStateSpecific ? ' 📍 State-specific' : ''}
@@ -368,7 +369,7 @@ const AddLicenseRequestModal = ({ show, onHide, onSuccess }: AddLicenseRequestMo
 								>
 									<option value="">Select state...</option>
 									{states.map((state) => (
-										<option key={state.value} value={state.value}>
+										<option key={`state-${state.value}`} value={state.value}>
 											{state.label}
 										</option>
 									))}

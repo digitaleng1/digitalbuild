@@ -9,7 +9,7 @@ public class SpecialistLicenseTypeConfiguration : IEntityTypeConfiguration<Speci
     public void Configure(EntityTypeBuilder<SpecialistLicenseType> builder)
     {
         builder.ToTable("SpecialistLicenseTypes");
-        builder.HasKey(slt => new { slt.SpecialistId, slt.LicenseTypeId });
+        builder.HasKey(slt => new { slt.SpecialistId, slt.LicenseTypeId, slt.ProfessionTypeId });
         
         builder.Property(e => e.State).HasMaxLength(100);
         builder.Property(e => e.IssuingAuthority).HasMaxLength(200);
@@ -34,7 +34,7 @@ public class SpecialistLicenseTypeConfiguration : IEntityTypeConfiguration<Speci
         builder.HasOne(slt => slt.ProfessionType)
             .WithMany()
             .HasForeignKey(slt => slt.ProfessionTypeId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
             
         builder.HasIndex(e => e.Status);
     }

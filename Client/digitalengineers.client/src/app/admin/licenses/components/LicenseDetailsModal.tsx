@@ -33,6 +33,7 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 				await licenseRequestService.approveLicenseRequest(license.id, {
 					specialistId: license.specialistId,
 					licenseTypeId: license.licenseTypeId,
+					professionTypeId: license.professionTypeId,
 					adminComment: approveComment || undefined,
 				});
 				showSuccess('Success', 'License request approved successfully');
@@ -57,6 +58,7 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 				await licenseRequestService.rejectLicenseRequest(license.id, {
 					specialistId: license.specialistId,
 					licenseTypeId: license.licenseTypeId,
+					professionTypeId: license.professionTypeId,
 					adminComment: rejectReason,
 				});
 				showSuccess('Success', 'License request rejected');
@@ -103,6 +105,10 @@ const LicenseDetailsModal = React.memo<LicenseDetailsModalProps>(
 							<div className="col-md-6">
 								<label className="form-label text-muted">License Type</label>
 								<p className="mb-0 font-16 fw-semibold">{license.licenseTypeName}</p>
+							</div>
+							<div className="col-md-6">
+								<label className="form-label text-muted">Profession Type</label>
+								<p className="mb-0 font-16 fw-semibold">{license.professionTypeName}</p>
 							</div>
 							<div className="col-md-6">
 								<label className="form-label text-muted">State</label>

@@ -4,6 +4,7 @@ import type { CreateLicenseRequest, LicenseRequest, ResubmitLicenseRequest, Revi
 class LicenseRequestService {
 	async createLicenseRequest(data: CreateLicenseRequest): Promise<LicenseRequest> {
 		const formData = new FormData();
+		formData.append('professionTypeId', data.professionTypeId.toString());
 		formData.append('licenseTypeId', data.licenseTypeId.toString());
 		formData.append('state', data.state);
 		formData.append('issuingAuthority', data.issuingAuthority);
@@ -23,6 +24,7 @@ class LicenseRequestService {
 	async resubmitLicenseRequest(
 		specialistId: number,
 		licenseTypeId: number,
+		professionTypeId: number,
 		data: ResubmitLicenseRequest
 	): Promise<LicenseRequest> {
 		const formData = new FormData();
@@ -36,7 +38,7 @@ class LicenseRequestService {
 		}
 
 		const result = await httpClient.put<LicenseRequest>(
-			`/api/licenses/requests/${specialistId}/${licenseTypeId}/resubmit`,
+			`/api/licenses/requests/${specialistId}/${licenseTypeId}/${professionTypeId}/resubmit`,
 			formData,
 			{
 				headers: {

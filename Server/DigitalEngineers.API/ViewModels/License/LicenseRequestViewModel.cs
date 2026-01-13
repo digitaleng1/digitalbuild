@@ -6,6 +6,9 @@ namespace DigitalEngineers.API.ViewModels.License;
 public class CreateLicenseRequestViewModel
 {
     [Required]
+    public int ProfessionTypeId { get; set; }
+    
+    [Required]
     public int LicenseTypeId { get; set; }
     
     [Required]
@@ -61,6 +64,9 @@ public class ReviewLicenseRequestViewModel
     [Required]
     public int LicenseTypeId { get; set; }
     
+    [Required]
+    public int ProfessionTypeId { get; set; }
+    
     [MaxLength(1000)]
     public string? AdminComment { get; set; }
 }
@@ -73,6 +79,8 @@ public class LicenseRequestViewModel
     public string SpecialistEmail { get; set; } = string.Empty;
     public int LicenseTypeId { get; set; }
     public string LicenseTypeName { get; set; } = string.Empty;
+    public int ProfessionTypeId { get; set; }
+    public string ProfessionTypeName { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string IssuingAuthority { get; set; } = string.Empty;
     public DateTime IssueDate { get; set; }

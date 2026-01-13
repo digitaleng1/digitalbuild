@@ -105,6 +105,7 @@ const EditLicenseRequestModal = ({ show, onHide, onSuccess, licenseRequest }: Ed
 			await licenseRequestService.resubmitLicenseRequest(
 				licenseRequest.specialistId,
 				licenseRequest.licenseTypeId,
+				licenseRequest.professionTypeId,
 				requestData
 			);
 			showSuccess('Success', 'License request resubmitted successfully. Awaiting admin verification.');

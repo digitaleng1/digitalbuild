@@ -38,6 +38,7 @@ const LicensesTable = React.memo<LicensesTableProps>(
 						<tr>
 							<th>Specialist</th>
 							<th>License Type</th>
+							<th>Profession Type</th>
 							<th>State</th>
 							<th>Submitted</th>
 							<th className="text-end">Actions</th>
@@ -46,7 +47,7 @@ const LicensesTable = React.memo<LicensesTableProps>(
 					<tbody>
 						{licenseRequests.map((license) => (
 							<LicenseRequestRow
-								key={`${license.specialistId}-${license.licenseTypeId}`}
+								key={`${license.specialistId}-${license.licenseTypeId}-${license.professionTypeId}`}
 								license={license}
 								onViewDetails={onViewDetails}
 								onActionSuccess={onActionSuccess}

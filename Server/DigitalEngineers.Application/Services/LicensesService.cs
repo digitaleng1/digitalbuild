@@ -46,24 +46,32 @@ public class LicensesService : ILicensesService
         if (licenseType == null)
             throw new ArgumentException($"License type with ID {dto.LicenseTypeId} not found");
 
+        var professionType = await _context.ProfessionTypes
+            .FirstOrDefaultAsync(pt => pt.Id == dto.ProfessionTypeId, cancellationToken);
+
+        if (professionType == null)
+            throw new ArgumentException($"Profession type with ID {dto.ProfessionTypeId} not found");
+
         var existingLicense = await _context.SpecialistLicenseTypes
             .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId 
-                && slt.LicenseTypeId == dto.LicenseTypeId, 
+                && slt.LicenseTypeId == dto.LicenseTypeId
+                && slt.ProfessionTypeId == dto.ProfessionTypeId, 
                 cancellationToken);
 
         if (existingLicense != null)
         {
             if (existingLicense.Status == LicenseRequestStatus.Pending)
-                throw new InvalidOperationException("A pending license request for this license type already exists");
+                throw new InvalidOperationException("A pending license request for this license type and profession type already exists");
             
             if (existingLicense.Status == LicenseRequestStatus.Approved)
-                throw new InvalidOperationException("This license type is already approved for this specialist");
+                throw new InvalidOperationException("This license type is already approved for this specialist and profession type");
         }
 
         var licenseRequest = new SpecialistLicenseType
         {
             SpecialistId = specialistId,
             LicenseTypeId = dto.LicenseTypeId,
+            ProfessionTypeId = dto.ProfessionTypeId,
             State = dto.State,
             IssuingAuthority = dto.IssuingAuthority,
             IssueDate = DateTime.SpecifyKind(dto.IssueDate, DateTimeKind.Utc),
@@ -79,7 +87,7 @@ public class LicensesService : ILicensesService
         _context.SpecialistLicenseTypes.Add(licenseRequest);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return MapToDto(licenseRequest, specialist, licenseType);
+        return MapToDto(licenseRequest, specialist, licenseType, professionType);
     }
 
     public async Task<IEnumerable<LicenseRequestDto>> GetSpecialistLicenseRequestsAsync(
@@ -90,11 +98,12 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
+            .Include(slt => slt.ProfessionType)
             .Where(slt => slt.SpecialistId == specialistId)
             .OrderByDescending(slt => slt.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return requests.Select(slt => MapToDto(slt, slt.Specialist, slt.LicenseType));
+        return requests.Select(slt => MapToDto(slt, slt.Specialist, slt.LicenseType, slt.ProfessionType));
     }
 
     public async Task<IEnumerable<LicenseRequestDto>> GetPendingLicenseRequestsAsync(
@@ -104,11 +113,12 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
+            .Include(slt => slt.ProfessionType)
             .Where(slt => slt.Status == LicenseRequestStatus.Pending)
             .OrderBy(slt => slt.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return requests.Select(slt => MapToDto(slt, slt.Specialist, slt.LicenseType));
+        return requests.Select(slt => MapToDto(slt, slt.Specialist, slt.LicenseType, slt.ProfessionType));
     }
 
     public async Task<LicenseRequestDto> GetLicenseRequestByIdAsync(
@@ -120,17 +130,19 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
+            .Include(slt => slt.ProfessionType)
             .FirstOrDefaultAsync(slt => slt.SpecialistId == id, cancellationToken);
 
         if (request == null)
             throw new LicenseRequestNotFoundException(id);
 
-        return MapToDto(request, request.Specialist, request.LicenseType);
+        return MapToDto(request, request.Specialist, request.LicenseType, request.ProfessionType);
     }
 
     public async Task<LicenseRequestDto> ApproveLicenseRequestAsync(
         int specialistId,
         int licenseTypeId,
+        int professionTypeId,
         string adminId,
         ReviewLicenseRequestDto dto,
         CancellationToken cancellationToken = default)
@@ -139,7 +151,10 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
-            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
+            .Include(slt => slt.ProfessionType)
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId 
+                && slt.LicenseTypeId == licenseTypeId
+                && slt.ProfessionTypeId == professionTypeId, cancellationToken);
 
         if (request == null)
             throw new LicenseRequestNotFoundException(specialistId);
@@ -174,12 +189,13 @@ public class LicensesService : ILicensesService
             _logger.LogError(ex, "Failed to send license approval email to {Email}", request.Specialist.User.Email);
         }
 
-        return MapToDto(request, request.Specialist, request.LicenseType);
+        return MapToDto(request, request.Specialist, request.LicenseType, request.ProfessionType);
     }
 
     public async Task<LicenseRequestDto> RejectLicenseRequestAsync(
         int specialistId,
         int licenseTypeId,
+        int professionTypeId,
         string adminId,
         ReviewLicenseRequestDto dto,
         CancellationToken cancellationToken = default)
@@ -188,7 +204,10 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
-            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
+            .Include(slt => slt.ProfessionType)
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId 
+                && slt.LicenseTypeId == licenseTypeId
+                && slt.ProfessionTypeId == professionTypeId, cancellationToken);
 
         if (request == null)
             throw new LicenseRequestNotFoundException(specialistId);
@@ -225,12 +244,13 @@ public class LicensesService : ILicensesService
             _logger.LogError(ex, "Failed to send license rejection email to {Email}", request.Specialist.User.Email);
         }
 
-        return MapToDto(request, request.Specialist, request.LicenseType);
+        return MapToDto(request, request.Specialist, request.LicenseType, request.ProfessionType);
     }
 
     public async Task<LicenseRequestDto> ResubmitLicenseRequestAsync(
         int specialistId,
         int licenseTypeId,
+        int professionTypeId,
         ResubmitLicenseRequestDto dto,
         CancellationToken cancellationToken = default)
     {
@@ -238,7 +258,10 @@ public class LicensesService : ILicensesService
             .Include(slt => slt.Specialist)
                 .ThenInclude(s => s.User)
             .Include(slt => slt.LicenseType)
-            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId && slt.LicenseTypeId == licenseTypeId, cancellationToken);
+            .Include(slt => slt.ProfessionType)
+            .FirstOrDefaultAsync(slt => slt.SpecialistId == specialistId 
+                && slt.LicenseTypeId == licenseTypeId
+                && slt.ProfessionTypeId == professionTypeId, cancellationToken);
 
         if (request == null)
             throw new LicenseRequestNotFoundException(specialistId);
@@ -282,7 +305,7 @@ public class LicensesService : ILicensesService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return MapToDto(request, request.Specialist, request.LicenseType);
+        return MapToDto(request, request.Specialist, request.LicenseType, request.ProfessionType);
     }
 
     public async Task DeleteLicenseRequestAsync(
@@ -317,16 +340,18 @@ public class LicensesService : ILicensesService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private LicenseRequestDto MapToDto(SpecialistLicenseType request, Specialist specialist, LicenseType licenseType)
+    private LicenseRequestDto MapToDto(SpecialistLicenseType request, Specialist specialist, LicenseType licenseType, ProfessionType professionType)
     {
         return new LicenseRequestDto
         {
-            Id = request.SpecialistId, // Note: Using SpecialistId as Id for backward compatibility
+            Id = request.SpecialistId,
             SpecialistId = request.SpecialistId,
             SpecialistName = $"{specialist.User.FirstName} {specialist.User.LastName}",
             SpecialistEmail = specialist.User.Email ?? string.Empty,
             LicenseTypeId = request.LicenseTypeId,
             LicenseTypeName = licenseType.Name,
+            ProfessionTypeId = request.ProfessionTypeId,
+            ProfessionTypeName = professionType.Name,
             State = request.State,
             IssuingAuthority = request.IssuingAuthority,
             IssueDate = request.IssueDate ?? DateTime.MinValue,

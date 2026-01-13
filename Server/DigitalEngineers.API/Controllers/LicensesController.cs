@@ -58,6 +58,7 @@ public class LicensesController : ControllerBase
 
         var dto = new CreateLicenseRequestDto
         {
+            ProfessionTypeId = model.ProfessionTypeId,
             LicenseTypeId = model.LicenseTypeId,
             State = model.State,
             IssuingAuthority = model.IssuingAuthority,
@@ -122,12 +123,14 @@ public class LicensesController : ControllerBase
         {
             SpecialistId = model.SpecialistId,
             LicenseTypeId = model.LicenseTypeId,
+            ProfessionTypeId = model.ProfessionTypeId,
             AdminComment = model.AdminComment
         };
 
         var result = await _licensesService.ApproveLicenseRequestAsync(
             model.SpecialistId, 
-            model.LicenseTypeId, 
+            model.LicenseTypeId,
+            model.ProfessionTypeId,
             adminId, 
             dto, 
             cancellationToken);
@@ -149,12 +152,14 @@ public class LicensesController : ControllerBase
         {
             SpecialistId = model.SpecialistId,
             LicenseTypeId = model.LicenseTypeId,
+            ProfessionTypeId = model.ProfessionTypeId,
             AdminComment = model.AdminComment
         };
 
         var result = await _licensesService.RejectLicenseRequestAsync(
             model.SpecialistId, 
-            model.LicenseTypeId, 
+            model.LicenseTypeId,
+            model.ProfessionTypeId,
             adminId, 
             dto, 
             cancellationToken);
@@ -163,12 +168,13 @@ public class LicensesController : ControllerBase
         return Ok(viewModel);
     }
 
-    [HttpPut("requests/{specialistId}/{licenseTypeId}/resubmit")]
+    [HttpPut("requests/{specialistId}/{licenseTypeId}/{professionTypeId}/resubmit")]
     [Authorize(Roles = "Provider")]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<LicenseRequestViewModel>> ResubmitLicenseRequest(
         int specialistId,
         int licenseTypeId,
+        int professionTypeId,
         [FromForm] ResubmitLicenseRequestViewModel model,
         CancellationToken cancellationToken)
     {
@@ -210,7 +216,7 @@ public class LicensesController : ControllerBase
             LicenseFileUrl = licenseFileUrl
         };
 
-        var result = await _licensesService.ResubmitLicenseRequestAsync(specialistId, licenseTypeId, dto, cancellationToken);
+        var result = await _licensesService.ResubmitLicenseRequestAsync(specialistId, licenseTypeId, professionTypeId, dto, cancellationToken);
         var viewModel = MapToViewModel(result);
 
         return Ok(viewModel);
@@ -240,6 +246,8 @@ public class LicensesController : ControllerBase
             SpecialistEmail = dto.SpecialistEmail,
             LicenseTypeId = dto.LicenseTypeId,
             LicenseTypeName = dto.LicenseTypeName,
+            ProfessionTypeId = dto.ProfessionTypeId,
+            ProfessionTypeName = dto.ProfessionTypeName,
             State = dto.State,
             IssuingAuthority = dto.IssuingAuthority,
             IssueDate = dto.IssueDate,
