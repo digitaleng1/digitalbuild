@@ -659,7 +659,6 @@ const TaskEditor = ({ mode, taskId, projectId, statuses, onSuccess, onCancel, re
                     value={[]}
                     maxFiles={10}
                     maxFileSize={10}
-                    disabled={isFormReadOnly}
                   />
                 </>
               ) : (
