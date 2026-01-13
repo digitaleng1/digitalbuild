@@ -13,6 +13,9 @@ public class SpecialistLicenseType
     public int LicenseTypeId { get; set; }
     public LicenseType LicenseType { get; set; } = null!;
     
+    public int? ProfessionTypeId { get; set; }
+    public ProfessionType? ProfessionType { get; set; }
+    
     public string? State { get; set; }
     public string? IssuingAuthority { get; set; }
     public DateTime? IssueDate { get; set; }

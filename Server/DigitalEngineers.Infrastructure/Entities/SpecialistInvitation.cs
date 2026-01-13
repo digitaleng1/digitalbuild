@@ -21,9 +21,8 @@ public class SpecialistInvitation
     // Custom message from inviter
     public string? CustomMessage { get; set; }
     
-    // License type for the specialist
-    public int LicenseTypeId { get; set; }
-    public LicenseType LicenseType { get; set; } = null!;
+    // Profession types for the specialist
+    public string ProfessionTypeIds { get; set; } = string.Empty;
     
     // User who sent the invitation
     public string InvitedByUserId { get; set; } = string.Empty;

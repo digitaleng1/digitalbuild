@@ -3,7 +3,7 @@ export interface InviteSpecialistDto {
 	firstName: string;
 	lastName: string;
 	customMessage?: string;
-	licenseTypeId: number;
+	professionTypeIds: number[];
 }
 
 export interface InviteSpecialistResult {

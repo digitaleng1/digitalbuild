@@ -35,6 +35,10 @@ public class SpecialistInvitationConfiguration : IEntityTypeConfiguration<Specia
         builder.Property(si => si.CustomMessage)
             .HasMaxLength(1000);
 
+        builder.Property(si => si.ProfessionTypeIds)
+            .IsRequired()
+            .HasMaxLength(1000);
+
         builder.Property(si => si.InvitedByUserId)
             .IsRequired()
             .HasMaxLength(450);
@@ -64,11 +68,6 @@ public class SpecialistInvitationConfiguration : IEntityTypeConfiguration<Specia
         builder.HasIndex(si => si.CreatedAt);
 
         // Relationships
-        builder.HasOne(si => si.LicenseType)
-            .WithMany()
-            .HasForeignKey(si => si.LicenseTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(si => si.InvitedByUser)
             .WithMany()
             .HasForeignKey(si => si.InvitedByUserId)

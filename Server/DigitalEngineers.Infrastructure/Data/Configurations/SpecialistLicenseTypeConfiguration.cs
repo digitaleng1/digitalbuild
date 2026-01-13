@@ -31,6 +31,11 @@ public class SpecialistLicenseTypeConfiguration : IEntityTypeConfiguration<Speci
             .HasForeignKey(slt => slt.LicenseTypeId)
             .OnDelete(DeleteBehavior.Restrict);
             
+        builder.HasOne(slt => slt.ProfessionType)
+            .WithMany()
+            .HasForeignKey(slt => slt.ProfessionTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+            
         builder.HasIndex(e => e.Status);
     }
 }

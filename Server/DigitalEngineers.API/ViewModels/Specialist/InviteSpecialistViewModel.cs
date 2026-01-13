@@ -20,5 +20,5 @@ public class InviteSpecialistViewModel
     public string? CustomMessage { get; init; }
     
     [Required]
-    public int LicenseTypeId { get; init; }
+    public int[] ProfessionTypeIds { get; init; } = [];
 }

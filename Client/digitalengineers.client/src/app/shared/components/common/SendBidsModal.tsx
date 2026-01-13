@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useAvailableSpecialists } from '@/app/shared/hooks';
 import { InviteSpecialistModal } from '@/app/shared/components/bids';
@@ -446,12 +446,12 @@ const SendBidsModal = ({
 				</Modal.Footer>
 			</Modal>
 
-			{/* Invite Specialist Modal - pass first license type from project */}
-			{selectedProfessionTypes.length > 0 && licenseTypes.length > 0 && (
+			{/* Invite Specialist Modal - pass selected profession types */}
+			{selectedProfessionTypes.length > 0 && (
 				<InviteSpecialistModal
 					show={showInviteModal}
 					onHide={() => setShowInviteModal(false)}
-					licenseType={licenseTypes[0]}
+					professionTypes={selectedProfessionTypes}
 					onInvitationSent={handleInvitationSent}
 				/>
 			)}

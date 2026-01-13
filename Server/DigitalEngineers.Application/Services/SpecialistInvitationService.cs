@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using DigitalEngineers.Domain.DTOs;
 using DigitalEngineers.Domain.DTOs.Auth;
 using DigitalEngineers.Domain.Exceptions;
@@ -51,14 +52,21 @@ public class SpecialistInvitationService : ISpecialistInvitationService
             throw new UserAlreadyExistsException(dto.Email);
         }
 
-        // Validate license type
-        var licenseType = await _context.LicenseTypes
-            .FindAsync([dto.LicenseTypeId], cancellationToken);
-        
-        if (licenseType == null)
+        // Validate profession types
+        if (dto.ProfessionTypeIds.Length == 0)
         {
-            _logger.LogWarning("License type with ID {LicenseTypeId} not found", dto.LicenseTypeId);
-            throw new ArgumentException($"License type with ID {dto.LicenseTypeId} not found", nameof(dto.LicenseTypeId));
+            throw new ArgumentException("At least one profession type must be selected", nameof(dto.ProfessionTypeIds));
+        }
+
+        var professionTypes = await _context.ProfessionTypes
+            .Where(pt => dto.ProfessionTypeIds.Contains(pt.Id))
+            .Include(pt => pt.LicenseRequirements)
+            .ToListAsync(cancellationToken);
+
+        if (professionTypes.Count != dto.ProfessionTypeIds.Length)
+        {
+            _logger.LogWarning("Some profession types not found");
+            throw new ArgumentException($"One or more profession types not found", nameof(dto.ProfessionTypeIds));
         }
 
         // Use transaction for atomic operation
@@ -107,14 +115,27 @@ public class SpecialistInvitationService : ISpecialistInvitationService
             _context.Specialists.Add(specialist);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Create specialist license type
-            var specialistLicense = new SpecialistLicenseType
+            // Create specialist license types from profession type requirements
+            var licenseTypesToAdd = new Dictionary<int, int>();
+            foreach (var professionType in professionTypes)
             {
-                SpecialistId = specialist.Id,
-                LicenseTypeId = dto.LicenseTypeId
-            };
+                foreach (var requirement in professionType.LicenseRequirements)
+                {
+                    licenseTypesToAdd[requirement.LicenseTypeId] = professionType.Id;
+                }
+            }
 
-            _context.Set<SpecialistLicenseType>().Add(specialistLicense);
+            foreach (var kvp in licenseTypesToAdd)
+            {
+                var specialistLicense = new SpecialistLicenseType
+                {
+                    SpecialistId = specialist.Id,
+                    LicenseTypeId = kvp.Key,
+                    ProfessionTypeId = kvp.Value
+                };
+                _context.Set<SpecialistLicenseType>().Add(specialistLicense);
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
 
             // Generate invitation token
@@ -129,7 +150,7 @@ public class SpecialistInvitationService : ISpecialistInvitationService
                 GeneratedPassword = generatedPassword,
                 InvitationToken = invitationToken,
                 CustomMessage = dto.CustomMessage,
-                LicenseTypeId = dto.LicenseTypeId,
+                ProfessionTypeIds = JsonSerializer.Serialize(dto.ProfessionTypeIds),
                 InvitedByUserId = invitedByUserId,
                 CreatedSpecialistUserId = user.Id,
                 IsUsed = false,
@@ -147,13 +168,15 @@ public class SpecialistInvitationService : ISpecialistInvitationService
             var baseUrl = _urlProvider.GetBaseUrl();
             var invitationUrl = $"{baseUrl}/account/invite/{invitationToken}";
 
+            var professionTypeNames = string.Join(", ", professionTypes.Select(pt => pt.Name));
+
             await _emailService.SendSpecialistInvitationEmailAsync(
                 dto.Email,
                 $"{dto.FirstName} {dto.LastName}",
                 dto.Email,
                 generatedPassword,
                 invitationUrl,
-                licenseType.Name,
+                professionTypeNames,
                 dto.CustomMessage,
                 cancellationToken);
 
