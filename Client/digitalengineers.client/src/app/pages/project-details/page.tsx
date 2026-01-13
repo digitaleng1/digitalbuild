@@ -52,6 +52,11 @@ const ProjectDetailsPage = () => {
 		return false;
 	}, [isAdmin, isClient, project?.managementType]);
 
+	// Check if user can toggle management type (Admin only)
+	const canToggleManagementType = useMemo(() => {
+		return isAdmin;
+	}, [isAdmin]);
+
 	const canInvite = useMemo(() => 
 		isClient && project ? canClientInviteSpecialists(project) : false,
 		[isClient, project]
@@ -324,8 +329,8 @@ const ProjectDetailsPage = () => {
 								</Link>
 							</div>
 
-							{/* Management Type Switcher - Admin or Client with ClientManaged project */}
-							{canManageProject && (
+							{/* Management Type Switcher - Admin only */}
+							{canToggleManagementType && (
 								<div className="mb-4">
 									<h5 className="mb-3">Project Management Type</h5>
 									<div className="d-flex align-items-center justify-content-between p-3 border rounded">
