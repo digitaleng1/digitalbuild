@@ -99,4 +99,34 @@ public class UserManagementController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("specialist")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(UserManagementViewModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<UserManagementViewModel>> CreateSpecialist(
+        [FromBody] CreateSpecialistByAdminViewModel viewModel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var dto = _mapper.Map<CreateSpecialistByAdminDto>(viewModel);
+            var result = await _userManagementService.CreateSpecialistAsync(dto, cancellationToken);
+            var responseViewModel = _mapper.Map<UserManagementViewModel>(result);
+            
+            return CreatedAtAction(
+                nameof(GetUsersByRole), 
+                new { role = "Provider" }, 
+                responseViewModel);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

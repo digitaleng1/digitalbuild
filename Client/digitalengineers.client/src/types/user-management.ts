@@ -30,3 +30,12 @@ export interface CreateClientRequest {
     website?: string;
     companyDescription?: string;
 }
+
+export interface CreateSpecialistRequest {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    phoneNumber?: string;
+    professionTypeIds: number[];
+}

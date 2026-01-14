@@ -11,5 +11,6 @@ public class UserManagementMappingProfile : Profile
         CreateMap<UserManagementDto, UserManagementViewModel>();
         CreateMap<CreateAdminViewModel, CreateAdminDto>();
         CreateMap<CreateClientViewModel, CreateClientDto>();
+        CreateMap<CreateSpecialistByAdminViewModel, CreateSpecialistByAdminDto>();
     }
 }

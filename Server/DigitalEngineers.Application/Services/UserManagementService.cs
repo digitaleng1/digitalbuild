@@ -232,4 +232,126 @@ public class UserManagementService : IUserManagementService
             throw;
         }
     }
+
+    public async Task<UserManagementDto> CreateSpecialistAsync(CreateSpecialistByAdminDto dto, CancellationToken cancellationToken = default)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+        {
+            throw new InvalidOperationException("User with this email already exists");
+        }
+
+        if (dto.ProfessionTypeIds.Length == 0)
+        {
+            throw new ArgumentException("At least one profession type must be selected", nameof(dto.ProfessionTypeIds));
+        }
+
+        var professionTypes = await _context.ProfessionTypes
+            .Where(pt => dto.ProfessionTypeIds.Contains(pt.Id))
+            .Include(pt => pt.LicenseRequirements)
+            .ToListAsync(cancellationToken);
+
+        if (professionTypes.Count != dto.ProfessionTypeIds.Length)
+        {
+            throw new ArgumentException("One or more profession types not found", nameof(dto.ProfessionTypeIds));
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        
+        try
+        {
+            var user = new ApplicationUser
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                PhoneNumber = dto.PhoneNumber,
+                EmailConfirmed = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create specialist user: {errors}");
+            }
+
+            await _userManager.AddToRoleAsync(user, UserRoles.Provider);
+
+            var specialist = new Infrastructure.Entities.Specialist
+            {
+                UserId = user.Id,
+                YearsOfExperience = 0,
+                HourlyRate = null,
+                Specialization = null,
+                IsAvailable = true,
+                Rating = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Specialists.Add(specialist);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var licenseTypesToAdd = new Dictionary<int, int>();
+            foreach (var professionType in professionTypes)
+            {
+                foreach (var requirement in professionType.LicenseRequirements)
+                {
+                    licenseTypesToAdd[requirement.LicenseTypeId] = professionType.Id;
+                }
+            }
+
+            foreach (var kvp in licenseTypesToAdd)
+            {
+                var specialistLicense = new Infrastructure.Entities.SpecialistLicenseType
+                {
+                    SpecialistId = specialist.Id,
+                    LicenseTypeId = kvp.Key,
+                    ProfessionTypeId = kvp.Value,
+                    Status = LicenseRequestStatus.Pending
+                };
+                _context.Set<Infrastructure.Entities.SpecialistLicenseType>().Add(specialistLicense);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            var professionTypeNames = string.Join(", ", professionTypes.Select(pt => pt.Name));
+
+            await _emailService.SendSpecialistWelcomeEmailAsync(
+                dto.Email,
+                $"{dto.FirstName} {dto.LastName}",
+                dto.Email,
+                dto.Password,
+                professionTypeNames,
+                cancellationToken);
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new UserManagementDto
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePictureUrl = null,
+                Roles = roles,
+                IsActive = user.IsActive,
+                LastActive = user.LastActive,
+                CreatedAt = user.CreatedAt,
+                LicenseStatus = "Pending"
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }

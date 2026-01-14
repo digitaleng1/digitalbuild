@@ -124,6 +124,21 @@ class LookupService {
 		return response as ProfessionTypeManagementDto[];
 	}
 
+	async getAllProfessionTypes(): Promise<ProfessionType[]> {
+		const cacheKey = 'all-profession-types';
+		const cached = this.getCachedData<ProfessionType[]>(cacheKey);
+
+		if (cached) {
+			return cached;
+		}
+
+		const response = await httpClient.get<ProfessionType[]>('/api/profession-types');
+		const data = response as ProfessionType[];
+		this.setCachedData(cacheKey, data);
+
+		return data;
+	}
+
 	async createProfessionType(dto: CreateProfessionTypeDto): Promise<ProfessionTypeManagementDto> {
 		const response = await httpClient.post<ProfessionTypeManagementDto>('/api/profession-types', dto);
 		this.clearCache();

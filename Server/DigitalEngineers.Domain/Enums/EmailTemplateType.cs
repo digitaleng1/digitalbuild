@@ -13,6 +13,7 @@ public enum EmailTemplateType
     SpecialistInvitation,
     AdminWelcome,
     ClientWelcome,
+    SpecialistWelcome,
     
     // Project
     ProjectCreated,

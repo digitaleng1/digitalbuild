@@ -60,6 +60,14 @@ public interface IEmailService
         string password,
         CancellationToken cancellationToken = default);
 
+    Task SendSpecialistWelcomeEmailAsync(
+        string toEmail,
+        string userName,
+        string email,
+        string password,
+        string professionTypeNames,
+        CancellationToken cancellationToken = default);
+
     // Specialist Invitation
     Task SendSpecialistInvitationEmailAsync(
         string toEmail,

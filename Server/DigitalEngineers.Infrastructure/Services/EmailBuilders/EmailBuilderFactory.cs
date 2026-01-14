@@ -34,32 +34,33 @@ public class EmailBuilderFactory
             EmailTemplateType.SpecialistInvitation => _serviceProvider.GetRequiredService<SpecialistInvitationEmailBuilder>(),
             EmailTemplateType.AdminWelcome => _serviceProvider.GetRequiredService<AdminWelcomeEmailBuilder>(),
             EmailTemplateType.ClientWelcome => _serviceProvider.GetRequiredService<ClientWelcomeEmailBuilder>(),
-            
+            EmailTemplateType.SpecialistWelcome => _serviceProvider.GetRequiredService<SpecialistWelcomeEmailBuilder>(),
+
             // Project
             EmailTemplateType.ProjectCreated => _serviceProvider.GetRequiredService<ProjectCreatedEmailBuilder>(),
             EmailTemplateType.ProjectAssigned => _serviceProvider.GetRequiredService<ProjectAssignedEmailBuilder>(),
             EmailTemplateType.ProjectStatusChanged => _serviceProvider.GetRequiredService<ProjectStatusChangedEmailBuilder>(),
-            
+
             // Quote
             EmailTemplateType.QuoteSubmitted => _serviceProvider.GetRequiredService<QuoteSubmittedEmailBuilder>(),
             EmailTemplateType.QuoteAccepted => _serviceProvider.GetRequiredService<QuoteAcceptedEmailBuilder>(),
             EmailTemplateType.QuoteRejected => _serviceProvider.GetRequiredService<QuoteRejectedEmailBuilder>(),
-            
+
             // Bid
             EmailTemplateType.BidRequest => _serviceProvider.GetRequiredService<BidRequestEmailBuilder>(),
             EmailTemplateType.BidResponseReceived => _serviceProvider.GetRequiredService<BidResponseReceivedEmailBuilder>(),
             EmailTemplateType.BidAccepted => _serviceProvider.GetRequiredService<BidAcceptedEmailBuilder>(),
             EmailTemplateType.BidRejected => _serviceProvider.GetRequiredService<BidRejectedEmailBuilder>(),
-            
+
             // Task
             EmailTemplateType.TaskCreated => _serviceProvider.GetRequiredService<TaskCreatedEmailBuilder>(),
             EmailTemplateType.TaskAssigned => _serviceProvider.GetRequiredService<TaskAssignedEmailBuilder>(),
             EmailTemplateType.TaskCompleted => _serviceProvider.GetRequiredService<TaskCompletedEmailBuilder>(),
-            
+
             // License
             EmailTemplateType.LicenseRequestApproved => _serviceProvider.GetRequiredService<LicenseRequestApprovedEmailBuilder>(),
             EmailTemplateType.LicenseRequestRejected => _serviceProvider.GetRequiredService<LicenseRequestRejectedEmailBuilder>(),
-            
+
             _ => throw new ArgumentException($"Unknown template type: {templateType}")
         };
     }

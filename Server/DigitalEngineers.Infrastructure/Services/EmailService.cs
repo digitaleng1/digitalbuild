@@ -243,6 +243,30 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
+    public async Task SendSpecialistWelcomeEmailAsync(
+        string toEmail,
+        string userName,
+        string email,
+        string password,
+        string professionTypeNames,
+        CancellationToken cancellationToken = default)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "UserName", userName },
+            { "Email", email },
+            { "Password", password },
+            { "ProfessionTypeNames", professionTypeNames },
+            { "LoginUrl", $"{GetBaseUrl()}/account/login" }
+        };
+
+        await SendTemplatedEmailAsync(
+            toEmail,
+            EmailTemplateType.SpecialistWelcome,
+            placeholders,
+            cancellationToken);
+    }
+
     // Specialist notifications
     public async Task SendSpecialistInvitationEmailAsync(
         string toEmail,

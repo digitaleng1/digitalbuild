@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SpecialistInvitationEmailBuilder>();
         services.AddScoped<AdminWelcomeEmailBuilder>();
         services.AddScoped<ClientWelcomeEmailBuilder>();
+        services.AddScoped<SpecialistWelcomeEmailBuilder>();
 
         // Project Email Builders
         services.AddScoped<ProjectCreatedEmailBuilder>();
