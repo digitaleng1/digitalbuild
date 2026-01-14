@@ -184,4 +184,22 @@ public interface IProjectService
         string[] userRoles,
         List<FileUploadInfo> files,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add profession types to existing project (Admin/SuperAdmin or Client for ClientManaged projects)
+    /// </summary>
+    /// <param name="projectId">Project ID</param>
+    /// <param name="professionTypeIds">List of profession type IDs to add</param>
+    /// <param name="userId">User ID (for authorization)</param>
+    /// <param name="userRoles">User roles</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <exception cref="Exceptions.ProjectNotFoundException">If project not found</exception>
+    /// <exception cref="ArgumentException">If profession type IDs are invalid</exception>
+    /// <exception cref="UnauthorizedAccessException">If user is not authorized</exception>
+    Task UpdateProjectProfessionTypesAsync(
+        int projectId,
+        List<int> professionTypeIds,
+        string userId,
+        string[] userRoles,
+        CancellationToken cancellationToken = default);
 }

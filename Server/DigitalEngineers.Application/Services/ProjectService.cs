@@ -1868,4 +1868,88 @@ public class ProjectService : IProjectService
             throw;
         }
     }
+
+    public async Task UpdateProjectProfessionTypesAsync(
+        int projectId,
+        List<int> professionTypeIds,
+        string userId,
+        string[] userRoles,
+        CancellationToken cancellationToken = default)
+    {
+        if (professionTypeIds == null || professionTypeIds.Count == 0)
+        {
+            throw new ArgumentException("At least one profession type ID must be provided", nameof(professionTypeIds));
+        }
+
+        var project = await _context.Projects
+            .Include(p => p.ProjectProfessionTypes)
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+
+        if (project == null)
+        {
+            _logger.LogWarning("Attempt to add profession types to non-existent project {ProjectId}", projectId);
+            throw new ProjectNotFoundException(projectId);
+        }
+
+        // Authorization check: Admin/SuperAdmin can add to any project, Client can only add to their ClientManaged projects
+        var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperAdmin");
+        var isClient = userRoles.Contains("Client");
+
+        if (!isAdmin)
+        {
+            if (!isClient || project.ClientId != userId || project.ManagementType != ProjectManagementType.ClientManaged)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to add profession types to this project");
+            }
+        }
+
+        // Validate profession types exist
+        var existingProfessionTypeIds = await _context.ProfessionTypes
+            .Where(pt => professionTypeIds.Contains(pt.Id))
+            .Select(pt => pt.Id)
+            .ToListAsync(cancellationToken);
+
+        if (existingProfessionTypeIds.Count != professionTypeIds.Count)
+        {
+            var invalidIds = professionTypeIds.Except(existingProfessionTypeIds);
+            _logger.LogWarning("Invalid profession type IDs: {InvalidIds}", string.Join(", ", invalidIds));
+            throw new ArgumentException($"Invalid profession type IDs: {string.Join(", ", invalidIds)}", nameof(professionTypeIds));
+        }
+
+        // Get already assigned profession type IDs
+        var alreadyAssignedIds = project.ProjectProfessionTypes
+            .Select(ppt => ppt.ProfessionTypeId)
+            .ToHashSet();
+
+        // Filter out duplicates
+        var newProfessionTypeIds = professionTypeIds
+            .Where(id => !alreadyAssignedIds.Contains(id))
+            .ToList();
+
+        if (newProfessionTypeIds.Count == 0)
+        {
+            _logger.LogInformation("All provided profession types are already assigned to project {ProjectId}", projectId);
+            return;
+        }
+
+        // Create new ProjectProfessionType entities
+        var newProjectProfessionTypes = newProfessionTypeIds
+            .Select(ptId => new ProjectProfessionType
+            {
+                ProjectId = projectId,
+                ProfessionTypeId = ptId
+            })
+            .ToList();
+
+        _context.ProjectProfessionTypes.AddRange(newProjectProfessionTypes);
+        project.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Added {Count} new profession types to project {ProjectId}. Total: {Total}",
+            newProfessionTypeIds.Count,
+            projectId,
+            project.ProjectProfessionTypes.Count + newProfessionTypeIds.Count);
+    }
 }

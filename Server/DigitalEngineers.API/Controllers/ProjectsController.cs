@@ -592,4 +592,43 @@ public class ProjectsController : ControllerBase
         var viewModels = _mapper.Map<IEnumerable<ProjectFileViewModel>>(uploadedFiles);
         return Ok(viewModels);
     }
+
+    /// <summary>
+    /// Add profession types to existing project (Admin/SuperAdmin or Client for ClientManaged projects)
+    /// </summary>
+    [HttpPatch("{id}/profession-types")]
+    [Authorize(Roles = "Admin,SuperAdmin,Client")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> UpdateProjectProfessionTypes(
+        int id,
+        [FromBody] UpdateProjectProfessionTypesViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+
+        await _projectService.UpdateProjectProfessionTypesAsync(
+            id,
+            model.ProfessionTypeIds,
+            userId,
+            roles,
+            cancellationToken);
+
+        return NoContent();
+    }
 }

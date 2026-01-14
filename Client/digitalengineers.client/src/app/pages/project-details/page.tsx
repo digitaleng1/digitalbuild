@@ -20,6 +20,7 @@ import QuoteSubmittedAlert from '@/app/client/projects/details/QuoteSubmittedAle
 import PendingAlert from '@/app/client/projects/details/PendingAlert';
 import ClientManagedAlert from '@/app/admin/projects/details/ClientManagedAlert';
 import ChangeClientModal from '@/app/admin/projects/details/ChangeClientModal';
+import AddProfessionTypesSection from './AddProfessionTypesSection';
 import { taskService } from '@/services/taskService';
 import projectService from '@/services/projectService';
 import { useToast } from '@/contexts';
@@ -47,6 +48,13 @@ const ProjectDetailsPage = () => {
 
 	// Check if user can manage project (Admin or Client with ClientManaged project)
 	const canManageProject = useMemo(() => {
+		if (isAdmin) return true;
+		if (isClient && project?.managementType === ProjectManagementType.ClientManaged) return true;
+		return false;
+	}, [isAdmin, isClient, project?.managementType]);
+
+	// Check if user can add profession types (Admin or Client with ClientManaged project)
+	const canAddProfessionTypes = useMemo(() => {
 		if (isAdmin) return true;
 		if (isClient && project?.managementType === ProjectManagementType.ClientManaged) return true;
 		return false;
@@ -537,7 +545,15 @@ const ProjectDetailsPage = () => {
 
 							{project.professionTypes && project.professionTypes.length > 0 && (
 								<>
-									<h5>Required Professions:</h5>
+									<div className="d-flex justify-content-between align-items-center mb-3">
+										<h5 className="mb-0">Required Professions:</h5>
+										<AddProfessionTypesSection
+											projectId={project.id}
+											currentProfessionTypeIds={project.professionTypes.map(pt => pt.id)}
+											onSuccess={refetch}
+											canEdit={canAddProfessionTypes}
+										/>
+									</div>
 									<div className="mb-4">
 										{project.professionTypes.map((professionType) => (
 											<Badge

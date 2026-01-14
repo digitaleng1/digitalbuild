@@ -198,6 +198,15 @@ class ProjectService {
 		
 		return result as ProjectFile[];
 	}
+
+	/**
+	 * Add profession types to existing project (Admin/SuperAdmin or Client for ClientManaged projects)
+	 */
+	async updateProjectProfessionTypes(projectId: number, professionTypeIds: number[]): Promise<void> {
+		await httpClient.patch(`/api/projects/${projectId}/profession-types`, {
+			professionTypeIds
+		});
+	}
 }
 
 export default new ProjectService();
