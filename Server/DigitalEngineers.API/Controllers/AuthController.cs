@@ -68,6 +68,7 @@ public class AuthController : ControllerBase
             viewModel.Provider, 
             viewModel.IdToken, 
             viewModel.Role,
+            viewModel.IsRegistration,
             cancellationToken);
         var result = _mapper.Map<TokenResponseViewModel>(response);
         return Ok(result);

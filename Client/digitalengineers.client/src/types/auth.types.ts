@@ -37,10 +37,15 @@ export interface ExternalLoginDto {
     provider: 'Google' | 'Auth0';
     idToken: string;
     role?: 'Client' | 'Provider';
+    isRegistration: boolean;
 }
 
 export interface ApiErrorResponse {
     message: string;
+    type?: string;
+    details?: {
+        email?: string;
+    };
 }
 
 export interface ConfirmEmailParams {

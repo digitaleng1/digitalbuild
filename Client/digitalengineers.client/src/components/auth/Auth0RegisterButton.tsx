@@ -54,6 +54,7 @@ const Auth0RegisterButton = () => {
                 provider: 'Auth0',
                 idToken: idTokenClaims.__raw,
                 role: role,
+                isRegistration: true,
             });
 
             saveSession(

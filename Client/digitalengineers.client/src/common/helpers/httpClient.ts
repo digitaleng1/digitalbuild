@@ -4,15 +4,20 @@ const ErrorCodeMessages: { [key: number]: string } = {
 	401: 'Invalid credentials',
 	403: 'Access Forbidden',
 	404: 'Resource or page not found',
-	};
+};
 
 function HttpClient() {
-	const _errorHandler = (error: any) =>
-		Promise.reject(
+	const _errorHandler = (error: any) => {
+		if (error?.response?.status === 404 && error.response?.data?.type === 'UserNotFound') {
+			return Promise.reject(error);
+		}
+		
+		return Promise.reject(
 			Object.keys(ErrorCodeMessages).includes(error?.response?.status)
 				? ErrorCodeMessages[error.response.status]
 				: error.response?.data?.message || error.message || error
 		);
+	};
 
 	client.interceptors.response.use(
 		(response) => response.data,

@@ -5,10 +5,13 @@ import { useAuthContext } from '@/common/context/useAuthContext';
 import { authApi } from '@/common/api';
 import { useNotificationContext } from '@/common/context';
 import { useNavigate } from 'react-router';
+import UserNotFoundModal from './UserNotFoundModal';
+import type { ApiErrorResponse } from '@/types/auth.types';
 
 const Auth0LoginButton = () => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+    const [showUserNotFoundModal, setShowUserNotFoundModal] = useState(false);
     const { saveSession } = useAuthContext();
     const { showNotification } = useNotificationContext();
     const navigate = useNavigate();
@@ -36,7 +39,6 @@ const Auth0LoginButton = () => {
                 },
             });
 
-            // Force re-authentication, ignoring any existing SSO session
             await auth0Client.loginWithPopup({ authorizationParams: { prompt: 'login' } });
 
             const idTokenClaims = await auth0Client.getIdTokenClaims();
@@ -44,71 +46,87 @@ const Auth0LoginButton = () => {
                 throw new Error('Failed to get ID token from Auth0');
             }
 
-            const tokenResponse = await authApi.externalLogin({
-                provider: 'Auth0',
-                idToken: idTokenClaims.__raw,
-            });
+            try {
+                const tokenResponse = await authApi.externalLogin({
+                    provider: 'Auth0',
+                    idToken: idTokenClaims.__raw,
+                    isRegistration: false,
+                });
 
-            saveSession(
-                tokenResponse.user,
-                tokenResponse.accessToken,
-                tokenResponse.refreshToken,
-                tokenResponse.expiresAt
-            );
+                saveSession(
+                    tokenResponse.user,
+                    tokenResponse.accessToken,
+                    tokenResponse.refreshToken,
+                    tokenResponse.expiresAt
+                );
 
-            showNotification({
-                message: t('Successfully logged in with Auth0'),
-                type: 'success',
-            });
+                showNotification({
+                    message: t('Successfully logged in with Auth0'),
+                    type: 'success',
+                });
 
-            const primaryRole = tokenResponse.user.roles[0];
-            const redirectPath = primaryRole === 'Provider' 
-                ? '/specialist/projects' 
-                : primaryRole === 'Admin' || primaryRole === 'SuperAdmin'
-                    ? '/admin/projects'
-                    : '/client/projects';
-            navigate(redirectPath);
+                const primaryRole = tokenResponse.user.roles[0];
+                const redirectPath = primaryRole === 'Provider' 
+                    ? '/specialist/projects' 
+                    : primaryRole === 'Admin' || primaryRole === 'SuperAdmin'
+                        ? '/admin/projects'
+                        : '/client/projects';
+                navigate(redirectPath);
+            } catch (apiError: unknown) {
+                const axiosError = apiError as { response?: { data?: ApiErrorResponse } };
+                
+                if (axiosError.response?.data?.type === 'UserNotFound') {
+                    setShowUserNotFoundModal(true);
+                    return;
+                }
+
+                const errorMessage = axiosError.response?.data?.message || t('Login failed. Please try again.');
+                showNotification({ message: errorMessage, type: 'error' });
+            }
         } catch (error: unknown) {
-            let errorMessage = t('Auth0 login failed');
-
             if (error instanceof Error) {
                 if ('error' in error) {
                     const auth0Error = error as { error: string; error_description?: string };
+                    if (auth0Error.error === 'access_denied') {
+                        return;
+                    }
+                    
+                    let errorMessage = t('Auth0 login failed');
                     if (auth0Error.error === 'consent_required') {
                         errorMessage = t('Please grant permission to access your profile');
                     } else if (auth0Error.error === 'login_required') {
                         errorMessage = t('Please log in to continue');
-                    } else if (auth0Error.error === 'access_denied') {
-                        errorMessage = t('Access denied. Please try again.');
                     } else if (auth0Error.error_description) {
                         errorMessage = auth0Error.error_description;
                     }
+                    
+                    showNotification({ message: errorMessage, type: 'error' });
                 } else if (error.message) {
-                    errorMessage = error.message;
+                    showNotification({ message: error.message, type: 'error' });
                 }
             }
-
-            const axiosError = error as { response?: { data?: { message?: string } } };
-            if (axiosError.response?.data?.message) {
-                errorMessage = axiosError.response.data.message;
-            }
-
-            showNotification({ message: errorMessage, type: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Button
-            variant="outline-secondary"
-            className="w-100 mb-2"
-            onClick={handleAuth0Login}
-            disabled={loading}
-        >
-            <i className="mdi mdi-shield-lock-outline me-2"></i>
-            {loading ? t('Loading...') : t('Sign in with Auth0')}
-        </Button>
+        <>
+            <Button
+                variant="outline-secondary"
+                className="w-100 mb-2"
+                onClick={handleAuth0Login}
+                disabled={loading}
+            >
+                <i className="mdi mdi-shield-lock-outline me-2"></i>
+                {loading ? t('Loading...') : t('Sign in with Auth0')}
+            </Button>
+
+            <UserNotFoundModal 
+                show={showUserNotFoundModal}
+                onHide={() => setShowUserNotFoundModal(false)}
+            />
+        </>
     );
 };
 

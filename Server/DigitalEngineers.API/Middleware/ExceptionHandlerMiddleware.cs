@@ -47,6 +47,7 @@ namespace DigitalEngineers.API.Middleware
                 BidRequestNotFoundException => StatusCodes.Status404NotFound,
                 BidResponseNotFoundException => StatusCodes.Status404NotFound,
                 InvitationNotFoundException => StatusCodes.Status404NotFound,
+                UserNotFoundException => StatusCodes.Status404NotFound,
 
                 // 403 - Forbidden (Email not confirmed or account deactivated)
                 EmailNotConfirmedException => StatusCodes.Status403Forbidden,
@@ -85,6 +86,22 @@ namespace DigitalEngineers.API.Middleware
             {
                 TraceId = context.TraceIdentifier
             };
+
+            if (exception is UserNotFoundException userNotFoundEx)
+            {
+                errorResponse = new ErrorResponse(
+                    exception.Message,
+                    statusCode
+                )
+                {
+                    TraceId = context.TraceIdentifier,
+                    Type = "UserNotFound",
+                    Details = new Dictionary<string, object>
+                    {
+                        { "email", userNotFoundEx.Email }
+                    }
+                };
+            }
 
             context.Response.ContentType = "application/json";
             var json = JsonConvert.SerializeObject(errorResponse, new JsonSerializerSettings

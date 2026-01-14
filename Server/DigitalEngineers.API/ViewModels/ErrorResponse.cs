@@ -6,6 +6,8 @@
         public string Message { get; set; } = string.Empty;
         public int Status { get; set; }
         public string? TraceId { get; set; }
+        public string? Type { get; set; }
+        public Dictionary<string, object>? Details { get; set; }
 
         public ErrorResponse(string message, int status)
         {

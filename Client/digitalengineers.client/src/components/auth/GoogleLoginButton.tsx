@@ -5,7 +5,8 @@ import { useAuthContext } from '@/common/context/useAuthContext';
 import { authApi } from '@/common/api';
 import { useNotificationContext } from '@/common/context';
 import { useNavigate } from 'react-router';
-import type { TokenResponse } from '@/types/auth.types';
+import UserNotFoundModal from './UserNotFoundModal';
+import type { ApiErrorResponse } from '@/types/auth.types';
 
 declare global {
     interface Window {
@@ -16,6 +17,7 @@ declare global {
 const GoogleLoginButton = () => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+    const [showUserNotFoundModal, setShowUserNotFoundModal] = useState(false);
     const { saveSession } = useAuthContext();
     const { showNotification } = useNotificationContext();
     const navigate = useNavigate();
@@ -35,6 +37,7 @@ const GoogleLoginButton = () => {
                         const tokenResponse = await authApi.externalLogin({
                             provider: 'Google',
                             idToken: response.access_token,
+                            isRegistration: false,
                         });
 
                         saveSession(
@@ -54,10 +57,18 @@ const GoogleLoginButton = () => {
                             ? '/specialist/dashboard' 
                             : '/client/dashboard';
                         navigate(redirectPath);
+                        setLoading(false);
                     } catch (error: any) {
+                        const axiosError = error as { response?: { data?: ApiErrorResponse } };
+                        
+                        if (axiosError.response?.data?.type === 'UserNotFound') {
+                            setShowUserNotFoundModal(true);
+                            setLoading(false);
+                            return;
+                        }
+
                         const errorMessage = error.response?.data?.message || error.message || 'Google login failed';
                         showNotification({ message: errorMessage, type: 'error' });
-                    } finally {
                         setLoading(false);
                     }
                 },
@@ -71,15 +82,22 @@ const GoogleLoginButton = () => {
     };
 
     return (
-        <Button
-            variant="outline-primary"
-            className="w-100 mb-2"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-        >
-            <i className="mdi mdi-google me-2"></i>
-            {loading ? t('Loading...') : t('Sign in with Google')}
-        </Button>
+        <>
+            <Button
+                variant="outline-primary"
+                className="w-100 mb-2"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+            >
+                <i className="mdi mdi-google me-2"></i>
+                {loading ? t('Loading...') : t('Sign in with Google')}
+            </Button>
+
+            <UserNotFoundModal 
+                show={showUserNotFoundModal}
+                onHide={() => setShowUserNotFoundModal(false)}
+            />
+        </>
     );
 };
 

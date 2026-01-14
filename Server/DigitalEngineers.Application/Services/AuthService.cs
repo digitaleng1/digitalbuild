@@ -208,15 +208,15 @@ public class AuthService : IAuthService
         return await GenerateTokenResponse(user, cancellationToken);
     }
 
-    public async Task<TokenData> ExternalLoginAsync(string provider, string idToken, string? role = null, CancellationToken cancellationToken = default)
+    public async Task<TokenData> ExternalLoginAsync(string provider, string idToken, string? role = null, bool isRegistration = false, CancellationToken cancellationToken = default)
     {
         if (provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
         {
-            return await HandleGoogleLogin(idToken, cancellationToken);
+            return await HandleGoogleLogin(idToken, isRegistration, cancellationToken);
         }
         else if (provider.Equals("Auth0", StringComparison.OrdinalIgnoreCase))
         {
-            return await HandleAuth0Login(idToken, role, cancellationToken);
+            return await HandleAuth0Login(idToken, role, isRegistration, cancellationToken);
         }
 
         throw new NotSupportedException($"Provider {provider} is not supported");
@@ -397,7 +397,7 @@ public class AuthService : IAuthService
         return await GenerateTokenResponse(user, cancellationToken);
     }
 
-    private async Task<TokenData> HandleGoogleLogin(string idToken, CancellationToken cancellationToken)
+    private async Task<TokenData> HandleGoogleLogin(string idToken, bool isRegistration, CancellationToken cancellationToken)
     {
         try
         {
@@ -412,6 +412,11 @@ public class AuthService : IAuthService
             
             if (user == null)
             {
+                if (!isRegistration)
+                {
+                    throw new DigitalEngineers.Domain.Exceptions.UserNotFoundException(payload.Email);
+                }
+                
                 user = new ApplicationUser
                 {
                     UserName = payload.Email,
@@ -428,6 +433,20 @@ public class AuthService : IAuthService
                 }
 
                 await _userManager.AddToRoleAsync(user, "Client");
+                
+                var client = new Client
+                {
+                    UserId = user.Id,
+                    CompanyName = null,
+                    Industry = null,
+                    Website = null,
+                    CompanyDescription = null,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Set<Client>().Add(client);
+                await _context.SaveChangesAsync(cancellationToken);
             }
             else if (!user.IsActive)
             {
@@ -439,6 +458,10 @@ public class AuthService : IAuthService
 
             return await GenerateTokenResponse(user, cancellationToken);
         }
+        catch (DigitalEngineers.Domain.Exceptions.UserNotFoundException)
+        {
+            throw;
+        }
         catch (DigitalEngineers.Domain.Exceptions.UserDeactivatedException)
         {
             throw;
@@ -449,7 +472,7 @@ public class AuthService : IAuthService
         }
     }
 
-    private async Task<TokenData> HandleAuth0Login(string idToken, string? role, CancellationToken cancellationToken)
+    private async Task<TokenData> HandleAuth0Login(string idToken, string? role, bool isRegistration, CancellationToken cancellationToken)
     {
         try
         {
@@ -488,14 +511,16 @@ public class AuthService : IAuthService
                          ?? principal.FindFirst("given_name")?.Value;
             var lastName = principal.FindFirst(ClaimTypes.Surname)?.Value
                         ?? principal.FindFirst("family_name")?.Value;
-            var auth0Id = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? principal.FindFirst("sub")?.Value;
 
             var user = await _userManager.FindByEmailAsync(email);
 
             if (user == null)
             {
-                // Validate and determine effective role (default to Client for backwards compatibility)
+                if (!isRegistration)
+                {
+                    throw new DigitalEngineers.Domain.Exceptions.UserNotFoundException(email);
+                }
+                
                 var effectiveRole = role ?? "Client";
                 if (effectiveRole != "Client" && effectiveRole != "Provider")
                 {
@@ -519,7 +544,6 @@ public class AuthService : IAuthService
 
                 await _userManager.AddToRoleAsync(user, effectiveRole);
 
-                // Create appropriate entity based on role
                 if (effectiveRole == "Client")
                 {
                     var client = new Client
@@ -558,12 +582,15 @@ public class AuthService : IAuthService
             {
                 throw new DigitalEngineers.Domain.Exceptions.UserDeactivatedException(email);
             }
-            // Note: For existing users, the role parameter is ignored (security)
 
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
 
             return await GenerateTokenResponse(user, cancellationToken);
+        }
+        catch (DigitalEngineers.Domain.Exceptions.UserNotFoundException)
+        {
+            throw;
         }
         catch (DigitalEngineers.Domain.Exceptions.UserDeactivatedException)
         {
